@@ -20,13 +20,13 @@ function App() {
   return (
     <main className="app-container">
       <header className="dashboard-header">
-        <h1>neet os</h1>
+        <h1>Billu's Diary</h1>
         <div className="status-badge">{dbStatus}</div>
       </header>
 
       <section className="main-content">
-        {/* We will insert our feature components here next */}
-        <p style={{ color: 'var(--text-muted)' }}>Architecture Ready.</p>
+        {/*insert feature components here */}
+        <p style={{ color: 'var(--text-muted)' }}>Work in Progress...</p>
       </section>
     </main>
   );
