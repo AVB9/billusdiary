@@ -20,7 +20,7 @@ function App() {
   return (
     <main className="app-container">
       <header className="dashboard-header">
-        <h1>neet os</h1>
+        <h1>Billu's Diary</h1>
         <div className="status-badge">{dbStatus}</div>
       </header>
 

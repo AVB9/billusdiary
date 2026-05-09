@@ -18,7 +18,7 @@
   font-size: 0.8rem;
   padding: 0.4rem 0.8rem;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(126, 82, 107, 0.05);
   border: 1px solid var(--glass-border);
   color: var(--accent-color);
 }
