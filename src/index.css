@@ -1,27 +1,1508 @@
+/* =================================================================
+   1. CORE VARIABLES (The Absolute Source of Truth)
+   ================================================================= */
 :root {
-  --bg-color: #0a0a0a;
-  --panel-bg: #161616;
-  --accent-color: #ff3b3b;
-  --text-main: #ffffff;
-  --text-muted: #a0a0a0;
-  --glass-border: rgba(255, 255, 255, 0.1);
+    /* Colors */
+    --color-bg: #0a0a0a;
+    --color-surface: #1a1a1a;
+    --color-text: #ffffff;
+    --color-text-muted: #888888;
+    --color-primary: #ff3b3b;
+    
+    /* Glass & Alpha Colors */
+    --color-glass-bg: rgba(30, 30, 30, 0.45);
+    --color-glass-tint: rgba(10, 10, 10, 0.45);
+    --color-glass-border: rgba(255, 255, 255, 0.08);
+    --color-glass-white: rgba(255, 255, 255, 0.15);
+    --color-danger: #ff5252;
+    --color-danger-bg: rgba(255, 59, 59, 0.15);
+    --color-danger-border: rgba(255, 59, 59, 0.3);
+    --color-success: #1fcc61;
+    --color-success-bg: rgba(31, 204, 97, 0.15);
+    --color-success-border: rgba(31, 204, 97, 0.3);
+    
+    /* Spacing & Layout (HARDWARE AWARE) */
+    --max-mobile-width: 480px;
+    --max-desktop-width: 1200px;
+    --safe-bottom: env(safe-area-inset-bottom, 20px);
+    --nav-height: calc(120px + var(--safe-bottom));
+    --planner-bottom-clear: calc(90px + var(--safe-bottom));
+    --pad-sm: 8px;
+    --pad-md: 15px;
+    --pad-lg: 20px;
+    --pad-xl: 25px;
+    
+    /* Radii & Borders */
+    --rad-sm: 10px;
+    --rad-md: 12px;
+    --rad-lg: 20px;
+    --rad-pill: 50px;
+    --rad-circle: 50%;
+    
+    /* Shadows & Blurs */
+    --blur-glass: blur(15px);
+    --blur-heavy: blur(25px);
+    --shadow-sm: 0 4px 10px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 40px color-mix(in srgb, var(--color-primary) 40%, transparent);
+    --shadow-inset: inset 0 0 0 1px var(--color-primary);
+    
+    /* Animations & Fonts */
+    --trans-fast: all 0.2s ease;
+    --trans-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --trans-slow: all 0.8s ease-in-out;
+    --font-main: 'Nova Flat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+/* =================================================================
+   NATIVE APP ILLUSION (Selection Locks & Custom Highlights)
+================================================================= */
 body {
-  background-color: var(--bg-color);
-  color: var(--text-main);
-  font-family: 'Nova Flat', sans-serif; /* Matching your previous project's font */
-  overflow-x: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+body.modal-open { overflow: hidden !important; touch-action: none !important; }
+input, textarea {
+    -webkit-user-select: auto !important;
+    user-select: auto !important;
+}
+::selection {
+    background-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+    color: var(--color-text);
+}
+::-moz-selection {
+    background-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+    color: var(--color-text);
 }
 
-#root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+/* 1. STANDARD DOCUMENT SCROLL (Restored) */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
+    overscroll-behavior: none; /* Keeps native bounce away */
+}
+
+/* 2. STANDARD WRAPPER */
+#app-container {
+    min-height: 100vh; 
+    width: 100%;
+    position: relative;
+}
+
+/* 3. STANDARD CONTAINER */
+#todoSwipeContainer {
+    width: 100%;
+    min-height: calc(100vh - 200px); 
+    padding-bottom: 120px; 
+    overflow-y: visible; /* Lets the main window handle scrolling! */
+}
+
+/* =================================================================
+   COMPACT DATE PICKER
+   ================================================================= */
+#datePicker { position: fixed; width: 320px; background: var(--color-surface); border-radius: var(--rad-md); padding: var(--pad-md); box-shadow: var(--shadow-lg); border: 1px solid var(--color-glass-border); z-index: 10000; font-family: var(--font-main); overflow: hidden; }
+.cdp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--pad-md); }
+.cdp-month-year-btn { background: transparent; border: none; color: var(--color-text); font-size: 1.05rem; font-weight: 600; display: flex; align-items: center; cursor: pointer; padding: 4px 8px; border-radius: var(--rad-sm); transition: var(--trans-fast); }
+.cdp-month-year-btn:hover { background: var(--color-glass-white); }
+.cdp-month-year-btn svg { color: var(--color-primary); transition: var(--trans-fast); }
+.cdp-month-year-btn.drill-open svg { transform: rotate(90deg); }
+.cdp-nav { display: flex; gap: var(--pad-sm); }
+.cdp-icon-btn { background: transparent; border: none; color: var(--color-primary); width: 30px; height: 30px; border-radius: var(--rad-circle); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--trans-fast); }
+.cdp-icon-btn:hover { background: var(--color-glass-white); }
+.cdp-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600; margin-bottom: var(--pad-sm); }
+.cdp-view { display: none; }
+.cdp-view.active { display: block; animation: cdpFade 0.2s ease-out; }
+.cdp-grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 6px; }
+.cdp-day-cell { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; color: var(--color-text); cursor: pointer; border-radius: var(--rad-circle); user-select: none; margin: 0 2px; transition: var(--trans-fast); }
+.cdp-day-cell:hover:not(.empty) { background-color: var(--color-glass-white); }
+.cdp-day-cell.selected { background-color: var(--color-primary); color: var(--color-bg); font-weight: bold; }
+.cdp-day-cell.today:not(.selected) { color: var(--color-primary); }
+.cdp-day-cell.empty { cursor: default; }
+.cdp-grid-drill { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--pad-sm); padding: 10px 0; }
+.cdp-drill-cell { padding: 14px 4px; text-align: center; border-radius: var(--rad-sm); cursor: pointer; font-size: 0.95rem; color: var(--color-text); transition: var(--trans-fast); user-select: none; }
+.cdp-drill-cell:hover { background-color: var(--color-glass-white); }
+.cdp-drill-cell.selected { background-color: var(--color-primary); color: var(--color-bg); font-weight: bold; }
+.cdp-footer { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-glass-border); display: flex; justify-content: flex-end; }
+.cdp-done-btn { background: transparent; border: none; color: var(--color-primary); font-size: 1rem; font-weight: 600; cursor: pointer; padding: 6px 12px; border-radius: var(--rad-sm); transition: var(--trans-fast); }
+.cdp-done-btn:hover { background: var(--color-glass-white); }
+@keyframes cdpFade { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+
+/* =================================================================
+   GLOBAL WATERMARK 
+   ================================================================= */
+
+/* --- Global Touch Paw Effect --- */
+.touch-paw-effect {
+    position: fixed;
+    width: 45px;
+    height: 45px;
+    pointer-events: none;
+    z-index: 10000;
+    opacity: 0;
+    margin-top: -22px; /* Centers the paw on the cursor */
+    margin-left: -22px;
+    animation: pawFade 0.7s ease-out forwards;
+}
+
+@keyframes pawFade {
+    0% { opacity: 0; transform: scale(0.5); }
+    20% { opacity: 0.5; transform: scale(1.1); }
+    100% { opacity: 0; transform: scale(0.9); }
+}
+
+/* --- Paw Texture Effect --- */
+.global-paw-watermark {
+    position: absolute;
+    top: 230px;
+    left: -20px;
+    width: 500px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.04;
+    transform: scaleX(-1) rotate(40deg);
+}
+
+.global-paw-watermark svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    overflow: visible;
+}
+
+/* =================================================================
+   2. BASE RESET & TYPOGRAPHY
+   ================================================================= */
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { 
+    background-color: var(--color-bg); 
+    color: var(--color-text); 
+    font-family: var(--font-main); 
+    overscroll-behavior: none; 
+}
+h1, h2, h3 { color: var(--color-text); }
+button, input, textarea, select { font-family: inherit; font-size: 16px; }
+input, textarea { appearance: none; -webkit-appearance: none; }
+.hidden-input { display: none !important; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.text-md { font-size: 1.8rem !important; }
+
+/* =================================================================
+   3. GLOBAL LAYOUT ARCHITECTURE 
+   ================================================================= */
+#app-container { 
+    min-height: 100vh; 
+    width: 100%; 
+    position: relative; 
+    transition: opacity 1s ease 0.3s, transform 1s ease 0.3s; 
+    transform: scale(0.98); 
+}
+#app-container.app-hidden { 
+    opacity: 0; 
+    transform: scale(1); 
+}
+
+.app-tab { 
+    padding: var(--pad-lg) var(--pad-md) var(--nav-height) var(--pad-md); 
+    animation: tabEnter 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    will-change: transform, opacity, filter;
+}
+
+@keyframes tabEnter {
+    0% { opacity: 0; transform: scale(0.96) translate3d(0, 25px, 0); filter: blur(8px); }
+    100% { opacity: 1; transform: scale(1) translate3d(0, 0, 0); filter: blur(0px); }
+}
+
+.central-column { 
+    width: 100%; 
+    max-width: var(--max-mobile-width); 
+    margin: 0 auto; 
+    display: flex; 
+    flex-direction: column; 
+    gap: var(--pad-md); 
+}
+/* =================================================================
+   4. REUSABLE UTILITIES (Glass, Buttons, Swipes)
+   ================================================================= */
+.glass-panel { background: var(--color-glass-bg); backdrop-filter: var(--blur-glass); -webkit-backdrop-filter: var(--blur-glass); border: 1px solid var(--color-glass-border); border-radius: var(--rad-lg); box-shadow: var(--shadow-md); }
+.icon-btn { background: none; border: none; color: var(--color-text-muted); font-size: 1.5rem; cursor: pointer; padding: 0 5px; transition: color 0.2s; }
+.icon-btn:hover { color: var(--color-text); }
+.btn-primary { background: var(--color-primary); color: var(--color-text); border: none; border-radius: var(--rad-sm); padding: 10px var(--pad-lg); font-weight: 600; cursor: pointer; }
+.btn-secondary { background: transparent; color: var(--color-text-muted); border: none; padding: 10px var(--pad-lg); font-weight: 600; cursor: pointer; }
+.btn-danger { background: var(--color-danger-bg); color: var(--color-danger); border: 1px solid var(--color-danger-border); padding: 10px var(--pad-lg); border-radius: var(--rad-sm); font-weight: 600; cursor: pointer; transition: var(--trans-fast); }
+.btn-danger:hover { background: rgba(255, 59, 59, 0.2); }
+.btn-ghost { flex: 1; border: 1px solid var(--color-glass-border); background: rgba(255,255,255,0.05); border-radius: var(--rad-md); color: var(--color-text-muted); font-weight: 600; cursor: pointer; transition: transform 0.2s ease, background 0.2s ease; }
+.btn-ghost:active { transform: scale(0.95); }
+.swipe-container { width: 100%; min-height: 60vh; touch-action: pan-y; }
+.subject-tag { font-size: 0.7rem; font-weight: 800; padding: 3px var(--pad-sm); border-radius: var(--rad-pill); width: fit-content; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: var(--shadow-sm); display: inline-block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: top; border: 1px solid currentColor; }
+
+/* =================================================================
+   5. UI COMPONENTS (Bento Cards, Navigators)
+   ================================================================= */
+.bento-card { display: flex; flex-direction: column; justify-content: center; min-width: 0; overflow: hidden; padding: var(--pad-lg); min-height: 110px; cursor: pointer; transition: transform 0.2s ease, background 0.2s ease; }
+.bento-card:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.05); }
+.bento-danger { background: var(--color-danger-bg); border: 1px solid var(--color-danger-border); }
+.bento-accent {background: color-mix(in srgb, var(--color-primary) 20%, var(--color-glass-bg)); border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent); }
+.bento-accent .bento-value, .bento-accent .bento-sub { color: var(--color-text); }
+.bento-centered { align-items: center; justify-content: center; text-align: center; }
+.text-main-color { color: var(--color-text); }
+.bento-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted); margin-bottom: var(--pad-sm); }
+.bento-value { font-size: 2.5rem; font-weight: 800; color: var(--color-primary); line-height: 1; margin-bottom: var(--pad-sm); }
+.bento-sub { font-size: 0.85rem; color: var(--color-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+.tab-title { font-size: 1.8rem; font-weight: 700; color: var(--color-text); }
+.date-navigator { display: flex; align-items: center; gap: var(--pad-md); padding: 6px var(--pad-md); border-radius: var(--rad-lg); background: var(--color-glass-tint); backdrop-filter: var(--blur-glass); -webkit-backdrop-filter: var(--blur-glass); border: 1px solid var(--color-glass-border); }
+.date-display { font-weight: 600; font-size: 0.95rem; min-width: 80px; text-align: center; color: var(--color-text); }
+
+/* =================================================================
+   6. TAB SPECIFICS (Home, Journal)
+   ================================================================= */
+.home-grid { display: grid; grid-template-columns: 1fr; gap: var(--pad-md); width: 100%; }
+.greeting-header { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: var(--pad-lg) 10px var(--pad-md) 10px; gap: 12px; }
+.greeting-icon svg { width: 45px; height: 45px; stroke: var(--color-primary); }
+.greeting-text h2 { font-size: clamp(1rem, 4.5vw, 1.6rem); font-weight: 700; margin-bottom: 5px; color: var(--color-text); }
+.greeting-text p { font-size: 0.95rem; color: var(--color-text-muted); font-weight: 500; letter-spacing: 1px; text-transform: uppercase; }
+#dashTaskContainer { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.empty-task-text { color: var(--color-text-muted); margin-top: 10px; font-style: italic; text-align: center; }
+
+#tab-journal { padding-bottom: 0 !important; height: 100vh; }
+#tab-journal.active { display: flex; flex-direction: column; }
+#tab-journal .central-column { flex: 1; padding-bottom: 0 !important; margin: 0 auto; display: flex; flex-direction: column; }
+#journalSwipeContainer { flex: 1; display: flex; flex-direction: column; margin: 0; padding: 0; }
+.journal-textarea { flex: 1; width: 100%; background: transparent; border: none; color: var(--color-text); font-size: 1.1rem; line-height: 1.6; padding: var(--pad-md) var(--pad-md) var(--nav-height) var(--pad-md); resize: none; outline: none; margin: 0; }
+.journal-textarea::placeholder { color: var(--color-text-muted); font-style: italic; opacity: 0.6; }
+
+/* =================================================================
+   7. MODALS & BOTTOM PILL NAV
+   ================================================================= */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; }
+.modal-box { width: 90%; max-width: 350px; padding: var(--pad-xl); }
+.modal-title { margin-bottom: 20px; text-align: center; font-size: 1.3rem; }
+.modal-box h2 { font-size: 1.2rem; margin-bottom: var(--pad-md); }
+.modal-box input { width: 100%; padding: 12px var(--pad-md); background: var(--color-bg); border: 1px solid var(--color-glass-border); color: var(--color-text); border-radius: var(--rad-sm); margin-bottom: var(--pad-lg); outline: none; }
+.modal-box input:focus { border-color: var(--color-primary); }
+.modal-box input[type="date"] { color-scheme: dark; }
+.modal-form-group { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+.modal-input-lg { width: 100%; padding: 15px; margin-bottom: 25px; }
+.modal-divider { margin: 20px 0; }
+.modal-buttons { display: flex; justify-content: flex-end; gap: 10px; }
+.modal-buttons.expanded { margin-top: 25px; display: flex; gap: 10px; }
+.modal-buttons.expanded button { flex: 1; border-radius: var(--rad-md); }
+.align-left { margin-right: auto; color: var(--color-text-muted); padding-left: 0; }
+
+/* --- PREMIUM AUTH MODAL STYLES --- */
+.auth-modal { padding: 30px 25px; }
+.auth-header { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 25px; text-align: center; }
+.auth-subtitle { font-size: 0.85rem; color: var(--color-text-muted); margin-top: -5px; letter-spacing: 0.5px; }
+.google-btn { display: flex; align-items: center; justify-content: center; gap: 12px; background: rgba(255, 255, 255, 0.05); color: var(--color-text); border: 1px solid var(--color-glass-border); }
+.google-btn:hover { background: rgba(255, 255, 255, 0.1); }
+.google-btn svg { flex-shrink: 0; }
+.auth-separator { display: flex; align-items: center; text-align: center; margin: 15px 0; color: var(--color-text-muted); font-size: 0.85rem; font-weight: 700; letter-spacing: 2px; width: 100%; }
+.auth-separator::before, .auth-separator::after { content: ''; flex: 1; border-bottom: 1px solid var(--color-glass-border); }
+.auth-separator span { padding: 0 15px; }
+.password-wrapper { position: relative; width: 100%; }
+.password-eye-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--color-text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color 0.2s ease; padding: 5px; }
+.password-eye-btn:hover { color: var(--color-text); }
+.password-eye-btn:active { transform: translateY(-50%) scale(0.9); }
+.standalone-forgot-btn { background: none; border: none; color: var(--color-primary); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s ease; padding: 0; }
+.standalone-forgot-btn:hover { opacity: 0.8; text-decoration: underline; }
+.auth-action-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 25px; }
+.btn-block { width: 100%; display: flex; justify-content: center; align-items: center; padding: 14px; font-size: 1.05rem; border-radius: 12px; }
+.auth-footer { text-align: center; margin-top: 15px; font-size: 0.85rem; color: var(--color-text-muted); }
+.auth-footer button { background: none; border: none; color: var(--color-primary); font-weight: bold; cursor: pointer; padding: 0 5px; }
+/* --- Landscape Modal Architecture (PC Side-by-Side) --- */
+@media (min-width: 768px) {
+    .modal-box.landscape-modal {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        max-width: 750px;
+        align-items: stretch;
+        gap: var(--pad-xl);
+    }
+    .landscape-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0; 
+    }
+    .landscape-panel.side-info {
+        border-right: 1px solid var(--color-glass-border);
+        padding-right: var(--pad-xl);
+        justify-content: center;
+    }
+    .landscape-panel.side-action {
+        justify-content: center;
+    }
+    /* If someone forces it to stack on desktop anyway */
+    .modal-box:not(.landscape-modal) .landscape-panel.side-info {
+        border-right: none;
+        padding-right: 0;
+        margin-bottom: var(--pad-lg);
+        border-bottom: 1px solid var(--color-glass-border);
+        padding-bottom: var(--pad-lg);
+    }
+}
+
+/* Mobile fallback: Stack vertically with a bottom border */
+@media (max-width: 767px) {
+    .modal-box.landscape-modal {
+        display: flex;
+        flex-direction: column;
+    }
+    .landscape-panel.side-info {
+        margin-bottom: var(--pad-lg);
+        border-bottom: 1px solid var(--color-glass-border);
+        padding-bottom: var(--pad-lg);
+    }
+}
+
+/* --- Landscape Modal Architecture (PC Side-by-Side) --- */
+.auth-desktop-element { display: none !important; } /* Hidden by default */
+
+@media (min-width: 768px) {
+    .modal-box.landscape-modal {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        max-width: 750px;
+        align-items: stretch;
+        gap: var(--pad-xl);
+    }
+    .landscape-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0; 
+    }
+    .landscape-panel.side-info {
+        border-right: 1px solid var(--color-glass-border);
+        padding-right: var(--pad-xl);
+        justify-content: center;
+    }
+    .landscape-panel.side-action {
+        justify-content: center;
+    }
+    
+    /* Device-specific visibility toggles */
+    .auth-desktop-element { display: flex !important; }
+    .auth-mobile-element { display: none !important; }
+}
+
+/* Mobile fallback */
+@media (max-width: 767px) {
+    .modal-box.landscape-modal {
+        display: flex;
+        flex-direction: column;
+    }
+    .landscape-panel.side-info {
+        margin-bottom: var(--pad-lg);
+        border-bottom: 1px solid var(--color-glass-border);
+        padding-bottom: var(--pad-lg);
+    }
+}
+
+/* PWA Hardware Fix: GPU Accelerated & Notch Aware */
+.bottom-pill-nav { position: fixed; bottom: calc(30px + var(--safe-bottom)); left: 50%; display: flex; gap: 8px; padding: 8px 16px; border-radius: var(--rad-pill); z-index: 1000; background: var(--color-glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--color-glass-border); box-shadow: var(--shadow-lg); transform: translateX(-50%) translateZ(0); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); will-change: transform; }
+.bottom-pill-nav.nav-hidden { transform: translate(-50%, 150px) translateZ(0); }
+.bottom-pill-btn { background: transparent; border: none; color: var(--color-text-muted); padding: 12px; border-radius: var(--rad-circle); cursor: pointer; transition: background-color 0.3s ease, transform 0.3s ease; display: flex; align-items: center; justify-content: center; }
+.bottom-pill-btn svg { transition: stroke 0.2s ease; }
+.bottom-pill-btn.active { background: rgba(255, 255, 255, 0.08); }
+.bottom-pill-btn.active svg { stroke: var(--color-primary); }
+
+/* =================================================================
+   8. RESPONSIVENESS
+   ================================================================= */
+@media (min-width: 768px) { 
+    .central-column { max-width: var(--max-desktop-width); gap: var(--pad-xl); } 
+    .home-grid { grid-template-columns: repeat(2, 1fr); gap: var(--pad-xl); } 
+    #focusModeWidget { grid-column: span 2; }
+    .bento-card { min-height: 130px; padding: var(--pad-xl); } 
+    .greeting-widget { padding: 30px; } 
+    .tab-title { font-size: 2.2rem; } 
+    .greeting-text h2 { font-size: 1.8rem; } 
+    .bento-value { font-size: 2.8rem; } 
+}
+@media (max-width: 380px) { .home-grid { grid-template-columns: 1fr; gap: 10px; } .bento-card { padding: var(--pad-md); min-height: 95px; } .bento-value { font-size: 2rem; } .greeting-widget { padding: var(--pad-md); gap: 10px; } .greeting-text h2 { font-size: 1.2rem; } }
+
+/* =================================================================
+   9. SETTINGS TAB STYLES
+   ================================================================= */
+.settings-card { display: flex; flex-direction: column; gap: var(--pad-lg); padding: var(--pad-xl); margin-bottom: 5px; }
+.settings-title { font-size: 1.1rem; font-weight: 700; color: var(--color-text); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+.settings-group { display: flex; flex-direction: column; gap: 10px; }
+.settings-group label { font-size: 0.9rem; color: var(--color-text-muted); }
+.label-block { display: block; margin-bottom: 10px; }
+.settings-input-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.settings-input-row input { flex: 1 1 200px; padding: 12px var(--pad-md); background: rgba(0, 0, 0, 0.3); border: 1px solid var(--color-glass-border); color: var(--color-text); border-radius: var(--rad-sm); font-size: 1rem; outline: none; }
+.settings-input-row button { flex: 1 1 auto; white-space: nowrap; }
+.settings-action-btn { width: 100%; text-align: center; border: 1px solid var(--color-glass-border); border-radius: var(--rad-sm); background: rgba(255, 255, 255, 0.05); }
+.settings-divider { border: 0; border-top: 1px solid var(--color-glass-border); margin: 5px 0; }
+.toggle-group { display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 30px; }
+.toggle-group > label:first-child { flex: 1; line-height: 1.4; }
+.switch { position: relative; display: inline-block; width: 50px; height: 26px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.1); transition: background-color 0.4s; border-radius: 34px; }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: var(--color-text-muted); transition: transform 0.4s, background-color 0.4s; border-radius: var(--rad-circle); }
+input:checked + .slider { background-color: var(--color-primary); }
+input:checked + .slider:before { transform: translateX(24px); background-color: white; }
+.upload-btn { display: flex; justify-content: center; align-items: center; cursor: pointer; margin-bottom: 10px; box-sizing: border-box; }
+.upload-btn svg { margin-right: 8px; }
+
+/* Modal Settings Subject Scroll */
+#subjectList { max-height: 50vh; overflow-y: auto; padding-right: 8px; display: flex; flex-direction: column; gap: 8px; margin: 15px 0; }
+#subjectList::-webkit-scrollbar { width: 6px; }
+#subjectList::-webkit-scrollbar-track { background: transparent; }
+#subjectList::-webkit-scrollbar-thumb { background: var(--color-glass-border); border-radius: 10px; }
+
+/* =================================================================
+   10.1 PLANNER MOBILE (MINI CALENDAR, CARDS, & BOTTOM SHEET)
+   ================================================================= */
+#tab-planner { padding-bottom: var(--planner-bottom-clear) !important; height: auto; }
+#tab-planner .central-column { padding-bottom: 0 !important; }
+.mini-calendar-wrapper { padding: var(--pad-md); margin-bottom: 15px; touch-action: pan-y; position: relative; overflow: hidden; }
+.cal-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.8rem; color: var(--color-text-muted); font-weight: 700; margin-bottom: 10px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; justify-items: center; }
+.cal-day { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: var(--rad-circle); font-size: 0.95rem; font-weight: 500; cursor: pointer; position: relative; transition: transform 0.2s ease, border-color 0.2s ease; color: var(--color-text); border: 1px solid transparent; }
+.cal-day.empty { visibility: hidden; }
+.cal-day:active { transform: scale(0.9); }
+.cal-day.today { color: var(--color-primary) !important; font-weight: 800 !important; border: 1px solid var(--color-primary) !important; background: transparent !important; }
+.cal-day.selected { border: 2px solid var(--color-text) !important; background: color-mix(in srgb, var(--color-text) 10%, transparent) !important; transform: scale(1.1); }
+.cal-day.has-task, .cal-day.future-task { background: color-mix(in srgb, var(--color-primary) 15%, transparent) !important; border-color: color-mix(in srgb, var(--color-primary) 20%, transparent) !important; color: var(--color-text) !important; font-weight: 700; }
+.cal-day.completed { background: color-mix(in srgb, var(--color-success) 12%, transparent) !important; border-color: color-mix(in srgb, var(--color-success) 20%, transparent) !important; color: var(--color-success) !important; font-weight: 700; }
+.cal-day.overdue { background: color-mix(in srgb, var(--color-primary) 25%, transparent) !important; border-color: color-mix(in srgb, var(--color-primary) 40%, transparent) !important; color: var(--color-text) !important; }
+
+.slider-wrapper { position: relative; width: 100%; margin-top: 5px; -webkit-mask-image: linear-gradient(to right, transparent 0px, black 30px, black calc(100% - 30px), transparent 100%); mask-image: linear-gradient(to right, transparent 0px, black 30px, black calc(100% - 30px), transparent 100%); }
+.daily-slider-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; gap: 15px; padding: 5px 30px 15px 30px; scrollbar-width: none; transition: opacity 0.3s ease, transform 0.3s ease; }
+.daily-slider-container::-webkit-scrollbar { display: none; }
+.daily-slider-container.hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
+
+.daily-card { min-width: 85%; min-height: 125px; scroll-snap-align: center; border-radius: 18px; padding: 15px; display: flex; align-items: stretch; gap: 15px; cursor: pointer; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); position: relative; overflow: hidden; background: rgba(10, 10, 10, 0.45); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid var(--color-glass-border); will-change: transform; -webkit-transform: translateZ(0); transform: translateZ(0); }
+.daily-card:active { transform: scale(0.97) translateZ(0); -webkit-transform: scale(0.97) translateZ(0); }
+.daily-card.today { border-color: var(--color-primary) !important; box-shadow: inset 0 0 0 1px var(--color-primary), 0 0 20px color-mix(in srgb, var(--color-primary) 15%, transparent) !important; }
+.daily-card.overdue { background: linear-gradient(145deg, color-mix(in srgb, var(--color-primary) 20%, var(--color-glass-bg)), var(--color-glass-bg)) !important; border-color: color-mix(in srgb, var(--color-primary) 25%, transparent) !important; }
+.daily-card-date { display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid var(--color-glass-border); padding-right: var(--pad-lg); min-width: 80px; height: 100%; }
+.daily-card-day { font-size: 0.9rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 1px; }
+.daily-card-num { font-size: 2.2rem; font-weight: 800; line-height: 1; color: var(--color-text); margin-top: 5px; }
+.daily-card-content { display: flex; flex-direction: column; justify-content: center; gap: 10px; flex: 1; overflow: hidden; z-index: 2; position: relative; }
+.daily-card-topic { font-size: 1.05rem; color: var(--color-text); white-space: normal; line-height: 1.4; transition: opacity 0.3s ease; }
+.daily-card.completed { border-color: #222; background: rgba(0, 0, 0, 0.3); }
+.daily-card.completed .daily-card-topic { text-decoration: line-through; opacity: 0.4; }
+.daily-card.completed .subject-tag { opacity: 0.5; filter: grayscale(30%); }
+.daily-card.completed::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scaleX(-1);
+    width: 70px;
+    height: 86px;
+    background-color: var(--color-primary);
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='324.8 715.6 70.4 86.4'%3E%3Cpath fill='%23000' d='M368.7 725h-.1m-.1.7-.2.1-.1.1v-.2h.2m2.4-1.8-.4.3v.5l-.7.5h.1l.3-.3.2-.2v-.6l-.2.2-.3-.2h-.3l-.3-.2-.2.2v.2h-.2l-.3.3-.1.2-.2.2h-.1l-.3.2.2.1.5-.4h.2v.2l-.1-.1h-.1l-.5.4v.6l.4.2h.3l.3-.2v-.3h.5l-.1.3.2.2.3-.2h.3v-.2l.2-.2v-.2.2-.5l.4-.2v-.2l.1-.1.2-.1h.2l.3-.3-.3-.2zm-12.3 7.1-.2.1-.1.1-.2.1.3-.2zm1.7-.5-2.2 1.3v.2l-.1.2-.1.2-.5.3-.6.4h.1l.2-.4.5-.4q0-.2.2-.3zm10.7 5-.3.3v.1l.2-.3m-13.3 2.3-.4.4-.2.3.4-.4.1-.2zm25 2.1-.3.2v.1l.1-.1v-.1zm-16.4 1.2-.1.4h-.2zm8.4 6.3-.2.4-.2.1-.2.2.1-.2zm8.4 1.3-.1.1h-.1zm-9.3.3q-1.2 1.2-1.3 1.5l1.1-1.1.2-.3zm-22.3 2.8-.2.4h.2v-.4m7.6 0-.4.7.2-.3.1-.2zm12 .4h-.2l-.2.3-.2.2.1-.3zm8.3 2v.1l-.3.3-.2.1.1-.1zm-3 3.2h-.2v.2-.1zm-39.3 1.5-.2.6-.1.5.4-.8zm32.6 1-.8 1v.1l.7-1m-.3 1.2-.1.1-.2.3v-.1zm-9 5-.4.6v.1zm-7.8 1.9-.4.4v.2l-.2.1.3-.4zm7.6-2.2-2.3 3.4 2.2-3.3zm14.5-34.2h-.1l-.4.3-.7.2-1.6 1.4-.1.4-.1.1-.3.3-.2.4-1.2 1.3v-.1l1-1v-.4l.5-.6v-.2l.1-.1.9-1-1 .8-1.9 1.2h-.6l-.3.3q-.5.3-1.1.3l-.5.3-1.6 2.2-.7.6-.1-.2-.6.8-.5.5h-.3l-.2-.2-.4.3h-1l-.3.3h-.5l-.8 1.1h-.4l-.4.3q-.4.4-.5.9-.4.3-.6.8l-.4.2-.2.5.3-.1.2-.4h.3l-.4.4v.5l-.2.3-.2.2-.1.1-.2.2.5-.5-2.2 2.2.2.2-.2.3-.9.8h-1l-.6.2-.6.9.1.4-.3.3-.2.2-.2.2-.5 1v.5l-.6.8h-.3l-.8 1.3.4.2.3-.4 1.1-1.6v-.1l.4-.3.3-.2.2.3-.1.3v.1l-.3-.3-.3.5h-.2l-1 1.5v.6l.1.6-.5 1h-.1l.4-1-.8-.2-.3.4-.6 1.4-.5.2-.4.4v.6l-.1.4-.1.5-.3.4.1.5.3-.5.2-.3-.2.5.2.6v.4h-.2l-1.1 2.2h.4l-.8 1.7-.3.4-.5.4-.7 1.3h.9q-2 5.2-1.4 5.5 1.1-1.2 2.8-3.6l4.5-6.5h.3l.3-.6 1.3-2 .2-.4 1.2-1.8h.4l.1.5-.6.8.2.5h.6l1.2-1.7.4-.4.8-.6v-.5l.6-.8.1-.5.4-.4v-.5h-.1l-.3.5-.4.3.3-.5.1-.5-.1-.6.1-.1h.3l1.7-2.5-.2-.4.9-1.3.3-.3v-.3q.4-.4 1-.6l.4-.7.6-.6v-.6l.7-.8.2-.4.3-.4v-.4l.5-.5.7-.8.2.2 1.8-1.8h-.6l-.3.3-.7.7v-.2l.5-.6.3-.3.9-1.3-.1.4-.5.6.2.1h.2l1-1.3.3-.2.3-.3.1-.1.1-.4.8-.9.2-.3h-.1l-.4.5h-.1l.3-.3.1-.6.1-.1v.1h.1l1.6-1.6h-.2l.1-.1 1-.9h.1v-.1l.2-.2h.1l.4-.2.8-.7.3-.3zm-7.9-4.7-1 .6h-1l-1.6 1h-.1l-.1.3-.9.5h-.4v-.2l.8-.4-.2-.2h-.2l-1.2.7-.2.1h-.2q-.1.2-.3.2h-.2q0 .3-.3.4l-.5.3-.1.2-.4.2v.1l.4-.3h.1l-.3.3-.3.5h-.1v-.1l-1.9 1.2h.2l-1 .7-.3.1-.2.2h-.4l-1.2.8.3.1-.9.4-1.7 3-1.3 1.3-1.9 2-.1-.2-.3.5-3 1.1-1.4 2.4v1.5h-.6l-1.7 3-.2 1-1.5.9-.3.4-.7 1.9v.7l-1.3 2.3h.4l-.6 1.4.1.5-.9 2.4q-.2 0-.3.2l-1.1 2.9h.2l.4-.3.8-2v-.4l.3-.3.7-2 .1-.3.3-.3.2-.2.2-.5.1.3v.6l-.1.4-.2.1-.1-.4-.6 1.4h-.2l-1.3 3.6v.5l.2.5.1.5.4-1 .1-.3-.4 1.5v-.2l-.3.5.1.1q-.9 3-1.6 6.3l3.7-5.8 7.3-11.8.2-.2v.1l.8-.2 1.7-3 .7-.3.9-1v-.8l.6-1.2.2-.6v-.1l.4-.5 1.5-2.1 1.9-1.8.5-.1.8-.6.1-.5q1.8-1.8 2-2.3l-.4.1-.7.7.1-.2.4-.4.1-1 .2-.2.1.2 3-2.9h-.5l.2-.3 1.5-1.4.3-.3.2-.2.4-.3.5-.1 1.8-1.8-.7-.3 1.9-2 1-1.3zm-23.5 46.5.1.1v-.1m41-26.6-1.9.9-3.9 3.4-.3.4-1.5 1.5h-.4l-.7.8h-.1l.4-.6 1.5-1.4h-.2l-.4.1q-1 .8-2.8 2.7l-.5.3-.7.7-2.7 3.3-.4.8.8-1v-.2l.4-.3-.8 1-.3.8h-.1l-.2.3.1-.2v.1l-2.3 3-1 1.5.4-.3-.1.1-2 2.9q-.1.1 0 .1l-.4.6-.6.5-1.2 2-.7 1q.3 0 .4-.2l-.2.3-.6 1 .4-.1-.3.5h.3l-.2.1v.2-.1l-.4.7-.5.5-1.3 2-.6 1 .6-.4.7-.9 1-1 1.5-2.3-.3.6-.7 1 .7-.3.7-1 1-1 2.8-4 .1-.4.4-.3v.2l.3-.5.8-.6 1.6-2 1.3-1 2-2.4.3-.5.4-.4.1-.1 1.6-1.7 1.1-1 .2-.1-.3.3h.2l3.1-2.9-.6.3-2.2 2-.2.2-.2.1.2-.2.2-.2 2.2-2 .2-.4h.1l.1-.2-.2.4.1-.1 3.2-2.8-.7.3-2.1 1.9-.2.3h-.1l.3-.5.5-.4h.1l1.5-1.4.8-1.1-1.4 1.2-.3.1-.2.1.3-.2 2.1-1.8-.5.6.5-.4.2-.2v-.1l.6-.6-1.3.6.7-1-1.4 1.3h-.2l.5-.4h-.2l1.8-1.4-.5.6.5-.4.1-.2.1-.2.6-.5-1.2.5.3-.2-.7.3v-.2l.6-.5-1.1.5.3-.4-.7.6-.4.2-.7.5-.1.1 2.4-2-.5.6.5-.4.1-.2.1-.1zM352 776.9l-.3.4v.3l.1-.2zm-8.5-3.7h-.4l-.2.2-.4.7v.2l-.1.4-.2.1-.2-.1.2-.4h-.4l-.3.5-.3.3v.4l-.2.4v.2l.3-.3-.1.2v.4l-.4.7v.6l-.2.2v.1l-.2.1-.3.6h.5l.1-.2h.3l.1-.2.3-.6v-.8l.5-1.1v-.1l-.4 1v.1l.1.3v.4q.2 0 .2-.3l.2-.1h.4l.5-.3.2-.3v-.4l.1-.1.3-.6v-.2l.2-.6.3-.6v-.1h-.2l-.1.5v.1l-.2.2v.2l-.1-.1v.2-.1.2h-.2v.2l-.2-.1v-.2h.2l.2-.3v.1l.4-1-.2-.2v-.1l-.1.3h-.2l.2-.4zm3.7 5.4-.2.3v.1l.2-.3zm38.7-43q-4 2.1-7.3 4.1l2-2.5h-1.1l-.4.2-.7.7-1.4.6-.4.4-3.1 4v.2l-.7.6v-.4h-.2l-1.1 1.4-.7.6-.2.1-.1-.2q-.2 0-.6.5l-2.3 1-.4.2-2 2.4-.2.4-.2 1h-.2l-.4.3-2.9 3.6-2.1 2.9-.3.3-2.8 3.6.7-.3q0 .3-.2.5l-1.3 1.7-.4.3-.9.5-.2.5v.5l-.7.8-.2.4-.4.4v.5l.1-.1.7-.7-.4.7v1l-.1-.1-.3.2-2.1 2.8h.4l-.3.4-1.6 2.2h-.6l-1.5 2.1.8.2.5-.2.3-.3.3-.1-.5.9v.4h-.2l-.1.2-.6 1-.1.2v.2l-.6.9-.8 1.3.3-.1 1.1-2h.1l.1-.1.1-.2.1-.1v.5h-.2v-.2l-.4.7-.9 1.4v.6l.3-.4.1-.1.2-.1-.5 1v-.4l-.1.2v.2l-.1.2.4-.1q-.8 2.3-.5 2.6v-.1q1.9-1.7 5-5.9l1.1-1.4v.1l.4-.6.4-.5.3-.2-1.3 1.8-.4.7 1.2-.8.1-.2 2-2.9.2-.5 1-1.5.6-.5-.2.5-.8 1.2h.5l1.6-2.4.4-.2.5-.6.3-.7 1.2-1.9.3-.5-.1.1-.5.7v.1l-.2.2.4-.8.3-.9v-.1.3l.1-.1 2.2-3.2-.2.2.5-.9 2.1-1.2.4-.3 2.3-3.3.4-1.3.6-.2 3.5-4.2q.4-.5.3-.9l3-3.3q.2 0 .1.3l4-3.9v-.2l-.9.3-2.5 2.5q-.4.3-.5.8h-.4l-1.4 1.6-.2.1-1.6 1.9-.2-.1-.3.2-.3.4-.4.4.1-.3 1-1.3v.3l2-2.2v.2l4.6-4.7q.3-.4.3-.8l.7-.6v-.3l.6-.6h.4v.2l-.5.4.2.2h.2l.7-.8h.2l.4-.2.1-.2v-.2l.7-.7.1-.2-.3.3v-.2l.2-.4v-.2.2l1.2-1.2.9-1 .3-.2.8-.7-.4-.1h-.2l-.1.2h-.5l-.2.1-1 1v.4l-.4.3v.3l-1.6 1.6 1.3-1.4.1-.2v-.3l.3-.2v-.2z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='324.8 715.6 70.4 86.4'%3E%3Cpath fill='%23000' d='M368.7 725h-.1m-.1.7-.2.1-.1.1v-.2h.2m2.4-1.8-.4.3v.5l-.7.5h.1l.3-.3.2-.2v-.6l-.2.2-.3-.2h-.3l-.3-.2-.2.2v.2h-.2l-.3.3-.1.2-.2.2h-.1l-.3.2.2.1.5-.4h.2v.2l-.1-.1h-.1l-.5.4v.6l.4.2h.3l.3-.2v-.3h.5l-.1.3.2.2.3-.2h.3v-.2l.2-.2v-.2.2-.5l.4-.2v-.2l.1-.1.2-.1h.2l.3-.3-.3-.2zm-12.3 7.1-.2.1-.1.1-.2.1.3-.2zm1.7-.5-2.2 1.3v.2l-.1.2-.1.2-.5.3-.6.4h.1l.2-.4.5-.4q0-.2.2-.3zm10.7 5-.3.3v.1l.2-.3m-13.3 2.3-.4.4-.2.3.4-.4.1-.2zm25 2.1-.3.2v.1l.1-.1v-.1zm-16.4 1.2-.1.4h-.2zm8.4 6.3-.2.4-.2.1-.2.2.1-.2zm8.4 1.3-.1.1h-.1zm-9.3.3q-1.2 1.2-1.3 1.5l1.1-1.1.2-.3zm-22.3 2.8-.2.4h.2v-.4m7.6 0-.4.7.2-.3.1-.2zm12 .4h-.2l-.2.3-.2.2.1-.3zm8.3 2v.1l-.3.3-.2.1.1-.1zm-3 3.2h-.2v.2-.1zm-39.3 1.5-.2.6-.1.5.4-.8zm32.6 1-.8 1v.1l.7-1m-.3 1.2-.1.1-.2.3v-.1zm-9 5-.4.6v.1zm-7.8 1.9-.4.4v.2l-.2.1.3-.4zm7.6-2.2-2.3 3.4 2.2-3.3zm14.5-34.2h-.1l-.4.3-.7.2-1.6 1.4-.1.4-.1.1-.3.3-.2.4-1.2 1.3v-.1l1-1v-.4l.5-.6v-.2l.1-.1.9-1-1 .8-1.9 1.2h-.6l-.3.3q-.5.3-1.1.3l-.5.3-1.6 2.2-.7.6-.1-.2-.6.8-.5.5h-.3l-.2-.2-.4.3h-1l-.3.3h-.5l-.8 1.1h-.4l-.4.3q-.4.4-.5.9-.4.3-.6.8l-.4.2-.2.5.3-.1.2-.4h.3l-.4.4v.5l-.2.3-.2.2-.1.1-.2.2.5-.5-2.2 2.2.2.2-.2.3-.9.8h-1l-.6.2-.6.9.1.4-.3.3-.2.2-.2.2-.5 1v.5l-.6.8h-.3l-.8 1.3.4.2.3-.4 1.1-1.6v-.1l.4-.3.3-.2.2.3-.1.3v.1l-.3-.3-.3.5h-.2l-1 1.5v.6l.1.6-.5 1h-.1l.4-1-.8-.2-.3.4-.6 1.4-.5.2-.4.4v.6l-.1.4-.1.5-.3.4.1.5.3-.5.2-.3-.2.5.2.6v.4h-.2l-1.1 2.2h.4l-.8 1.7-.3.4-.5.4-.7 1.3h.9q-2 5.2-1.4 5.5 1.1-1.2 2.8-3.6l4.5-6.5h.3l.3-.6 1.3-2 .2-.4 1.2-1.8h.4l.1.5-.6.8.2.5h.6l1.2-1.7.4-.4.8-.6v-.5l.6-.8.1-.5.4-.4v-.5h-.1l-.3.5-.4.3.3-.5.1-.5-.1-.6.1-.1h.3l1.7-2.5-.2-.4.9-1.3.3-.3v-.3q.4-.4 1-.6l.4-.7.6-.6v-.6l.7-.8.2-.4.3-.4v-.4l.5-.5.7-.8.2.2 1.8-1.8h-.6l-.3.3-.7.7v-.2l.5-.6.3-.3.9-1.3-.1.4-.5.6.2.1h.2l1-1.3.3-.2.3-.3.1-.1.1-.4.8-.9.2-.3h-.1l-.4.5h-.1l.3-.3.1-.6.1-.1v.1h.1l1.6-1.6h-.2l.1-.1 1-.9h.1v-.1l.2-.2h.1l.4-.2.8-.7.3-.3zm-7.9-4.7-1 .6h-1l-1.6 1h-.1l-.1.3-.9.5h-.4v-.2l.8-.4-.2-.2h-.2l-1.2.7-.2.1h-.2q-.1.2-.3.2h-.2q0 .3-.3.4l-.5.3-.1.2-.4.2v.1l.4-.3h.1l-.3.3-.3.5h-.1v-.1l-1.9 1.2h.2l-1 .7-.3.1-.2.2h-.4l-1.2.8.3.1-.9.4-1.7 3-1.3 1.3-1.9 2-.1-.2-.3.5-3 1.1-1.4 2.4v1.5h-.6l-1.7 3-.2 1-1.5.9-.3.4-.7 1.9v.7l-1.3 2.3h.4l-.6 1.4.1.5-.9 2.4q-.2 0-.3.2l-1.1 2.9h.2l.4-.3.8-2v-.4l.3-.3.7-2 .1-.3.3-.3.2-.2.2-.5.1.3v.6l-.1.4-.2.1-.1-.4-.6 1.4h-.2l-1.3 3.6v.5l.2.5.1.5.4-1 .1-.3-.4 1.5v-.2l-.3.5.1.1q-.9 3-1.6 6.3l3.7-5.8 7.3-11.8.2-.2v.1l.8-.2 1.7-3 .7-.3.9-1v-.8l.6-1.2.2-.6v-.1l.4-.5 1.5-2.1 1.9-1.8.5-.1.8-.6.1-.5q1.8-1.8 2-2.3l-.4.1-.7.7.1-.2.4-.4.1-1 .2-.2.1.2 3-2.9h-.5l.2-.3 1.5-1.4.3-.3.2-.2.4-.3.5-.1 1.8-1.8-.7-.3 1.9-2 1-1.3zm-23.5 46.5.1.1v-.1m41-26.6-1.9.9-3.9 3.4-.3.4-1.5 1.5h-.4l-.7.8h-.1l.4-.6 1.5-1.4h-.2l-.4.1q-1 .8-2.8 2.7l-.5.3-.7.7-2.7 3.3-.4.8.8-1v-.2l.4-.3-.8 1-.3.8h-.1l-.2.3.1-.2v.1l-2.3 3-1 1.5.4-.3-.1.1-2 2.9q-.1.1 0 .1l-.4.6-.6.5-1.2 2-.7 1q.3 0 .4-.2l-.2.3-.6 1 .4-.1-.3.5h.3l-.2.1v.2-.1l-.4.7-.5.5-1.3 2-.6 1 .6-.4.7-.9 1-1 1.5-2.3-.3.6-.7 1 .7-.3.7-1 1-1 2.8-4 .1-.4.4-.3v.2l.3-.5.8-.6 1.6-2 1.3-1 2-2.4.3-.5.4-.4.1-.1 1.6-1.7 1.1-1 .2-.1-.3.3h.2l3.1-2.9-.6.3-2.2 2-.2.2-.2.1.2-.2.2-.2 2.2-2 .2-.4h.1l.1-.2-.2.4.1-.1 3.2-2.8-.7.3-2.1 1.9-.2.3h-.1l.3-.5.5-.4h.1l1.5-1.4.8-1.1-1.4 1.2-.3.1-.2.1.3-.2 2.1-1.8-.5.6.5-.4.2-.2v-.1l.6-.6-1.3.6.7-1-1.4 1.3h-.2l.5-.4h-.2l1.8-1.4-.5.6.5-.4.1-.2.1-.2.6-.5-1.2.5.3-.2-.7.3v-.2l.6-.5-1.1.5.3-.4-.7.6-.4.2-.7.5-.1.1 2.4-2-.5.6.5-.4.1-.2.1-.1zM352 776.9l-.3.4v.3l.1-.2zm-8.5-3.7h-.4l-.2.2-.4.7v.2l-.1.4-.2.1-.2-.1.2-.4h-.4l-.3.5-.3.3v.4l-.2.4v.2l.3-.3-.1.2v.4l-.4.7v.6l-.2.2v.1l-.2.1-.3.6h.5l.1-.2h.3l.1-.2.3-.6v-.8l.5-1.1v-.1l-.4 1v.1l.1.3v.4q.2 0 .2-.3l.2-.1h.4l.5-.3.2-.3v-.4l.1-.1.3-.6v-.2l.2-.6.3-.6v-.1h-.2l-.1.5v.1l-.2.2v.2l-.1-.1v.2-.1.2h-.2v.2l-.2-.1v-.2h.2l.2-.3v.1l.4-1-.2-.2v-.1l-.1.3h-.2l.2-.4zm3.7 5.4-.2.3v.1l.2-.3zm38.7-43q-4 2.1-7.3 4.1l2-2.5h-1.1l-.4.2-.7.7-1.4.6-.4.4-3.1 4v.2l-.7.6v-.4h-.2l-1.1 1.4-.7.6-.2.1-.1-.2q-.2 0-.6.5l-2.3 1-.4.2-2 2.4-.2.4-.2 1h-.2l-.4.3-2.9 3.6-2.1 2.9-.3.3-2.8 3.6.7-.3q0 .3-.2.5l-1.3 1.7-.4.3-.9.5-.2.5v.5l-.7.8-.2.4-.4.4v.5l.1-.1.7-.7-.4.7v1l-.1-.1-.3.2-2.1 2.8h.4l-.3.4-1.6 2.2h-.6l-1.5 2.1.8.2.5-.2.3-.3.3-.1-.5.9v.4h-.2l-.1.2-.6 1-.1.2v.2l-.6.9-.8 1.3.3-.1 1.1-2h.1l.1-.1.1-.2.1-.1v.5h-.2v-.2l-.4.7-.9 1.4v.6l.3-.4.1-.1.2-.1-.5 1v-.4l-.1.2v.2l-.1.2.4-.1q-.8 2.3-.5 2.6v-.1q1.9-1.7 5-5.9l1.1-1.4v.1l.4-.6.4-.5.3-.2-1.3 1.8-.4.7 1.2-.8.1-.2 2-2.9.2-.5 1-1.5.6-.5-.2.5-.8 1.2h.5l1.6-2.4.4-.2.5-.6.3-.7 1.2-1.9.3-.5-.1.1-.5.7v.1l-.2.2.4-.8.3-.9v-.1.3l.1-.1 2.2-3.2-.2.2.5-.9 2.1-1.2.4-.3 2.3-3.3.4-1.3.6-.2 3.5-4.2q.4-.5.3-.9l3-3.3q.2 0 .1.3l4-3.9v-.2l-.9.3-2.5 2.5q-.4.3-.5.8h-.4l-1.4 1.6-.2.1-1.6 1.9-.2-.1-.3.2-.3.4-.4.4.1-.3 1-1.3v.3l2-2.2v.2l4.6-4.7q.3-.4.3-.8l.7-.6v-.3l.6-.6h.4v.2l-.5.4.2.2h.2l.7-.8h.2l.4-.2.1-.2v-.2l.7-.7.1-.2-.3.3v-.2l.2-.4v-.2.2l1.2-1.2.9-1 .3-.2.8-.7-.4-.1h-.2l-.1.2h-.5l-.2.1-1 1v.4l-.4.3v.3l-1.6 1.6 1.3-1.4.1-.2v-.3l.3-.2v-.2z'/%3E%3C/svg%3E");
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+        mask-size: contain;
+        mask-repeat: no-repeat;
+        mask-position: center;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.4;
+}
+
+.today-btn-wrapper { display: flex; justify-content: center; margin-top: 5px; min-height: 40px; }
+.return-today-btn { background: var(--color-glass-white); backdrop-filter: var(--blur-glass); -webkit-backdrop-filter: var(--blur-glass); border: 1px solid var(--color-glass-border); color: var(--color-text); padding: 8px 30px; border-radius: var(--rad-pill); font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; box-shadow: var(--shadow-md); opacity: 1; transform: translateY(0); transition: transform 0.3s ease, opacity 0.3s ease; will-change: transform, opacity; }
+.return-today-btn.hidden { opacity: 0; pointer-events: none; transform: translateY(-15px) scale(0.95); }
+.return-today-btn:active { transform: scale(0.92); }
+
+.bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; height: auto; max-height: 75vh; background: var(--color-surface); border-radius: 30px 30px 0 0; border: 1px solid var(--color-glass-border); border-bottom: none; padding: 0 var(--pad-xl) calc(var(--pad-xl) + var(--safe-bottom)) var(--pad-xl); display: flex; flex-direction: column; z-index: 3000; transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s; touch-action: none; box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6); visibility: hidden; pointer-events: none; will-change: transform; }
+.bottom-sheet.active { transform: translateY(0); visibility: visible; pointer-events: auto; }
+.sheet-swipe-zone { width: 100%; padding-top: var(--pad-md); cursor: grab; }
+.sheet-swipe-zone:active { cursor: grabbing; }
+.sheet-drag-handle { width: 45px; height: 5px; background: rgba(255, 255, 255, 0.25); border-radius: var(--rad-sm); margin: 0 auto var(--pad-md) auto; }
+.sheet-header { justify-content: center; padding-bottom: 15px; border-bottom: 1px solid var(--color-glass-border); margin-bottom: 15px; display: flex; }
+.sheet-title { font-size: 1.15rem; font-weight: 600; color: var(--color-text); }
+.sheet-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding-bottom: var(--pad-lg); }
+.sheet-actions { display: flex; gap: 12px; padding-bottom: 10px; }
+
+.target-textarea { resize: none; width: 100%; border-radius: var(--rad-md); padding: var(--pad-md); background: rgba(0,0,0,0.3); margin-bottom: var(--pad-md); color: var(--color-text) !important; caret-color: var(--color-primary); border: 1px solid var(--color-glass-border); outline: none; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.target-textarea:focus { border-color: var(--color-primary); box-shadow: var(--shadow-inset); }
+.subject-pills-wrapper { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: var(--pad-md); padding: 5px; }
+.mb-md { margin-bottom: 15px; }
+.subject-pill { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--color-glass-border); color: var(--color-text-muted); padding: 8px 16px; border-radius: var(--rad-pill); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: transform 0.2s ease, color 0.2s ease, background-color 0.2s ease; }
+.subject-pill.active { color: var(--color-text) !important; box-shadow: var(--shadow-md); transform: scale(1.05); }
+.flex-2 { flex: 2; border-radius: var(--rad-md); font-weight: 700; font-size: 1.05rem; }
+
+/* =================================================================
+   10.2 PLANNER PC (FULL CALENDAR, STATS & TASK MANAGEMENT)
+   ================================================================= */
+#desktopPlannerView { display: none; }
+#mobilePlannerView { display: block; }
+
+@media (min-width: 768px) { 
+    #desktopPlannerView { display: block; }
+    #mobilePlannerView { display: none; }
+    #tab-planner { padding-bottom: 0 !important; } 
+}
+
+.month-label { font-size: 1.5rem; font-weight: bold; color: var(--color-text); text-transform: uppercase; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; width: 100%; margin-bottom: 20px; }
+
+.day-cell { background: var(--color-glass-tint); backdrop-filter: var(--blur-glass); -webkit-backdrop-filter: var(--blur-glass); border: 1px solid var(--color-glass-border); border-radius: var(--rad-sm); min-height: 160px; padding: 10px; display: flex; flex-direction: column; gap: 5px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; }
+.day-cell:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: rgba(255, 255, 255, 0.3); }
+.day-cell.empty { background: transparent; border: none; cursor: default; }
+.day-cell.empty:hover { transform: none; box-shadow: none; }
+.day-cell.today { border: 2px solid var(--color-primary); box-shadow: 0 0 15px color-mix(in srgb, var(--color-primary) 30%, transparent); }
+.day-cell.today .date-num { color: var(--color-primary); }
+.day-cell.overdue { background: linear-gradient(145deg, color-mix(in srgb, var(--color-primary) 20%, var(--color-glass-bg)), var(--color-glass-bg)) !important; border-color: color-mix(in srgb, var(--color-primary) 25%, transparent) !important; }
+
+.day-cell.completed { background-color: rgba(0, 0, 0, 0.4); border-color: rgba(255, 255, 255, 0.05); }
+.day-cell.completed .task-content { opacity: 0.4; text-decoration: line-through; }
+.day-cell.completed::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scaleX(-1);
+    width: 100px;
+    height: 120px;
+    background-color: var(--color-primary);
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='324.8 715.6 70.4 86.4'%3E%3Cpath fill='%23000' d='M368.7 725h-.1m-.1.7-.2.1-.1.1v-.2h.2m2.4-1.8-.4.3v.5l-.7.5h.1l.3-.3.2-.2v-.6l-.2.2-.3-.2h-.3l-.3-.2-.2.2v.2h-.2l-.3.3-.1.2-.2.2h-.1l-.3.2.2.1.5-.4h.2v.2l-.1-.1h-.1l-.5.4v.6l.4.2h.3l.3-.2v-.3h.5l-.1.3.2.2.3-.2h.3v-.2l.2-.2v-.2.2-.5l.4-.2v-.2l.1-.1.2-.1h.2l.3-.3-.3-.2zm-12.3 7.1-.2.1-.1.1-.2.1.3-.2zm1.7-.5-2.2 1.3v.2l-.1.2-.1.2-.5.3-.6.4h.1l.2-.4.5-.4q0-.2.2-.3zm10.7 5-.3.3v.1l.2-.3m-13.3 2.3-.4.4-.2.3.4-.4.1-.2zm25 2.1-.3.2v.1l.1-.1v-.1zm-16.4 1.2-.1.4h-.2zm8.4 6.3-.2.4-.2.1-.2.2.1-.2zm8.4 1.3-.1.1h-.1zm-9.3.3q-1.2 1.2-1.3 1.5l1.1-1.1.2-.3zm-22.3 2.8-.2.4h.2v-.4m7.6 0-.4.7.2-.3.1-.2zm12 .4h-.2l-.2.3-.2.2.1-.3zm8.3 2v.1l-.3.3-.2.1.1-.1zm-3 3.2h-.2v.2-.1zm-39.3 1.5-.2.6-.1.5.4-.8zm32.6 1-.8 1v.1l.7-1m-.3 1.2-.1.1-.2.3v-.1zm-9 5-.4.6v.1zm-7.8 1.9-.4.4v.2l-.2.1.3-.4zm7.6-2.2-2.3 3.4 2.2-3.3zm14.5-34.2h-.1l-.4.3-.7.2-1.6 1.4-.1.4-.1.1-.3.3-.2.4-1.2 1.3v-.1l1-1v-.4l.5-.6v-.2l.1-.1.9-1-1 .8-1.9 1.2h-.6l-.3.3q-.5.3-1.1.3l-.5.3-1.6 2.2-.7.6-.1-.2-.6.8-.5.5h-.3l-.2-.2-.4.3h-1l-.3.3h-.5l-.8 1.1h-.4l-.4.3q-.4.4-.5.9-.4.3-.6.8l-.4.2-.2.5.3-.1.2-.4h.3l-.4.4v.5l-.2.3-.2.2-.1.1-.2.2.5-.5-2.2 2.2.2.2-.2.3-.9.8h-1l-.6.2-.6.9.1.4-.3.3-.2.2-.2.2-.5 1v.5l-.6.8h-.3l-.8 1.3.4.2.3-.4 1.1-1.6v-.1l.4-.3.3-.2.2.3-.1.3v.1l-.3-.3-.3.5h-.2l-1 1.5v.6l.1.6-.5 1h-.1l.4-1-.8-.2-.3.4-.6 1.4-.5.2-.4.4v.6l-.1.4-.1.5-.3.4.1.5.3-.5.2-.3-.2.5.2.6v.4h-.2l-1.1 2.2h.4l-.8 1.7-.3.4-.5.4-.7 1.3h.9q-2 5.2-1.4 5.5 1.1-1.2 2.8-3.6l4.5-6.5h.3l.3-.6 1.3-2 .2-.4 1.2-1.8h.4l.1.5-.6.8.2.5h.6l1.2-1.7.4-.4.8-.6v-.5l.6-.8.1-.5.4-.4v-.5h-.1l-.3.5-.4.3.3-.5.1-.5-.1-.6.1-.1h.3l1.7-2.5-.2-.4.9-1.3.3-.3v-.3q.4-.4 1-.6l.4-.7.6-.6v-.6l.7-.8.2-.4.3-.4v-.4l.5-.5.7-.8.2.2 1.8-1.8h-.6l-.3.3-.7.7v-.2l.5-.6.3-.3.9-1.3-.1.4-.5.6.2.1h.2l1-1.3.3-.2.3-.3.1-.1.1-.4.8-.9.2-.3h-.1l-.4.5h-.1l.3-.3.1-.6.1-.1v.1h.1l1.6-1.6h-.2l.1-.1 1-.9h.1v-.1l.2-.2h.1l.4-.2.8-.7.3-.3zm-7.9-4.7-1 .6h-1l-1.6 1h-.1l-.1.3-.9.5h-.4v-.2l.8-.4-.2-.2h-.2l-1.2.7-.2.1h-.2q-.1.2-.3.2h-.2q0 .3-.3.4l-.5.3-.1.2-.4.2v.1l.4-.3h.1l-.3.3-.3.5h-.1v-.1l-1.9 1.2h.2l-1 .7-.3.1-.2.2h-.4l-1.2.8.3.1-.9.4-1.7 3-1.3 1.3-1.9 2-.1-.2-.3.5-3 1.1-1.4 2.4v1.5h-.6l-1.7 3-.2 1-1.5.9-.3.4-.7 1.9v.7l-1.3 2.3h.4l-.6 1.4.1.5-.9 2.4q-.2 0-.3.2l-1.1 2.9h.2l.4-.3.8-2v-.4l.3-.3.7-2 .1-.3.3-.3.2-.2.2-.5.1.3v.6l-.1.4-.2.1-.1-.4-.6 1.4h-.2l-1.3 3.6v.5l.2.5.1.5.4-1 .1-.3-.4 1.5v-.2l-.3.5.1.1q-.9 3-1.6 6.3l3.7-5.8 7.3-11.8.2-.2v.1l.8-.2 1.7-3 .7-.3.9-1v-.8l.6-1.2.2-.6v-.1l.4-.5 1.5-2.1 1.9-1.8.5-.1.8-.6.1-.5q1.8-1.8 2-2.3l-.4.1-.7.7.1-.2.4-.4.1-1 .2-.2.1.2 3-2.9h-.5l.2-.3 1.5-1.4.3-.3.2-.2.4-.3.5-.1 1.8-1.8-.7-.3 1.9-2 1-1.3zm-23.5 46.5.1.1v-.1m41-26.6-1.9.9-3.9 3.4-.3.4-1.5 1.5h-.4l-.7.8h-.1l.4-.6 1.5-1.4h-.2l-.4.1q-1 .8-2.8 2.7l-.5.3-.7.7-2.7 3.3-.4.8.8-1v-.2l.4-.3-.8 1-.3.8h-.1l-.2.3.1-.2v.1l-2.3 3-1 1.5.4-.3-.1.1-2 2.9q-.1.1 0 .1l-.4.6-.6.5-1.2 2-.7 1q.3 0 .4-.2l-.2.3-.6 1 .4-.1-.3.5h.3l-.2.1v.2-.1l-.4.7-.5.5-1.3 2-.6 1 .6-.4.7-.9 1-1 1.5-2.3-.3.6-.7 1 .7-.3.7-1 1-1 2.8-4 .1-.4.4-.3v.2l.3-.5.8-.6 1.6-2 1.3-1 2-2.4.3-.5.4-.4.1-.1 1.6-1.7 1.1-1 .2-.1-.3.3h.2l3.1-2.9-.6.3-2.2 2-.2.2-.2.1.2-.2.2-.2 2.2-2 .2-.4h.1l.1-.2-.2.4.1-.1 3.2-2.8-.7.3-2.1 1.9-.2.3h-.1l.3-.5.5-.4h.1l1.5-1.4.8-1.1-1.4 1.2-.3.1-.2.1.3-.2 2.1-1.8-.5.6.5-.4.2-.2v-.1l.6-.6-1.3.6.7-1-1.4 1.3h-.2l.5-.4h-.2l1.8-1.4-.5.6.5-.4.1-.2.1-.2.6-.5-1.2.5.3-.2-.7.3v-.2l.6-.5-1.1.5.3-.4-.7.6-.4.2-.7.5-.1.1 2.4-2-.5.6.5-.4.1-.2.1-.1zM352 776.9l-.3.4v.3l.1-.2zm-8.5-3.7h-.4l-.2.2-.4.7v.2l-.1.4-.2.1-.2-.1.2-.4h-.4l-.3.5-.3.3v.4l-.2.4v.2l.3-.3-.1.2v.4l-.4.7v.6l-.2.2v.1l-.2.1-.3.6h.5l.1-.2h.3l.1-.2.3-.6v-.8l.5-1.1v-.1l-.4 1v.1l.1.3v.4q.2 0 .2-.3l.2-.1h.4l.5-.3.2-.3v-.4l.1-.1.3-.6v-.2l.2-.6.3-.6v-.1h-.2l-.1.5v.1l-.2.2v.2l-.1-.1v.2-.1.2h-.2v.2l-.2-.1v-.2h.2l.2-.3v.1l.4-1-.2-.2v-.1l-.1.3h-.2l.2-.4zm3.7 5.4-.2.3v.1l.2-.3zm38.7-43q-4 2.1-7.3 4.1l2-2.5h-1.1l-.4.2-.7.7-1.4.6-.4.4-3.1 4v.2l-.7.6v-.4h-.2l-1.1 1.4-.7.6-.2.1-.1-.2q-.2 0-.6.5l-2.3 1-.4.2-2 2.4-.2.4-.2 1h-.2l-.4.3-2.9 3.6-2.1 2.9-.3.3-2.8 3.6.7-.3q0 .3-.2.5l-1.3 1.7-.4.3-.9.5-.2.5v.5l-.7.8-.2.4-.4.4v.5l.1-.1.7-.7-.4.7v1l-.1-.1-.3.2-2.1 2.8h.4l-.3.4-1.6 2.2h-.6l-1.5 2.1.8.2.5-.2.3-.3.3-.1-.5.9v.4h-.2l-.1.2-.6 1-.1.2v.2l-.6.9-.8 1.3.3-.1 1.1-2h.1l.1-.1.1-.2.1-.1v.5h-.2v-.2l-.4.7-.9 1.4v.6l.3-.4.1-.1.2-.1-.5 1v-.4l-.1.2v.2l-.1.2.4-.1q-.8 2.3-.5 2.6v-.1q1.9-1.7 5-5.9l1.1-1.4v.1l.4-.6.4-.5.3-.2-1.3 1.8-.4.7 1.2-.8.1-.2 2-2.9.2-.5 1-1.5.6-.5-.2.5-.8 1.2h.5l1.6-2.4.4-.2.5-.6.3-.7 1.2-1.9.3-.5-.1.1-.5.7v.1l-.2.2.4-.8.3-.9v-.1.3l.1-.1 2.2-3.2-.2.2.5-.9 2.1-1.2.4-.3 2.3-3.3.4-1.3.6-.2 3.5-4.2q.4-.5.3-.9l3-3.3q.2 0 .1.3l4-3.9v-.2l-.9.3-2.5 2.5q-.4.3-.5.8h-.4l-1.4 1.6-.2.1-1.6 1.9-.2-.1-.3.2-.3.4-.4.4.1-.3 1-1.3v.3l2-2.2v.2l4.6-4.7q.3-.4.3-.8l.7-.6v-.3l.6-.6h.4v.2l-.5.4.2.2h.2l.7-.8h.2l.4-.2.1-.2v-.2l.7-.7.1-.2-.3.3v-.2l.2-.4v-.2.2l1.2-1.2.9-1 .3-.2.8-.7-.4-.1h-.2l-.1.2h-.5l-.2.1-1 1v.4l-.4.3v.3l-1.6 1.6 1.3-1.4.1-.2v-.3l.3-.2v-.2z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='324.8 715.6 70.4 86.4'%3E%3Cpath fill='%23000' d='M368.7 725h-.1m-.1.7-.2.1-.1.1v-.2h.2m2.4-1.8-.4.3v.5l-.7.5h.1l.3-.3.2-.2v-.6l-.2.2-.3-.2h-.3l-.3-.2-.2.2v.2h-.2l-.3.3-.1.2-.2.2h-.1l-.3.2.2.1.5-.4h.2v.2l-.1-.1h-.1l-.5.4v.6l.4.2h.3l.3-.2v-.3h.5l-.1.3.2.2.3-.2h.3v-.2l.2-.2v-.2.2-.5l.4-.2v-.2l.1-.1.2-.1h.2l.3-.3-.3-.2zm-12.3 7.1-.2.1-.1.1-.2.1.3-.2zm1.7-.5-2.2 1.3v.2l-.1.2-.1.2-.5.3-.6.4h.1l.2-.4.5-.4q0-.2.2-.3zm10.7 5-.3.3v.1l.2-.3m-13.3 2.3-.4.4-.2.3.4-.4.1-.2zm25 2.1-.3.2v.1l.1-.1v-.1zm-16.4 1.2-.1.4h-.2zm8.4 6.3-.2.4-.2.1-.2.2.1-.2zm8.4 1.3-.1.1h-.1zm-9.3.3q-1.2 1.2-1.3 1.5l1.1-1.1.2-.3zm-22.3 2.8-.2.4h.2v-.4m7.6 0-.4.7.2-.3.1-.2zm12 .4h-.2l-.2.3-.2.2.1-.3zm8.3 2v.1l-.3.3-.2.1.1-.1zm-3 3.2h-.2v.2-.1zm-39.3 1.5-.2.6-.1.5.4-.8zm32.6 1-.8 1v.1l.7-1m-.3 1.2-.1.1-.2.3v-.1zm-9 5-.4.6v.1zm-7.8 1.9-.4.4v.2l-.2.1.3-.4zm7.6-2.2-2.3 3.4 2.2-3.3zm14.5-34.2h-.1l-.4.3-.7.2-1.6 1.4-.1.4-.1.1-.3.3-.2.4-1.2 1.3v-.1l1-1v-.4l.5-.6v-.2l.1-.1.9-1-1 .8-1.9 1.2h-.6l-.3.3q-.5.3-1.1.3l-.5.3-1.6 2.2-.7.6-.1-.2-.6.8-.5.5h-.3l-.2-.2-.4.3h-1l-.3.3h-.5l-.8 1.1h-.4l-.4.3q-.4.4-.5.9-.4.3-.6.8l-.4.2-.2.5.3-.1.2-.4h.3l-.4.4v.5l-.2.3-.2.2-.1.1-.2.2.5-.5-2.2 2.2.2.2-.2.3-.9.8h-1l-.6.2-.6.9.1.4-.3.3-.2.2-.2.2-.5 1v.5l-.6.8h-.3l-.8 1.3.4.2.3-.4 1.1-1.6v-.1l.4-.3.3-.2.2.3-.1.3v.1l-.3-.3-.3.5h-.2l-1 1.5v.6l.1.6-.5 1h-.1l.4-1-.8-.2-.3.4-.6 1.4-.5.2-.4.4v.6l-.1.4-.1.5-.3.4.1.5.3-.5.2-.3-.2.5.2.6v.4h-.2l-1.1 2.2h.4l-.8 1.7-.3.4-.5.4-.7 1.3h.9q-2 5.2-1.4 5.5 1.1-1.2 2.8-3.6l4.5-6.5h.3l.3-.6 1.3-2 .2-.4 1.2-1.8h.4l.1.5-.6.8.2.5h.6l1.2-1.7.4-.4.8-.6v-.5l.6-.8.1-.5.4-.4v-.5h-.1l-.3.5-.4.3.3-.5.1-.5-.1-.6.1-.1h.3l1.7-2.5-.2-.4.9-1.3.3-.3v-.3q.4-.4 1-.6l.4-.7.6-.6v-.6l.7-.8.2-.4.3-.4v-.4l.5-.5.7-.8.2.2 1.8-1.8h-.6l-.3.3-.7.7v-.2l.5-.6.3-.3.9-1.3-.1.4-.5.6.2.1h.2l1-1.3.3-.2.3-.3.1-.1.1-.4.8-.9.2-.3h-.1l-.4.5h-.1l.3-.3.1-.6.1-.1v.1h.1l1.6-1.6h-.2l.1-.1 1-.9h.1v-.1l.2-.2h.1l.4-.2.8-.7.3-.3zm-7.9-4.7-1 .6h-1l-1.6 1h-.1l-.1.3-.9.5h-.4v-.2l.8-.4-.2-.2h-.2l-1.2.7-.2.1h-.2q-.1.2-.3.2h-.2q0 .3-.3.4l-.5.3-.1.2-.4.2v.1l.4-.3h.1l-.3.3-.3.5h-.1v-.1l-1.9 1.2h.2l-1 .7-.3.1-.2.2h-.4l-1.2.8.3.1-.9.4-1.7 3-1.3 1.3-1.9 2-.1-.2-.3.5-3 1.1-1.4 2.4v1.5h-.6l-1.7 3-.2 1-1.5.9-.3.4-.7 1.9v.7l-1.3 2.3h.4l-.6 1.4.1.5-.9 2.4q-.2 0-.3.2l-1.1 2.9h.2l.4-.3.8-2v-.4l.3-.3.7-2 .1-.3.3-.3.2-.2.2-.5.1.3v.6l-.1.4-.2.1-.1-.4-.6 1.4h-.2l-1.3 3.6v.5l.2.5.1.5.4-1 .1-.3-.4 1.5v-.2l-.3.5.1.1q-.9 3-1.6 6.3l3.7-5.8 7.3-11.8.2-.2v.1l.8-.2 1.7-3 .7-.3.9-1v-.8l.6-1.2.2-.6v-.1l.4-.5 1.5-2.1 1.9-1.8.5-.1.8-.6.1-.5q1.8-1.8 2-2.3l-.4.1-.7.7.1-.2.4-.4.1-1 .2-.2.1.2 3-2.9h-.5l.2-.3 1.5-1.4.3-.3.2-.2.4-.3.5-.1 1.8-1.8-.7-.3 1.9-2 1-1.3zm-23.5 46.5.1.1v-.1m41-26.6-1.9.9-3.9 3.4-.3.4-1.5 1.5h-.4l-.7.8h-.1l.4-.6 1.5-1.4h-.2l-.4.1q-1 .8-2.8 2.7l-.5.3-.7.7-2.7 3.3-.4.8.8-1v-.2l.4-.3-.8 1-.3.8h-.1l-.2.3.1-.2v.1l-2.3 3-1 1.5.4-.3-.1.1-2 2.9q-.1.1 0 .1l-.4.6-.6.5-1.2 2-.7 1q.3 0 .4-.2l-.2.3-.6 1 .4-.1-.3.5h.3l-.2.1v.2-.1l-.4.7-.5.5-1.3 2-.6 1 .6-.4.7-.9 1-1 1.5-2.3-.3.6-.7 1 .7-.3.7-1 1-1 2.8-4 .1-.4.4-.3v.2l.3-.5.8-.6 1.6-2 1.3-1 2-2.4.3-.5.4-.4.1-.1 1.6-1.7 1.1-1 .2-.1-.3.3h.2l3.1-2.9-.6.3-2.2 2-.2.2-.2.1.2-.2.2-.2 2.2-2 .2-.4h.1l.1-.2-.2.4.1-.1 3.2-2.8-.7.3-2.1 1.9-.2.3h-.1l.3-.5.5-.4h.1l1.5-1.4.8-1.1-1.4 1.2-.3.1-.2.1.3-.2 2.1-1.8-.5.6.5-.4.2-.2v-.1l.6-.6-1.3.6.7-1-1.4 1.3h-.2l.5-.4h-.2l1.8-1.4-.5.6.5-.4.1-.2.1-.2.6-.5-1.2.5.3-.2-.7.3v-.2l.6-.5-1.1.5.3-.4-.7.6-.4.2-.7.5-.1.1 2.4-2-.5.6.5-.4.1-.2.1-.1zM352 776.9l-.3.4v.3l.1-.2zm-8.5-3.7h-.4l-.2.2-.4.7v.2l-.1.4-.2.1-.2-.1.2-.4h-.4l-.3.5-.3.3v.4l-.2.4v.2l.3-.3-.1.2v.4l-.4.7v.6l-.2.2v.1l-.2.1-.3.6h.5l.1-.2h.3l.1-.2.3-.6v-.8l.5-1.1v-.1l-.4 1v.1l.1.3v.4q.2 0 .2-.3l.2-.1h.4l.5-.3.2-.3v-.4l.1-.1.3-.6v-.2l.2-.6.3-.6v-.1h-.2l-.1.5v.1l-.2.2v.2l-.1-.1v.2-.1.2h-.2v.2l-.2-.1v-.2h.2l.2-.3v.1l.4-1-.2-.2v-.1l-.1.3h-.2l.2-.4zm3.7 5.4-.2.3v.1l.2-.3zm38.7-43q-4 2.1-7.3 4.1l2-2.5h-1.1l-.4.2-.7.7-1.4.6-.4.4-3.1 4v.2l-.7.6v-.4h-.2l-1.1 1.4-.7.6-.2.1-.1-.2q-.2 0-.6.5l-2.3 1-.4.2-2 2.4-.2.4-.2 1h-.2l-.4.3-2.9 3.6-2.1 2.9-.3.3-2.8 3.6.7-.3q0 .3-.2.5l-1.3 1.7-.4.3-.9.5-.2.5v.5l-.7.8-.2.4-.4.4v.5l.1-.1.7-.7-.4.7v1l-.1-.1-.3.2-2.1 2.8h.4l-.3.4-1.6 2.2h-.6l-1.5 2.1.8.2.5-.2.3-.3.3-.1-.5.9v.4h-.2l-.1.2-.6 1-.1.2v.2l-.6.9-.8 1.3.3-.1 1.1-2h.1l.1-.1.1-.2.1-.1v.5h-.2v-.2l-.4.7-.9 1.4v.6l.3-.4.1-.1.2-.1-.5 1v-.4l-.1.2v.2l-.1.2.4-.1q-.8 2.3-.5 2.6v-.1q1.9-1.7 5-5.9l1.1-1.4v.1l.4-.6.4-.5.3-.2-1.3 1.8-.4.7 1.2-.8.1-.2 2-2.9.2-.5 1-1.5.6-.5-.2.5-.8 1.2h.5l1.6-2.4.4-.2.5-.6.3-.7 1.2-1.9.3-.5-.1.1-.5.7v.1l-.2.2.4-.8.3-.9v-.1.3l.1-.1 2.2-3.2-.2.2.5-.9 2.1-1.2.4-.3 2.3-3.3.4-1.3.6-.2 3.5-4.2q.4-.5.3-.9l3-3.3q.2 0 .1.3l4-3.9v-.2l-.9.3-2.5 2.5q-.4.3-.5.8h-.4l-1.4 1.6-.2.1-1.6 1.9-.2-.1-.3.2-.3.4-.4.4.1-.3 1-1.3v.3l2-2.2v.2l4.6-4.7q.3-.4.3-.8l.7-.6v-.3l.6-.6h.4v.2l-.5.4.2.2h.2l.7-.8h.2l.4-.2.1-.2v-.2l.7-.7.1-.2-.3.3v-.2l.2-.4v-.2.2l1.2-1.2.9-1 .3-.2.8-.7-.4-.1h-.2l-.1.2h-.5l-.2.1-1 1v.4l-.4.3v.3l-1.6 1.6 1.3-1.4.1-.2v-.3l.3-.2v-.2z'/%3E%3C/svg%3E");
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.3;
+}
+
+.date-num { font-size: 1.1rem; font-weight: bold; color: var(--color-text-muted); align-self: flex-end; z-index: 2; transition: color 0.2s; }
+.day-cell:hover .date-num { color: var(--color-text); }
+.day-cell.today:hover .date-num { color: var(--color-primary); }
+
+.task-content { display: flex; flex-direction: column; gap: 5px; margin-top: 15px; }
+.desktop-task-topic { font-size: 0.9rem; color: var(--color-text); line-height: 1.3; overflow: hidden; display: -webkit-box; line-clamp: 3; -webkit-box-orient: vertical; }
+
+.stats-footer { width: 100%; padding: var(--pad-lg); background: var(--color-glass-bg); border-radius: var(--rad-md); border: 1px solid var(--color-glass-border); margin-top: 10px; }
+.progress-container { background: rgba(0, 0, 0, 0.5); border-radius: 20px; border: 1px solid var(--color-glass-border); padding: 4px; height: 24px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 16px; background: var(--color-primary); width: 0%; transition: width 0.5s ease; box-shadow: 0 0 10px var(--color-primary); }
+
+.desktop-tag { position: absolute; top: 8px; left: 8px; z-index: 5; border-radius: var(--rad-pill); max-width: calc(100% - 40px); }
+.day-edit-btn { position: absolute; bottom: 8px; right: 8px; width: 28px; height: 28px; background: var(--color-glass-white); border: 1px solid var(--color-glass-border); border-radius: 6px; display: flex; justify-content: center; align-items: center; color: var(--color-text-muted); font-size: 1rem; font-weight: bold; cursor: pointer; opacity: 0; transition: all 0.2s ease; z-index: 10; }
+.day-cell:hover .day-edit-btn { opacity: 1; }
+.day-edit-btn:hover { background: var(--color-primary); color: var(--color-text); border-color: var(--color-primary); transform: scale(1.1); }
+
+@keyframes scratchDownWipe {
+    0% {
+        clip-path: inset(0 0 100% 0); /* Bottom is clipped 100% (hidden) */
+        transform: translate(-50%, -55%) scaleX(-1); /* Starts slightly higher */
+    }
+    100% {
+        clip-path: inset(0 0 0 0); /* Fully revealed */
+        transform: translate(-50%, -50%) scaleX(-1); /* Snaps into final position */
+    }
+}
+/* --- THE SCRATCH ANIMATION --- */
+.daily-card.just-completed::after,
+.day-cell.just-completed::after {
+    animation: scratchDownWipe 0.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* =================================================================
+   11. UI POLISH (Alignments, Custom Pickers & Scrollbars)
+   ================================================================= */
+.add-subject-row { display: flex; gap: 10px; align-items: stretch; height: 45px; }
+.add-subject-row .settings-input { flex: 1; margin: 0; padding: 0 var(--pad-md); border-radius: var(--rad-md); }
+.add-subject-row .btn-primary { margin: 0; padding: 0 var(--pad-md); border-radius: var(--rad-md); display: flex; align-items: center; justify-content: center; }
+
+.color-picker-wrapper { width: 45px; height: 45px; border-radius: var(--rad-circle); border: 2px solid var(--color-glass-border); flex-shrink: 0; position: relative; box-shadow: var(--shadow-sm); transition: background-color 0.2s ease; }
+.picker-sm { width: 35px !important; height: 35px !important; }
+.color-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: none; padding: 0; margin: 0; }
+.color-input::-webkit-color-swatch-wrapper { padding: 0; }
+.color-input::-webkit-color-swatch { border: none; border-radius: var(--rad-circle); }
+
+#themeColorWrapper { background-color: var(--color-primary); }
+#textColorWrapper { background-color: var(--color-text); }
+#colorPickerWrapper { background-color: #ff3b3b; }
+
+.subject-manager-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.05); padding: 10px var(--pad-md); border-radius: var(--rad-md); border: 1px solid var(--color-glass-border); margin-bottom: 8px; word-break: break-word; }
+.subject-manager-item > div { flex: 1; margin-right: var(--pad-md); }
+.subject-delete-btn { background: var(--color-danger-bg); border: 1px solid var(--color-danger-border); color: var(--color-danger); width: 28px; height: 28px; border-radius: var(--rad-circle); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; line-height: 1; cursor: pointer; transition: transform 0.2s ease, background-color 0.2s ease; }
+.subject-delete-btn:active { transform: scale(0.9); background: rgba(255, 59, 59, 0.4); }
+
+input[type="date"] { position: relative; appearance: none; -webkit-appearance: none; font-family: inherit; }
+input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; background: transparent; }
+input[type="date"]::-webkit-inner-spin-button, input[type="date"]::-webkit-clear-button { display: none; }
+
+/* =================================================================
+   12. EFFECTS (Preloader, Noise, Trays)
+   ================================================================= */
+.preloader { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--color-bg); z-index: 10000; display: flex; align-items: center; justify-content: center; transition: opacity 0.8s, visibility 0.8s, filter 0.8s, transform 0.8s ease-in; }
+.preloader-content { display: flex; flex-direction: column; align-items: center; gap: var(--pad-lg); position: relative; z-index: 2; }
+.preloader-content::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 150px; height: 150px; background: var(--color-primary); filter: blur(70px); opacity: 0; border-radius: var(--rad-circle); animation: breathingGlow 3s ease-in-out infinite alternate; z-index: -1; }
+.preloader.hidden { opacity: 0; visibility: hidden; pointer-events: none; transform: scale(1.15); filter: blur(10px); }
+.preloader-icon svg { width: 50px; height: 50px; stroke: var(--color-text); stroke-width: 1.5; opacity: 0; animation: smoothFade 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+.preloader-text { font-size: 1.4rem; font-weight: 500; letter-spacing: 2px; color: var(--color-text); opacity: 0; animation: smoothFade 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s forwards; }
+@keyframes smoothFade { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes breathingGlow { from { opacity: 0.1; transform: translate(-50%, -50%) scale(0.8); } to { opacity: 0.25; transform: translate(-50%, -50%) scale(1.2); } }
+
+.dynamic-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--color-bg); background-size: cover; background-position: center; filter: blur(7px) brightness(0.45); transform: scale(1.15); z-index: -2; transition: background-image 1s ease-in-out; }
+
+/* =================================================================
+   13. STANDBY FOCUS MODE
+   ================================================================= */
+#standbyOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000000; z-index: 99999; display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.6s ease; }
+#standbyOverlay.standby-hidden { opacity: 0; pointer-events: none; }
+.standby-content { text-align: center; color: var(--color-primary); display: flex; flex-direction: column; align-items: center; }
+.standby-time { font-size: clamp(6rem, 25vw, 15rem); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; text-shadow: var(--shadow-glow); }
+.standby-date { font-size: clamp(1.5rem, 5vw, 3rem); font-weight: 600; color: var(--color-text-muted); margin-top: var(--pad-md); text-transform: uppercase; letter-spacing: 2px; }
+.standby-exit { margin-top: 50px; padding: 10px 30px; border-radius: var(--rad-pill); border: 1px solid var(--color-glass-border); opacity: 0.5; transition: opacity 0.3s; }
+.standby-exit:active { opacity: 1; }
+
+/* =================================================================
+   14. PREMIUM DRAG VISUALS & ANIMATION
+   ================================================================= */
+.ghost-mode { visibility: hidden !important; }
+
+.dragging-placeholder {
+    opacity: 0.25 !important;
+    border: 2px dashed var(--color-glass-border) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transform: scale(0.98); 
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.flying-glass-task {
+    position: fixed !important;
+    margin: 0 !important;
+    z-index: 99999 !important; 
+    pointer-events: none !important; 
+    opacity: 0.98;
+    background: rgba(30, 30, 30, 0.7) !important; 
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid var(--color-primary) !important;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 15px rgba(255, 59, 59, 0.2) !important;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+    will-change: transform;
+}
+
+/* =========================================================
+   15. AUTOFILL & SEARCH BUTTON FIXES
+========================================================= */
+input[type="search"] { -webkit-appearance: none; appearance: none; }
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration { display: none !important; -webkit-appearance: none !important; }
+
+#addTaskBtn { background: transparent !important; color: var(--color-primary) !important; border: none !important; box-shadow: none !important; outline: none; display: flex; align-items: center; justify-content: center; padding: 6px; border-radius: 50%; transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease !important; -webkit-tap-highlight-color: transparent; }
+#addTaskBtn:active { transform: scale(0.80) !important; opacity: 0.6 !important; box-shadow: none !important; }
+
+/* =================================================================
+   16. TODO TAB: COMPLETE UNIFIED ARCHITECTURE
+================================================================= */
+
+/* --- A. CORE LAYOUT & VIEW TOGGLES --- */
+#tab-todo .central-column { display: flex; flex-direction: column; height: 100%; }
+#desktopTodoView { display: none !important; }
+#mobileTodoView { flex: 1; display: flex; flex-direction: column; z-index: 10; display: block !important; }
+
+/* --- B. FLOATING INPUT & SUBJECT TRAY --- */
+@media (min-width: 768px) {
+    .todo-input-group { max-width: 650px !important; }
+}
+/* --- FLOATING INPUT GROUP --- */
+.todo-input-group { position: fixed; bottom: calc(110px + var(--safe-bottom)); left: 50%; width: calc(100% - 30px); max-width: 500px; display: flex; flex-direction: row; align-items: center; padding: 8px 10px 8px var(--pad-lg); gap: 10px; z-index: 990; border-radius: var(--rad-pill) !important; transform: translateX(-50%) translateY(20px); opacity: 0; pointer-events: none; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1); will-change: transform, opacity, bottom; }
+.todo-input-group.active { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+.todo-input-group.float-lowered { bottom: calc(40px + var(--safe-bottom)); }
+
+/* TSE transition */
+.todo-input-group.keyboard-active { 
+    bottom: calc(15px + var(--safe-bottom)) !important; 
+    transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease !important;
+}
+
+.todo-input-group.edit-mode-hidden {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateX(-50%) translateY(20px) !important;
+}
+
+/* FIX 2: Violently strip native browser styling from the input */
+.todo-input-group input { 
+    flex: 1; 
+    background: transparent !important; 
+    border: none !important; 
+    color: var(--color-text) !important; 
+    font-size: 1rem !important;
+    outline: none !important; 
+    box-shadow: none !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    padding: 5px 0;
+    margin: 0;
+}
+
+.todo-input-group input::placeholder {
+    color: var(--color-text-muted);
+    opacity: 0.7;
+}
+
+.todo-subject-tray { position: absolute; bottom: 100%; left: 0; width: 100%; padding-bottom: var(--pad-md); display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; opacity: 0; visibility: hidden; transform: translateY(15px); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0s linear 0.3s !important; pointer-events: none; }
+.todo-subject-tray.active { opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0s linear 0s !important; }
+.todo-tint-pill { padding: 6px 14px; border-radius: var(--rad-lg); font-size: 0.8rem; font-weight: 600; cursor: pointer; color: var(--color-text-muted); border: 1px solid var(--color-glass-border); background: var(--color-surface); transform: translateZ(0); transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; will-change: transform; }
+.todo-tint-pill:active { transform: scale(0.92) translateZ(0); }
+.todo-tint-pill.selected { transform: translateY(-2px) translateZ(0); box-shadow: var(--shadow-md); font-weight: 800; }
+
+/* --- C. SHARED TASK ELEMENTS (Checkbox, Text, Buttons) --- */
+.todo-subject-header { margin-top: var(--pad-md); margin-bottom: 5px; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; padding-left: 5px; list-style: none; }
+.todo-text { flex: 1; font-size: 1rem; transition: color 0.3s ease, text-decoration 0.3s ease; line-height: 1.4; word-break: break-word; white-space: pre-wrap; }
+.todo-delete { background: none; border: none; color: var(--color-text-muted); font-size: 1.5rem; cursor: pointer; padding: 0 5px; flex-shrink: 0; margin-top: -2px; }
+.todo-edit-input { flex: 1; min-width: 0; background: transparent; border: none; border-bottom: 2px solid var(--color-primary); border-radius: 0; color: var(--color-text); font-size: 1rem; padding: 0 0 2px 0; margin: 0; outline: none; box-shadow: none; caret-color: var(--color-primary); resize: none; overflow: hidden; line-height: 1.4; }
+
+/* =================================================================
+   THE 3-STATE PAW CHECKBOX (TODO TAB)
+================================================================= */
+/* 1. Base Container (Size increased to 30px, old borders nuked) */
+.todo-checkbox {
+    width: 30px;
+    height: 30px;
+    border-radius: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    display: inline-block;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* Force hide any old legacy SVGs */
+.todo-checkbox svg { display: none !important; }
+
+/* 2. The Pseudo-Element that holds the Mask */
+.todo-checkbox::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* Default "TODO" State: Tightly cropped PAW Mask */
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='330 380 100 80'%3E%3Cpath fill='%23000' d='M386.6 414.8c5.1-.8 9.8 0 13.6 1.3 9 3 15.8 12.3 13.6 22.3l-.7 2.6q-1 3.3-3.4 5.6a9 9 0 0 1-5.6 2l-5.3-.4q-2.8-.5-6.5-.5c-4.3 0-7 1.7-10.3 3.4-1.4.8-3.5 1.8-5.8 2q-4 0-7.1-3c-8-7.2-6.8-19.3-.4-27 1.6-1.8 3-3.9 6-5.3 2.5-1.3 6-2 12-3m11 8.9q-4.4-1.7-9.6-1c-6.2 1-8.5 1.6-9.8 2.3-1 .5-1.3.9-3.3 3.3-4.5 5.3-4.4 12.3-.4 16 .9.8 1.2.7 1.3.7q.4.1 2.5-1c2.8-1.4 7.3-4.3 14-4.3q4.5.1 7.4.5l4.2.4.6-.1q.2.1 1-2l.5-1.8c1.2-5.3-2.4-11-8.4-13m-49.5-4.5c1.5-2 6-1.4 10 1.5l.5.3c3.8 2.8 5.8 6.7 4.3 8.7-1.4 2-6 1.4-10-1.5l-.4-.3c-3.8-2.9-5.8-6.7-4.4-8.7m67.7-7.3c3.3-3.5 7.3-5 9.1-3.4 2 1.7.8 6-2.5 9.8l-.3.4c-3.3 3.5-7.3 5-9.2 3.4s-.7-6 2.6-9.8zm-49.5-13.8c2-1.5 6.1.5 9.2 4.5l.3.3c2.8 4 3.5 8.2 1.5 9.7s-6-.5-9.1-4.5l-.3-.4c-2.8-3.9-3.5-8.1-1.6-9.6m35.2-3.3c2.5.2 4.2 4.4 3.8 9.4v.5c-.5 4.7-2.8 8.4-5.2 8.2-2.6-.2-4.3-4.4-3.9-9.4v-.5c.5-4.7 2.8-8.4 5.3-8.2'/%3E%3C/svg%3E");
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='330 380 100 80'%3E%3Cpath fill='%23000' d='M386.6 414.8c5.1-.8 9.8 0 13.6 1.3 9 3 15.8 12.3 13.6 22.3l-.7 2.6q-1 3.3-3.4 5.6a9 9 0 0 1-5.6 2l-5.3-.4q-2.8-.5-6.5-.5c-4.3 0-7 1.7-10.3 3.4-1.4.8-3.5 1.8-5.8 2q-4 0-7.1-3c-8-7.2-6.8-19.3-.4-27 1.6-1.8 3-3.9 6-5.3 2.5-1.3 6-2 12-3m11 8.9q-4.4-1.7-9.6-1c-6.2 1-8.5 1.6-9.8 2.3-1 .5-1.3.9-3.3 3.3-4.5 5.3-4.4 12.3-.4 16 .9.8 1.2.7 1.3.7q.4.1 2.5-1c2.8-1.4 7.3-4.3 14-4.3q4.5.1 7.4.5l4.2.4.6-.1q.2.1 1-2l.5-1.8c1.2-5.3-2.4-11-8.4-13m-49.5-4.5c1.5-2 6-1.4 10 1.5l.5.3c3.8 2.8 5.8 6.7 4.3 8.7-1.4 2-6 1.4-10-1.5l-.4-.3c-3.8-2.9-5.8-6.7-4.4-8.7m67.7-7.3c3.3-3.5 7.3-5 9.1-3.4 2 1.7.8 6-2.5 9.8l-.3.4c-3.3 3.5-7.3 5-9.2 3.4s-.7-6 2.6-9.8zm-49.5-13.8c2-1.5 6.1.5 9.2 4.5l.3.3c2.8 4 3.5 8.2 1.5 9.7s-6-.5-9.1-4.5l-.3-.4c-2.8-3.9-3.5-8.1-1.6-9.6m35.2-3.3c2.5.2 4.2 4.4 3.8 9.4v.5c-.5 4.7-2.8 8.4-5.2 8.2-2.6-.2-4.3-4.4-3.9-9.4v-.5c.5-4.7 2.8-8.4 5.3-8.2'/%3E%3C/svg%3E");
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    
+    background-color: var(--color-text-muted); 
+    opacity: 0.5;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center;
+}
+
+/* 3. Nuke legacy backgrounds on state changes */
+.todo-checkbox.in-progress, .todo-checkbox.done {
+    background: transparent !important;
+    border: none !important;
+}
+
+/* --- BREATHING ANIMATION FOR IN-PROGRESS --- */
+@keyframes inProgressPawBreathe {
+    0%   { opacity: 0.4; transform: scale(0.95); }
+    50%  { opacity: 0.8; transform: scale(1.05); }
+    100% { opacity: 0.4; transform: scale(0.95); }
+}
+
+/* 4. "IN-PROGRESS" State: Breathing Accent Paw */
+.todo-checkbox.in-progress::before {
+    background-color: var(--color-primary);
+    animation: inProgressPawBreathe 2s ease-in-out infinite;
+}
+
+/* 5. "DONE" State: The Mirrored Scratch Mask */
+.todo-checkbox.done::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='324.8 715.6 70.4 86.4'%3E%3Cpath fill='%23000' d='M368.7 725h-.1m-.1.7-.2.1-.1.1v-.2h.2m2.4-1.8-.4.3v.5l-.7.5h.1l.3-.3.2-.2v-.6l-.2.2-.3-.2h-.3l-.3-.2-.2.2v.2h-.2l-.3.3-.1.2-.2.2h-.1l-.3.2.2.1.5-.4h.2v.2l-.1-.1h-.1l-.5.4v.6l.4.2h.3l.3-.2v-.3h.5l-.1.3.2.2.3-.2h.3v-.2l.2-.2v-.2.2-.5l.4-.2v-.2l.1-.1.2-.1h.2l.3-.3-.3-.2zm-12.3 7.1-.2.1-.1.1-.2.1.3-.2zm1.7-.5-2.2 1.3v.2l-.1.2-.1.2-.5.3-.6.4h.1l.2-.4.5-.4q0-.2.2-.3zm10.7 5-.3.3v.1l.2-.3m-13.3 2.3-.4.4-.2.3.4-.4.1-.2zm25 2.1-.3.2v.1l.1-.1v-.1zm-16.4 1.2-.1.4h-.2zm8.4 6.3-.2.4-.2.1-.2.2.1-.2zm8.4 1.3-.1.1h-.1zm-9.3.3q-1.2 1.2-1.3 1.5l1.1-1.1.2-.3zm-22.3 2.8-.2.4h.2v-.4m7.6 0-.4.7.2-.3.1-.2zm12 .4h-.2l-.2.3-.2.2.1-.3zm8.3 2v.1l-.3.3-.2.1.1-.1zm-3 3.2h-.2v.2-.1zm-39.3 1.5-.2.6-.1.5.4-.8zm32.6 1-.8 1v.1l.7-1m-.3 1.2-.1.1-.2.3v-.1zm-9 5-.4.6v.1zm-7.8 1.9-.4.4v.2l-.2.1.3-.4zm7.6-2.2-2.3 3.4 2.2-3.3zm14.5-34.2h-.1l-.4.3-.7.2-1.6 1.4-.1.4-.1.1-.3.3-.2.4-1.2 1.3v-.1l1-1v-.4l.5-.6v-.2l.1-.1.9-1-1 .8-1.9 1.2h-.6l-.3.3q-.5.3-1.1.3l-.5.3-1.6 2.2-.7.6-.1-.2-.6.8-.5.5h-.3l-.2-.2-.4.3h-1l-.3.3h-.5l-.8 1.1h-.4l-.4.3q-.4.4-.5.9-.4.3-.6.8l-.4.2-.2.5.3-.1.2-.4h.3l-.4.4v.5l-.2.3-.2.2-.1.1-.2.2.5-.5-2.2 2.2.2.2-.2.3-.9.8h-1l-.6.2-.6.9.1.4-.3.3-.2.2-.2.2-.5 1v.5l-.6.8h-.3l-.8 1.3.4.2.3-.4 1.1-1.6v-.1l.4-.3.3-.2.2.3-.1.3v.1l-.3-.3-.3.5h-.2l-1 1.5v.6l.1.6-.5 1h-.1l.4-1-.8-.2-.3.4-.6 1.4-.5.2-.4.4v.6l-.1.4-.1.5-.3.4.1.5.3-.5.2-.3-.2.5.2.6v.4h-.2l-1.1 2.2h.4l-.8 1.7-.3.4-.5.4-.7 1.3h.9q-2 5.2-1.4 5.5 1.1-1.2 2.8-3.6l4.5-6.5h.3l.3-.6 1.3-2 .2-.4 1.2-1.8h.4l.1.5-.6.8.2.5h.6l1.2-1.7.4-.4.8-.6v-.5l.6-.8.1-.5.4-.4v-.5h-.1l-.3.5-.4.3.3-.5.1-.5-.1-.6.1-.1h.3l1.7-2.5-.2-.4.9-1.3.3-.3v-.3q.4-.4 1-.6l.4-.7.6-.6v-.6l.7-.8.2-.4.3-.4v-.4l.5-.5.7-.8.2.2 1.8-1.8h-.6l-.3.3-.7.7v-.2l.5-.6.3-.3.9-1.3-.1.4-.5.6.2.1h.2l1-1.3.3-.2.3-.3.1-.1.1-.4.8-.9.2-.3h-.1l-.4.5h-.1l.3-.3.1-.6.1-.1v.1h.1l1.6-1.6h-.2l.1-.1 1-.9h.1v-.1l.2-.2h.1l.4-.2.8-.7.3-.3zm-7.9-4.7-1 .6h-1l-1.6 1h-.1l-.1.3-.9.5h-.4v-.2l.8-.4-.2-.2h-.2l-1.2.7-.2.1h-.2q-.1.2-.3.2h-.2q0 .3-.3.4l-.5.3-.1.2-.4.2v.1l.4-.3h.1l-.3.3-.3.5h-.1v-.1l-1.9 1.2h.2l-1 .7-.3.1-.2.2h-.4l-1.2.8.3.1-.9.4-1.7 3-1.3 1.3-1.9 2-.1-.2-.3.5-3 1.1-1.4 2.4v1.5h-.6l-1.7 3-.2 1-1.5.9-.3.4-.7 1.9v.7l-1.3 2.3h.4l-.6 1.4.1.5-.9 2.4q-.2 0-.3.2l-1.1 2.9h.2l.4-.3.8-2v-.4l.3-.3.7-2 .1-.3.3-.3.2-.2.2-.5.1.3v.6l-.1.4-.2.1-.1-.4-.6 1.4h-.2l-1.3 3.6v.5l.2.5.1.5.4-1 .1-.3-.4 1.5v-.2l-.3.5.1.1q-.9 3-1.6 6.3l3.7-5.8 7.3-11.8.2-.2v.1l.8-.2 1.7-3 .7-.3.9-1v-.8l.6-1.2.2-.6v-.1l.4-.5 1.5-2.1 1.9-1.8.5-.1.8-.6.1-.5q1.8-1.8 2-2.3l-.4.1-.7.7.1-.2.4-.4.1-1 .2-.2.1.2 3-2.9h-.5l.2-.3 1.5-1.4.3-.3.2-.2.4-.3.5-.1 1.8-1.8-.7-.3 1.9-2 1-1.3zm-23.5 46.5.1.1v-.1m41-26.6-1.9.9-3.9 3.4-.3.4-1.5 1.5h-.4l-.7.8h-.1l.4-.6 1.5-1.4h-.2l-.4.1q-1 .8-2.8 2.7l-.5.3-.7.7-2.7 3.3-.4.8.8-1v-.2l.4-.3-.8 1-.3.8h-.1l-.2.3.1-.2v.1l-2.3 3-1 1.5.4-.3-.1.1-2 2.9q-.1.1 0 .1l-.4.6-.6.5-1.2 2-.7 1q.3 0 .4-.2l-.2.3-.6 1 .4-.1-.3.5h.3l-.2.1v.2-.1l-.4.7-.5.5-1.3 2-.6 1 .6-.4.7-.9 1-1 1.5-2.3-.3.6-.7 1 .7-.3.7-1 1-1 2.8-4 .1-.4.4-.3v.2l.3-.5.8-.6 1.6-2 1.3-1 2-2.4.3-.5.4-.4.1-.1 1.6-1.7 1.1-1 .2-.1-.3.3h.2l3.1-2.9-.6.3-2.2 2-.2.2-.2.1.2-.2.2-.2 2.2-2 .2-.4h.1l.1-.2-.2.4.1-.1 3.2-2.8-.7.3-2.1 1.9-.2.3h-.1l.3-.5.5-.4h.1l1.5-1.4.8-1.1-1.4 1.2-.3.1-.2.1.3-.2 2.1-1.8-.5.6.5-.4.2-.2v-.1l.6-.6-1.3.6.7-1-1.4 1.3h-.2l.5-.4h-.2l1.8-1.4-.5.6.5-.4.1-.2.1-.2.6-.5-1.2.5.3-.2-.7.3v-.2l.6-.5-1.1.5.3-.4-.7.6-.4.2-.7.5-.1.1 2.4-2-.5.6.5-.4.1-.2.1-.1zM352 776.9l-.3.4v.3l.1-.2zm-8.5-3.7h-.4l-.2.2-.4.7v.2l-.1.4-.2.1-.2-.1.2-.4h-.4l-.3.5-.3.3v.4l-.2.4v.2l.3-.3-.1.2v.4l-.4.7v.6l-.2.2v.1l-.2.1-.3.6h.5l.1-.2h.3l.1-.2.3-.6v-.8l.5-1.1v-.1l-.4 1v.1l.1.3v.4q.2 0 .2-.3l.2-.1h.4l.5-.3.2-.3v-.4l.1-.1.3-.6v-.2l.2-.6.3-.6v-.1h-.2l-.1.5v.1l-.2.2v.2l-.1-.1v.2-.1.2h-.2v.2l-.2-.1v-.2h.2l.2-.3v.1l.4-1-.2-.2v-.1l-.1.3h-.2l.2-.4zm3.7 5.4-.2.3v.1l.2-.3zm38.7-43q-4 2.1-7.3 4.1l2-2.5h-1.1l-.4.2-.7.7-1.4.6-.4.4-3.1 4v.2l-.7.6v-.4h-.2l-1.1 1.4-.7.6-.2.1-.1-.2q-.2 0-.6.5l-2.3 1-.4.2-2 2.4-.2.4-.2 1h-.2l-.4.3-2.9 3.6-2.1 2.9-.3.3-2.8 3.6.7-.3q0 .3-.2.5l-1.3 1.7-.4.3-.9.5-.2.5v.5l-.7.8-.2.4-.4.4v.5l.1-.1.7-.7-.4.7v1l-.1-.1-.3.2-2.1 2.8h.4l-.3.4-1.6 2.2h-.6l-1.5 2.1.8.2.5-.2.3-.3.3-.1-.5.9v.4h-.2l-.1.2-.6 1-.1.2v.2l-.6.9-.8 1.3.3-.1 1.1-2h.1l.1-.1.1-.2.1-.1v.5h-.2v-.2l-.4.7-.9 1.4v.6l.3-.4.1-.1.2-.1-.5 1v-.4l-.1.2v.2l-.1.2.4-.1q-.8 2.3-.5 2.6v-.1q1.9-1.7 5-5.9l1.1-1.4v.1l.4-.6.4-.5.3-.2-1.3 1.8-.4.7 1.2-.8.1-.2 2-2.9.2-.5 1-1.5.6-.5-.2.5-.8 1.2h.5l1.6-2.4.4-.2.5-.6.3-.7 1.2-1.9.3-.5-.1.1-.5.7v.1l-.2.2.4-.8.3-.9v-.1.3l.1-.1 2.2-3.2-.2.2.5-.9 2.1-1.2.4-.3 2.3-3.3.4-1.3.6-.2 3.5-4.2q.4-.5.3-.9l3-3.3q.2 0 .1.3l4-3.9v-.2l-.9.3-2.5 2.5q-.4.3-.5.8h-.4l-1.4 1.6-.2.1-1.6 1.9-.2-.1-.3.2-.3.4-.4.4.1-.3 1-1.3v.3l2-2.2v.2l4.6-4.7q.3-.4.3-.8l.7-.6v-.3l.6-.6h.4v.2l-.5.4.2.2h.2l.7-.8h.2l.4-.2.1-.2v-.2l.7-.7.1-.2-.3.3v-.2l.2-.4v-.2.2l1.2-1.2.9-1 .3-.2.8-.7-.4-.1h-.2l-.1.2h-.5l-.2.1-1 1v.4l-.4.3v.3l-1.6 1.6 1.3-1.4.1-.2v-.3l.3-.2v-.2z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='324.8 715.6 70.4 86.4'%3E%3Cpath fill='%23000' d='M368.7 725h-.1m-.1.7-.2.1-.1.1v-.2h.2m2.4-1.8-.4.3v.5l-.7.5h.1l.3-.3.2-.2v-.6l-.2.2-.3-.2h-.3l-.3-.2-.2.2v.2h-.2l-.3.3-.1.2-.2.2h-.1l-.3.2.2.1.5-.4h.2v.2l-.1-.1h-.1l-.5.4v.6l.4.2h.3l.3-.2v-.3h.5l-.1.3.2.2.3-.2h.3v-.2l.2-.2v-.2.2-.5l.4-.2v-.2l.1-.1.2-.1h.2l.3-.3-.3-.2zm-12.3 7.1-.2.1-.1.1-.2.1.3-.2zm1.7-.5-2.2 1.3v.2l-.1.2-.1.2-.5.3-.6.4h.1l.2-.4.5-.4q0-.2.2-.3zm10.7 5-.3.3v.1l.2-.3m-13.3 2.3-.4.4-.2.3.4-.4.1-.2zm25 2.1-.3.2v.1l.1-.1v-.1zm-16.4 1.2-.1.4h-.2zm8.4 6.3-.2.4-.2.1-.2.2.1-.2zm8.4 1.3-.1.1h-.1zm-9.3.3q-1.2 1.2-1.3 1.5l1.1-1.1.2-.3zm-22.3 2.8-.2.4h.2v-.4m7.6 0-.4.7.2-.3.1-.2zm12 .4h-.2l-.2.3-.2.2.1-.3zm8.3 2v.1l-.3.3-.2.1.1-.1zm-3 3.2h-.2v.2-.1zm-39.3 1.5-.2.6-.1.5.4-.8zm32.6 1-.8 1v.1l.7-1m-.3 1.2-.1.1-.2.3v-.1zm-9 5-.4.6v.1zm-7.8 1.9-.4.4v.2l-.2.1.3-.4zm7.6-2.2-2.3 3.4 2.2-3.3zm14.5-34.2h-.1l-.4.3-.7.2-1.6 1.4-.1.4-.1.1-.3.3-.2.4-1.2 1.3v-.1l1-1v-.4l.5-.6v-.2l.1-.1.9-1-1 .8-1.9 1.2h-.6l-.3.3q-.5.3-1.1.3l-.5.3-1.6 2.2-.7.6-.1-.2-.6.8-.5.5h-.3l-.2-.2-.4.3h-1l-.3.3h-.5l-.8 1.1h-.4l-.4.3q-.4.4-.5.9-.4.3-.6.8l-.4.2-.2.5.3-.1.2-.4h.3l-.4.4v.5l-.2.3-.2.2-.1.1-.2.2.5-.5-2.2 2.2.2.2-.2.3-.9.8h-1l-.6.2-.6.9.1.4-.3.3-.2.2-.2.2-.5 1v.5l-.6.8h-.3l-.8 1.3.4.2.3-.4 1.1-1.6v-.1l.4-.3.3-.2.2.3-.1.3v.1l-.3-.3-.3.5h-.2l-1 1.5v.6l.1.6-.5 1h-.1l.4-1-.8-.2-.3.4-.6 1.4-.5.2-.4.4v.6l-.1.4-.1.5-.3.4.1.5.3-.5.2-.3-.2.5.2.6v.4h-.2l-1.1 2.2h.4l-.8 1.7-.3.4-.5.4-.7 1.3h.9q-2 5.2-1.4 5.5 1.1-1.2 2.8-3.6l4.5-6.5h.3l.3-.6 1.3-2 .2-.4 1.2-1.8h.4l.1.5-.6.8.2.5h.6l1.2-1.7.4-.4.8-.6v-.5l.6-.8.1-.5.4-.4v-.5h-.1l-.3.5-.4.3.3-.5.1-.5-.1-.6.1-.1h.3l1.7-2.5-.2-.4.9-1.3.3-.3v-.3q.4-.4 1-.6l.4-.7.6-.6v-.6l.7-.8.2-.4.3-.4v-.4l.5-.5.7-.8.2.2 1.8-1.8h-.6l-.3.3-.7.7v-.2l.5-.6.3-.3.9-1.3-.1.4-.5.6.2.1h.2l1-1.3.3-.2.3-.3.1-.1.1-.4.8-.9.2-.3h-.1l-.4.5h-.1l.3-.3.1-.6.1-.1v.1h.1l1.6-1.6h-.2l.1-.1 1-.9h.1v-.1l.2-.2h.1l.4-.2.8-.7.3-.3zm-7.9-4.7-1 .6h-1l-1.6 1h-.1l-.1.3-.9.5h-.4v-.2l.8-.4-.2-.2h-.2l-1.2.7-.2.1h-.2q-.1.2-.3.2h-.2q0 .3-.3.4l-.5.3-.1.2-.4.2v.1l.4-.3h.1l-.3.3-.3.5h-.1v-.1l-1.9 1.2h.2l-1 .7-.3.1-.2.2h-.4l-1.2.8.3.1-.9.4-1.7 3-1.3 1.3-1.9 2-.1-.2-.3.5-3 1.1-1.4 2.4v1.5h-.6l-1.7 3-.2 1-1.5.9-.3.4-.7 1.9v.7l-1.3 2.3h.4l-.6 1.4.1.5-.9 2.4q-.2 0-.3.2l-1.1 2.9h.2l.4-.3.8-2v-.4l.3-.3.7-2 .1-.3.3-.3.2-.2.2-.5.1.3v.6l-.1.4-.2.1-.1-.4-.6 1.4h-.2l-1.3 3.6v.5l.2.5.1.5.4-1 .1-.3-.4 1.5v-.2l-.3.5.1.1q-.9 3-1.6 6.3l3.7-5.8 7.3-11.8.2-.2v.1l.8-.2 1.7-3 .7-.3.9-1v-.8l.6-1.2.2-.6v-.1l.4-.5 1.5-2.1 1.9-1.8.5-.1.8-.6.1-.5q1.8-1.8 2-2.3l-.4.1-.7.7.1-.2.4-.4.1-1 .2-.2.1.2 3-2.9h-.5l.2-.3 1.5-1.4.3-.3.2-.2.4-.3.5-.1 1.8-1.8-.7-.3 1.9-2 1-1.3zm-23.5 46.5.1.1v-.1m41-26.6-1.9.9-3.9 3.4-.3.4-1.5 1.5h-.4l-.7.8h-.1l.4-.6 1.5-1.4h-.2l-.4.1q-1 .8-2.8 2.7l-.5.3-.7.7-2.7 3.3-.4.8.8-1v-.2l.4-.3-.8 1-.3.8h-.1l-.2.3.1-.2v.1l-2.3 3-1 1.5.4-.3-.1.1-2 2.9q-.1.1 0 .1l-.4.6-.6.5-1.2 2-.7 1q.3 0 .4-.2l-.2.3-.6 1 .4-.1-.3.5h.3l-.2.1v.2-.1l-.4.7-.5.5-1.3 2-.6 1 .6-.4.7-.9 1-1 1.5-2.3-.3.6-.7 1 .7-.3.7-1 1-1 2.8-4 .1-.4.4-.3v.2l.3-.5.8-.6 1.6-2 1.3-1 2-2.4.3-.5.4-.4.1-.1 1.6-1.7 1.1-1 .2-.1-.3.3h.2l3.1-2.9-.6.3-2.2 2-.2.2-.2.1.2-.2.2-.2 2.2-2 .2-.4h.1l.1-.2-.2.4.1-.1 3.2-2.8-.7.3-2.1 1.9-.2.3h-.1l.3-.5.5-.4h.1l1.5-1.4.8-1.1-1.4 1.2-.3.1-.2.1.3-.2 2.1-1.8-.5.6.5-.4.2-.2v-.1l.6-.6-1.3.6.7-1-1.4 1.3h-.2l.5-.4h-.2l1.8-1.4-.5.6.5-.4.1-.2.1-.2.6-.5-1.2.5.3-.2-.7.3v-.2l.6-.5-1.1.5.3-.4-.7.6-.4.2-.7.5-.1.1 2.4-2-.5.6.5-.4.1-.2.1-.1zM352 776.9l-.3.4v.3l.1-.2zm-8.5-3.7h-.4l-.2.2-.4.7v.2l-.1.4-.2.1-.2-.1.2-.4h-.4l-.3.5-.3.3v.4l-.2.4v.2l.3-.3-.1.2v.4l-.4.7v.6l-.2.2v.1l-.2.1-.3.6h.5l.1-.2h.3l.1-.2.3-.6v-.8l.5-1.1v-.1l-.4 1v.1l.1.3v.4q.2 0 .2-.3l.2-.1h.4l.5-.3.2-.3v-.4l.1-.1.3-.6v-.2l.2-.6.3-.6v-.1h-.2l-.1.5v.1l-.2.2v.2l-.1-.1v.2-.1.2h-.2v.2l-.2-.1v-.2h.2l.2-.3v.1l.4-1-.2-.2v-.1l-.1.3h-.2l.2-.4zm3.7 5.4-.2.3v.1l.2-.3zm38.7-43q-4 2.1-7.3 4.1l2-2.5h-1.1l-.4.2-.7.7-1.4.6-.4.4-3.1 4v.2l-.7.6v-.4h-.2l-1.1 1.4-.7.6-.2.1-.1-.2q-.2 0-.6.5l-2.3 1-.4.2-2 2.4-.2.4-.2 1h-.2l-.4.3-2.9 3.6-2.1 2.9-.3.3-2.8 3.6.7-.3q0 .3-.2.5l-1.3 1.7-.4.3-.9.5-.2.5v.5l-.7.8-.2.4-.4.4v.5l.1-.1.7-.7-.4.7v1l-.1-.1-.3.2-2.1 2.8h.4l-.3.4-1.6 2.2h-.6l-1.5 2.1.8.2.5-.2.3-.3.3-.1-.5.9v.4h-.2l-.1.2-.6 1-.1.2v.2l-.6.9-.8 1.3.3-.1 1.1-2h.1l.1-.1.1-.2.1-.1v.5h-.2v-.2l-.4.7-.9 1.4v.6l.3-.4.1-.1.2-.1-.5 1v-.4l-.1.2v.2l-.1.2.4-.1q-.8 2.3-.5 2.6v-.1q1.9-1.7 5-5.9l1.1-1.4v.1l.4-.6.4-.5.3-.2-1.3 1.8-.4.7 1.2-.8.1-.2 2-2.9.2-.5 1-1.5.6-.5-.2.5-.8 1.2h.5l1.6-2.4.4-.2.5-.6.3-.7 1.2-1.9.3-.5-.1.1-.5.7v.1l-.2.2.4-.8.3-.9v-.1.3l.1-.1 2.2-3.2-.2.2.5-.9 2.1-1.2.4-.3 2.3-3.3.4-1.3.6-.2 3.5-4.2q.4-.5.3-.9l3-3.3q.2 0 .1.3l4-3.9v-.2l-.9.3-2.5 2.5q-.4.3-.5.8h-.4l-1.4 1.6-.2.1-1.6 1.9-.2-.1-.3.2-.3.4-.4.4.1-.3 1-1.3v.3l2-2.2v.2l4.6-4.7q.3-.4.3-.8l.7-.6v-.3l.6-.6h.4v.2l-.5.4.2.2h.2l.7-.8h.2l.4-.2.1-.2v-.2l.7-.7.1-.2-.3.3v-.2l.2-.4v-.2.2l1.2-1.2.9-1 .3-.2.8-.7-.4-.1h-.2l-.1.2h-.5l-.2.1-1 1v.4l-.4.3v.3l-1.6 1.6 1.3-1.4.1-.2v-.3l.3-.2v-.2z'/%3E%3C/svg%3E");
+    background-color: var(--color-primary);
+    opacity: 1;
+    transform: scale(1.15) scaleX(-1); /* Pop and Flip! */
+    animation: none; /* Kills the breathing animation */
+}
+
+/* Scale down slightly when actively tapped */
+.todo-checkbox:active { transform: scale(0.85); }
+
+/* Text Done States */
+.todo-item.done { opacity: 0.65; }
+.kanban-task.done { opacity: 0.65; text-decoration: none !important; }
+.todo-item.done .todo-text, .kanban-task.done .todo-text { color: var(--color-primary); opacity: 0.8; text-decoration: line-through; }
+
+/* --- D. MOBILE LIST VIEW --- */
+#todoSwipeContainer { min-height: calc(100vh - 200px); padding-bottom: 120px; overflow-y: auto; }
+.todo-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.todo-item { border-radius: var(--pad-md); padding: var(--pad-md); display: flex; align-items: center; gap: var(--pad-md); transition: background-color 0.2s ease; user-select: none; background: var(--color-glass-tint); backdrop-filter: var(--blur-glass); -webkit-backdrop-filter: var(--blur-glass); border: 1px solid var(--color-glass-border); }
+
+/* --- E. DESKTOP KANBAN VIEW --- */
+@media (min-width: 768px) {
+    #mobileTodoView { display: none !important; }
+    
+    #desktopTodoView { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: var(--pad-xl); align-items: start; min-height: 60vh; padding-bottom: 120px; }
+    
+    /* Columns & Headers */
+    .kanban-column { background: var(--color-glass-bg) !important; backdrop-filter: var(--blur-glass) !important; -webkit-backdrop-filter: var(--blur-glass) !important; border: 1px solid var(--color-glass-border) !important; border-radius: var(--rad-lg) !important; display: flex; flex-direction: column; min-height: 500px; overflow: hidden; box-shadow: var(--shadow-sm); padding-bottom: var(--pad-md); }
+    .kanban-header { padding: var(--pad-md) var(--pad-lg); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--color-glass-border); font-size: 0.95rem; background: rgba(0, 0, 0, 0.2); }
+    .kanban-column[data-status="todo"] .kanban-header { color: color-mix(in srgb, var(--color-primary) 30%, var(--color-text-muted)); }
+    .kanban-column[data-status="in-progress"] .kanban-header { color: color-mix(in srgb, var(--color-primary) 70%, var(--color-text)); }
+    .kanban-column[data-status="done"] .kanban-header { color: var(--color-primary); }
+
+    /* Dropzones & Subjects */
+    .kanban-dropzone { flex: 1; padding: var(--pad-lg) var(--pad-md) var(--pad-md) var(--pad-md) !important; display: flex !important; flex-direction: column !important; gap: 12px !important; overflow-y: auto; overflow-y: auto; }
+    .kanban-subject-header { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin: 15px 0 5px 5px; padding-bottom: 3px; border-bottom: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent); }
+    .kanban-subject-header[data-subject-id="null"]:first-child { margin-top: 5px; }
+
+    /* Task Cards */
+    .kanban-task { display: flex !important; align-items: center !important; gap: var(--pad-md) !important; background: var(--color-glass-tint) !important; backdrop-filter: var(--blur-glass) !important; -webkit-backdrop-filter: var(--blur-glass) !important; border: 1px solid var(--color-glass-border) !important; border-radius: var(--rad-md) !important; padding: var(--pad-md) !important; margin: 0 !important; cursor: grab; user-select: none; transition: background-color 0.2s ease, transform 0.2s ease; }
+    .kanban-task:active { cursor: grabbing; transform: scale(0.98); }
+    .kanban-task.in-progress { border-left: 3px solid color-mix(in srgb, var(--color-primary) 70%, var(--color-text)) !important; }
+    .kanban-task .todo-text { flex: 1; font-size: 0.95rem; line-height: 1.3; word-break: break-word; }
+
+    /* HTML5 Drag States */
+    .kanban-task.is-dragging { opacity: 0.2 !important; border: 2px dashed var(--color-glass-border) !important; background: transparent !important; box-shadow: none !important; }
+    
+    /* Inter-container Drag Matrix UX */
+    .kanban-column.inter-drag-target { border-color: var(--color-primary) !important; box-shadow: inset 0 0 0 1px var(--color-primary), 0 0 25px color-mix(in srgb, var(--color-primary) 15%, transparent) !important; }
+    .kanban-column.inter-drag-target .kanban-dropzone > *:not(.is-dragging) { filter: blur(4px); opacity: 0.4; transition: filter 0.2s ease, opacity 0.2s ease; pointer-events: none; }
+    .kanban-column.inter-drag-target .is-dragging { opacity: 0 !important; height: 0 !important; padding: 0 !important; margin: 0 !important; border: none !important; overflow: hidden !important; }
+    .kanban-dropzone > * { transition: filter 0.2s ease, opacity 0.2s ease; }
+}
+
+/* =================================================================
+   TODO SHIFT TOMORROW (Floating Edit Pop-up)
+================================================================= */
+.shift-tomorrow-popup {
+    position: absolute !important;
+    top: -45px; /* Floats perfectly above the task container */
+    right: 0;
+    z-index: 99999;
+    padding: 6px 14px !important;
+    font-size: 0.75rem !important;
+    white-space: nowrap;
+    box-shadow: var(--shadow-lg) !important;
+    
+    /* Pop-in animation when entering edit mode */
+    animation: popupSpring 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popupSpring {
+    0% { opacity: 0; transform: translateY(10px) scale(0.8); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* =================================================================
+   TODO SHIFT TOMORROW (Z-Index, Anchors & Animations)
+================================================================= */
+/* 1. Elevates the task so the popup overlaps siblings below it */
+.todo-item.is-editing, .kanban-task.is-editing {
+    z-index: 100 !important;
+    position: relative !important;
+    margin-bottom: 20px !important; 
+}
+
+/* 2. Anchors the popup to the task, and slides it out from behind */
+.shift-tomorrow-popup {
+    position: absolute !important;
+    top: calc(100% + 2px) !important; /* Drops cleanly below the container */
+    left: 50% !important;
+    z-index: -1 !important; /* Forces it to tuck BEHIND the blurred task card */
+    
+    background: var(--color-glass-bg) !important;
+    backdrop-filter: var(--blur-glass) !important;
+    -webkit-backdrop-filter: var(--blur-glass) !important;
+    border: 1px solid var(--color-primary) !important;
+    color: var(--color-primary) !important;
+    border-radius: var(--rad-pill) !important;
+    
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 6px 16px !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    white-space: nowrap;
+    
+    box-shadow: var(--shadow-md) !important;
+    animation: popupSpringDown 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+}
+
+/* 3. The Slide-Up Exit Animation */
+.shift-tomorrow-popup.closing {
+    animation: popupSpringUp 0.25s cubic-bezier(0.175, 0.885, 0.32, 1) forwards !important;
+}
+
+@keyframes popupSpringDown {
+    0% { opacity: 0; transform: translate(-50%, -20px) scale(0.8); }
+    100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+@keyframes popupSpringUp {
+    0% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -20px) scale(0.8); }
+}
+
+/* =================================================================
+   GLOBAL TOAST NOTIFICATION (For Copy Actions)
+================================================================= */
+#global-toast {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -150%);
+    background: var(--color-glass-bg);
+    backdrop-filter: var(--blur-heavy);
+    -webkit-backdrop-filter: var(--blur-heavy);
+    border: 1px solid var(--color-primary);
+    color: var(--color-text);
+    padding: 12px 30px;
+    border-radius: 0 0 var(--rad-md) var(--rad-md);
+    font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    box-shadow: var(--shadow-lg);
+    z-index: 999999;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none;
+    text-align: center;
+    line-height: 1.4;
+    width: 90%;
+    max-width: 400px;
+}
+
+#global-toast.show {
+    transform: translate(-50%, 0);
+}
+
+/* =================================================================
+   MONTH PICKER MODAL GRID
+================================================================= */
+.month-grid-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--color-glass-border);
+    color: var(--color-text);
+    padding: 12px 0;
+    border-radius: var(--rad-sm);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+.month-grid-btn:active { transform: scale(0.92); }
+.month-grid-btn.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-bg);
+    font-weight: 800;
+    transform: scale(1.05);
+    box-shadow: var(--shadow-sm);
+}
+
+.month-grid-btn:active { transform: scale(0.92); }
+
+/* NEW: Hollow accent ring for the real-world current month */
+.month-grid-btn.current-month {
+    border: 2px solid var(--color-primary);
+    color: var(--color-primary);
+    font-weight: 800;
+}
+
+.month-grid-btn.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-bg);
+    font-weight: 800;
+    transform: scale(1.05);
+    box-shadow: var(--shadow-sm);
+}
+
+/* =================================================================
+   17. INLINE EDIT "DONE" BUTTON (MOBILE & PC)
+================================================================= */
+.mobile-edit-done-btn {
+    position: fixed;
+    bottom: calc(15px + var(--safe-bottom));
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    
+    /* Colors requested */
+    background: var(--color-primary) !important;
+    color: var(--color-text) !important;
+    
+    border: none;
+    padding: 12px 35px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    border-radius: var(--rad-pill);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    box-shadow: var(--shadow-lg);
+    
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease;
+    will-change: transform, opacity;
+}
+
+/* Pops up when active */
+.mobile-edit-done-btn.active {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.mobile-edit-done-btn:active {
+    transform: translateX(-50%) scale(0.95);
+    transition: transform 0.1s ease;
+}
+
+/* 1. The Buttery Smooth Done Pill Transition */
+.mobile-edit-done-btn {
+    position: fixed;
+    bottom: calc(20px + var(--safe-bottom));
+    left: 50%;
+    transform: translate(-50%, 150px); /* Starts completely off-screen */
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    
+    background: var(--color-primary) !important;
+    color: var(--color-text) !important;
+    
+    border: none;
+    padding: 12px 35px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    border-radius: var(--rad-pill);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    box-shadow: var(--shadow-lg);
+    
+    /* Upgraded bezier curve for a native "spring" slide-up effect */
+    transition: transform 0.4s cubic-bezier(0.34, 1.15, 0.64, 1), opacity 0.3s ease;
+    will-change: transform, opacity;
+}
+
+.mobile-edit-done-btn.active {
+    transform: translate(-50%, 0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 2. Extra breathing room below the task being edited */
+.todo-item.is-editing, .kanban-task.is-editing {
+    z-index: 100 !important;
+    position: relative !important;
+    margin-bottom: 50px !important; /* Increased to prevent overlapping the Tomorrow pill */
+}
+
+/* =================================================================
+   18. HOME DASHBOARD GRID UPDATE
+================================================================= */
+.home-col-left { display: flex; flex-direction: column; gap: var(--pad-md); }
+
+/* Lock max-height on mobile (roughly the height of the 2 widgets) */
+#homeHabitWidget { display: flex; flex-direction: column; max-height: 280px; }
+
+/* The magic 'min-height: 0' allows the flexbox to shrink and scroll instead of stretching the screen */
+.home-habit-list { flex: 1; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 5px; min-height: 0; }
+
+/* Desktop Asymmetrical Split */
+@media (min-width: 768px) {
+    /* align-items: stretch forces both columns to be exactly the same height */
+    .home-grid { grid-template-columns: 1fr 1fr; align-items: stretch; }
+    #focusModeWidget { grid-column: span 2; }
+    .home-col-left { height: 100%; }
+    
+    /* Lock the Habit list to exactly match the left column's natural height */
+    #homeHabitWidget { grid-column: 2; grid-row: 1; height: 100%; max-height: 100%; min-height: 0; }
+}
+
+/* Home Habit Checklist Items */
+.home-habit-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: rgba(255,255,255,0.03); border-radius: var(--rad-sm); border: 1px solid var(--color-glass-border); cursor: pointer; transition: background 0.2s; }
+.home-habit-item:active { transform: scale(0.98); }
+.home-habit-item.done { opacity: 0.5; }
+.home-habit-item.done .habit-name { text-decoration: line-through; color: var(--color-primary); }
+/* =================================================================
+   19. MOMENTUM (HABITS) TAB STYLES
+================================================================= */
+.habit-cards-wrapper { display: flex; flex-direction: column; gap: 15px; }
+.archived-header { display: flex; align-items: center; justify-content: space-between; padding: 15px 5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted); cursor: pointer; margin-top: 20px; border-top: 1px solid var(--color-glass-border); }
+.archived-header.hidden { display: none; }
+
+/* Habit Bento Card Redesign */
+.habit-card { position: relative; background: var(--color-glass-bg); backdrop-filter: var(--blur-glass); border: 1px solid var(--color-glass-border); border-radius: var(--rad-lg); padding: var(--pad-xl) var(--pad-lg); display: flex; flex-direction: column; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+.habit-card:active { transform: scale(0.97); }
+.habit-card.active-selection { border-color: var(--color-primary); box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 15%, transparent); }
+
+/* Left-Aligned Layout */
+.habit-card .bento-title { font-size: clamp(1.1rem, 4vw, 1.4rem); text-align: left; margin-bottom: 8px; color: var(--color-text); font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 45px; line-height: 1.2; }
+.habit-header-row { display: flex; justify-content: flex-start; align-items: center; margin-bottom: 10px; position: relative; width: 100%; }
+.habit-streak-display { display: flex; flex-direction: row; align-items: baseline; gap: 8px; }
+.habit-streak-num { font-size: 3.2rem; font-weight: 800; line-height: 1; color: var(--color-primary); }
+.habit-streak-label { font-size: 0.95rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+/* Absolute Right Checkbox */
+.habit-card .todo-checkbox { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; }
+
+/* Weekly Dots Tracker (NEET OS Style) */
+.weekly-dots { display: flex; justify-content: flex-start; gap: 6px; margin-top: 5px; }
+.streak-dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.15); transition: background 0.3s ease, box-shadow 0.3s ease; }
+.streak-dot.filled { background: var(--color-primary); box-shadow: 0 0 8px var(--color-primary); }
+
+/* Hybrid Detail Layout Classes */
+.habit-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+.stat-box { background: rgba(0,0,0,0.2); padding: 12px 5px; border-radius: var(--rad-md); text-align: center; border: 1px solid var(--color-glass-border); }
+.stat-box .stat-label { font-size: 0.65rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-weight: 700; }
+.stat-box .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--color-text); }
+.habit-calendar-wrapper { padding: 15px; background: rgba(0,0,0,0.2); border-radius: var(--rad-md); border: 1px solid var(--color-glass-border); }
+
+.desktop-only { display: none !important; }
+
+@media (min-width: 768px) {
+    /* 1.3fr to 1fr ratio makes the left grid slightly wider than the details pane! */
+    .momentum-layout { display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--pad-xl); align-items: start; height: auto; }
+    
+    /* 2 by N Grid for Active Habits */
+    .desktop-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--pad-md); }
+    
+    /* 3 by N Grid for Hall of Fame */
+    .desktop-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--pad-md); }
+    
+    #tab-momentum.active .desktop-only { 
+        display: flex !important; 
+        flex-direction: column; 
+        position: sticky; 
+        top: 0; 
+        padding: var(--pad-xl); 
+    }
+}
+
+/* Hide desktop pane completely if no habits exist */
+.momentum-desktop-pane.empty-state { opacity: 0 !important; pointer-events: none !important; }
+
+/* =================================================================
+   CUSTOM GLASS SCROLLBARS (Webkit + Firefox)
+   ================================================================= */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Firefox Fallback */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+/* =================================================================
+   GLOBAL ALERTS OVERRIDE (Nuclear Z-Index Fix)
+   ================================================================= */
+/* 1. Force the Linked Devices Modal to stay at a reasonable level */
+#linkedDevicesModalOverlay {
+    z-index: 9000 !important;
+}
+
+/* 2. Force the AppAlert to the absolute maximum layer */
+.app-alert-overlay, 
+#appAlertOverlay, 
+#customAlertOverlay,
+[class*="alert-overlay"],
+[id*="alertOverlay"] {
+    z-index: 999999 !important; /* Six nines guarantees it wins */
+}
+
+/* =================================================================
+   SMART BUTTON TRANSITIONS
+================================================================= */
+.dynamic-add-text {
+    display: inline-block;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    white-space: pre; /* Preserves the space after the ampersand */
+    vertical-align: bottom;
+    transition: max-width 0.4s cubic-bezier(0.34, 1.15, 0.64, 1), opacity 0.3s ease;
+}
+
+.dynamic-add-text.show {
+    max-width: 60px; /* Just enough room to reveal "Add & " */
+    opacity: 1;
+}
+
+/* --- Favicon Paw Glow Animation --- */
+@keyframes softPawGlow {
+    0% { filter: drop-shadow(0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent)); }
+    50% { filter: drop-shadow(0 0 10px color-mix(in srgb, var(--color-primary) 80%, transparent)); }
+    100% { filter: drop-shadow(0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent)); }
+}
+
+.glow-paw {
+    animation: softPawGlow 3s ease-in-out infinite;
+    transform-origin: center;
+}
+/* --- Favicon Paw Breathing Glow --- */
+@keyframes softPawGlow {
+    0% { 
+        filter: drop-shadow(0 0 2px var(--color-primary)); 
+        transform: scale(1); 
+        opacity: 0.85; 
+    }
+    50% { 
+        filter: drop-shadow(0 0 12px var(--color-primary)); 
+        transform: scale(1.03); 
+        opacity: 1; 
+    }
+    100% { 
+        filter: drop-shadow(0 0 2px var(--color-primary)); 
+        transform: scale(1); 
+        opacity: 0.85; 
+    }
+}
+
+.glow-paw {
+    animation: softPawGlow 2.5s ease-in-out infinite;
+    transform-origin: 70% 80%; /* Anchors the scale to where the paw actually is */
+}
+
+/* =================================================================
+   MATERIAL 3 DATE PICKER
+   ================================================================= */
+.m3-datepicker-panel {
+    width: 90vw;
+    max-width: 360px;
+    background-color: var(--color-bg);
+    border-radius: 28px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--color-glass-border);
+}
+
+.m3-dp-header {
+    padding: 24px 24px 16px 24px;
+    border-bottom: 1px solid var(--color-glass-border);
+}
+
+.m3-dp-label {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.m3-dp-selected-text {
+    font-size: 2rem;
+    font-weight: 400;
+    color: var(--color-text);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.m3-dp-body {
+    padding: 16px 24px;
+}
+
+.m3-dp-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.m3-dp-month-year {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--color-text);
+}
+
+.m3-icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--color-text);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.m3-icon-btn:active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.m3-dp-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.m3-dp-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    row-gap: 4px;
+}
+
+.m3-day-cell {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    color: var(--color-text);
+    cursor: pointer;
+    border-radius: 50%;
+    position: relative;
+    user-select: none;
+}
+
+.m3-day-cell:hover:not(.empty) {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.m3-day-cell.selected {
+    background-color: var(--color-primary);
+    color: var(--color-bg);
+    font-weight: bold;
+}
+
+.m3-day-cell.today:not(.selected) {
+    border: 1px solid var(--color-primary);
+    color: var(--color-primary);
+}
+
+.m3-day-cell.empty {
+    cursor: default;
+}
+
+.m3-dp-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 8px 24px 16px 24px;
+}
+
+.m3-text-btn {
+    background: transparent;
+    border: none;
+    color: var(--color-text);
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.m3-text-btn.primary-text {
+    color: var(--color-primary);
+}
+
+.m3-text-btn:active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* --- Date Picker Drill-Down & Swipe Additions --- */
+.m3-dp-month-year {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--color-text);
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: background 0.2s;
+    user-select: none;
+}
+
+.m3-dp-month-year:hover, .m3-dp-month-year:active {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.m3-dp-view {
+    display: none;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.m3-dp-view.active {
+    display: block;
+}
+
+.m3-dp-grid-3x4 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 10px 0;
+}
+
+.m3-drill-cell {
+    padding: 14px 4px;
+    text-align: center;
+    border-radius: 100px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--color-text);
+    transition: background 0.2s;
+    user-select: none;
+}
+
+.m3-drill-cell:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.m3-drill-cell.selected {
+    background-color: var(--color-primary);
+    color: var(--color-bg);
+    font-weight: bold;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
 }

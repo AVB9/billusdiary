@@ -28,6 +28,7 @@ dist-ssr
 .env.local
 .env.*.local
 
-# Agent files
-.agents/
-skills-lock.json
+# Firebase
+.firebase/
+firebase-debug.log*
+.firebaserc

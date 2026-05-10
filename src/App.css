@@ -1,24 +1,888 @@
 .app-container {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  min-height: 100vh;
   width: 100%;
+  position: relative;
+  background: #0a0a0a;
+  color: #ffffff;
+  font-family: 'Nova Flat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-.dashboard-header {
+.app-preloader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 1;
+  transition: opacity 0.8s ease;
+}
+
+.app-preloader.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.preloader-content {
+  text-align: center;
+}
+
+.main-content {
+  padding: 20px;
+  padding-bottom: 120px;
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(15px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 20px));
+  display: flex;
+  justify-content: space-around;
+  z-index: 100;
+}
+
+.bottom-pill-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #888888;
+  padding: 10px 15px;
+  border-radius: 25px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.bottom-pill-btn.active {
+  background: #ff3b3b;
+  color: #ffffff;
+  border-color: #ff3b3b;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Home Tab Styles */
+.home-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.greeting-text h1 {
+  font-size: 2rem;
+  margin: 10px 0;
+}
+
+.greeting-text p {
+  color: #888888;
+  transition: opacity 0.5s ease;
+}
+
+.goal-widget {
+  background: rgba(30, 30, 30, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.goal-display p:first-child {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.goal-display p:last-child {
+  color: #ff3b3b;
+  font-weight: bold;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: rgba(30, 30, 30, 0.95);
+  border-radius: 12px;
+  padding: 20px;
+  width: 90%;
+  max-width: 400px;
+}
+
+.modal h2 {
+  margin-top: 0;
+}
+
+.modal input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #ffffff;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.modal-buttons button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+#saveGoalBtn {
+  background: #ff3b3b;
+  color: #ffffff;
+}
+
+#closeGoalModalBtn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+/* Todo Tab Styles */
+.todo-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 3rem;
-  border-bottom: 1px solid var(--glass-border);
-  padding-bottom: 1rem;
+  margin-bottom: 20px;
 }
 
-.status-badge {
-  font-size: 0.8rem;
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
-  background: rgba(126, 82, 107, 0.05);
-  border: 1px solid var(--glass-border);
-  color: var(--accent-color);
+.todo-header button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.todo-header h2 {
+  cursor: pointer;
+  margin: 0;
+}
+
+.todo-input {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.todo-input input {
+  flex: 1;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #ffffff;
+  margin-right: 10px;
+}
+
+.todo-input button {
+  padding: 10px 20px;
+  background: #ff3b3b;
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.todo-lists {
+  display: flex;
+  gap: 20px;
+}
+
+.todo-column {
+  flex: 1;
+  background: rgba(30, 30, 30, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 15px;
+}
+
+.todo-column h3 {
+  margin-top: 0;
+  color: #ff3b3b;
+}
+
+.todo-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.todo-item.done {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
+.todo-item button {
+  background: transparent;
+  border: none;
+  color: #ff5252;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+/* Planner Tab Styles */
+.planner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.planner-header button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.planner-header h2 {
+  margin: 0;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.weekday-header {
+  text-align: center;
+  padding: 10px;
+  font-weight: bold;
+  color: #888888;
+  font-size: 14px;
+}
+
+.day-cell {
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.day-cell:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.day-cell.empty {
+  background: transparent;
+  border: none;
+  cursor: default;
+}
+
+.day-cell.today {
+  border-color: #ff3b3b;
+  background: rgba(255, 59, 59, 0.1);
+}
+
+.day-cell.completed {
+  background: rgba(31, 204, 97, 0.1);
+  border-color: rgba(31, 204, 97, 0.3);
+}
+
+.day-cell.overdue {
+  background: rgba(255, 82, 82, 0.1);
+  border-color: rgba(255, 82, 82, 0.3);
+}
+
+.day-cell.has-task {
+  background: rgba(30, 30, 30, 0.45);
+}
+
+.date-num {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.task-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.subject-tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  border: 1px solid;
+  align-self: flex-start;
+}
+
+.task-topic {
+  font-size: 12px;
+  line-height: 1.2;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.planner-modal {
+  width: 90%;
+  max-width: 400px;
+}
+
+.planner-modal h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.modal-section {
+  margin-bottom: 15px;
+}
+
+.modal-section label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.modal-section input,
+.modal-section select {
+  width: 100%;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #ffffff;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.modal-buttons button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.modal-buttons button:first-child {
+  background: #ff3b3b;
+  color: #ffffff;
+}
+
+.modal-buttons .delete-btn {
+  background: #ff5252;
+  color: #ffffff;
+}
+
+.modal-buttons button:last-child {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+/* Momentum Tab Styles */
+.momentum-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.add-habit-btn {
+  background: #ff3b3b;
+  color: #ffffff;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.habits-section {
+  margin-bottom: 30px;
+}
+
+.habits-section h3 {
+  margin-bottom: 15px;
+  color: #ff3b3b;
+}
+
+.empty-state {
+  color: #888888;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+.habits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.habit-item {
+  background: rgba(30, 30, 30, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.habit-item.archived {
+  opacity: 0.6;
+}
+
+.habit-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.habit-name {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.habit-streak {
+  font-size: 14px;
+  color: #ff3b3b;
+}
+
+.habit-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.habit-actions button {
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: #ffffff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.habit-actions .delete-btn {
+  background: #ff5252;
+  border-color: #ff5252;
+}
+
+.habit-calendar-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.modal-header h2 {
+  margin: 0;
+}
+
+.modal-header button {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+}
+
+.calendar-header h3 {
+  margin: 0;
+}
+
+.calendar-header button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.habit-calendar-modal .calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding: 20px;
+  flex: 1;
+}
+
+.habit-calendar-modal .weekday-header {
+  text-align: center;
+  padding: 10px;
+  font-weight: bold;
+  color: #888888;
+  font-size: 12px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.calendar-day.other-month {
+  opacity: 0.3;
+}
+
+.calendar-day.completed {
+  background: rgba(31, 204, 97, 0.2);
+  border-color: rgba(31, 204, 97, 0.5);
+}
+
+.calendar-day.today {
+  border-color: #ff3b3b;
+  background: rgba(255, 59, 59, 0.1);
+}
+
+.calendar-day.future {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.completion-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  background: #1fcc61;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 6px;
+  color: #ffffff;
+}
+
+.habit-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 12px;
+  color: #888888;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  display: block;
+  font-size: 18px;
+  font-weight: bold;
+  color: #ff3b3b;
+}
+
+/* Settings Tab Styles */
+.settings-section {
+  margin-bottom: 30px;
+  background: rgba(30, 30, 30, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.settings-section h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #ff3b3b;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.setting-item label {
+  min-width: 120px;
+  font-weight: bold;
+}
+
+.setting-item input[type="text"] {
+  flex: 1;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: #ffffff;
+}
+
+.setting-item input[type="color"] {
+  width: 50px;
+  height: 40px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.setting-item button {
+  padding: 8px 16px;
+  background: #ff3b3b;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.2);
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggle input:checked + .toggle-slider {
+  background-color: #ff3b3b;
+}
+
+.toggle input:checked + .toggle-slider:before {
+  transform: translateX(26px);
+}
+
+.export-btn {
+  background: #1fcc61 !important;
+}
+
+.reset-btn {
+  background: #ff5252 !important;
+}
+
+.export-modal {
+  width: 90%;
+  max-width: 500px;
+}
+
+.export-modal p {
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+/* Home Widgets */
+.home-widget {
+  background: rgba(30, 30, 30, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.home-widget h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #ff3b3b;
+  font-size: 18px;
+}
+
+.home-habit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.home-habit-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.home-habit-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.home-habit-item.done {
+  background: rgba(31, 204, 97, 0.1);
+  border-left: 4px solid #1fcc61;
+}
+
+.habit-name {
+  font-weight: 600;
+}
+
+.todo-checkbox {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.todo-checkbox.done {
+  background: #1fcc61;
+  border-color: #1fcc61;
+}
+
+.checkbox-svg {
+  width: 16px;
+  height: 16px;
+  stroke: #ffffff;
+  stroke-width: 3;
+  fill: none;
+}
+
+.dash-line {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  transition: stroke-dashoffset 0.2s ease;
+}
+
+.todo-checkbox.done .dash-line {
+  stroke-dashoffset: 0;
+}
+
+.tick-path {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  transition: stroke-dashoffset 0.3s ease;
+}
+
+.todo-checkbox.done .tick-path {
+  stroke-dashoffset: 0;
+}
+
+.planner-task {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.planner-task:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.planner-task.completed {
+  background: rgba(31, 204, 97, 0.1);
+  border-left: 4px solid #1fcc61;
+}
+
+.task-topic {
+  font-weight: 600;
+  flex: 1;
 }

@@ -1,35 +1,39 @@
-import React, { useEffect, useState } from 'react';
-import { db } from './services/firebase';
-import './App.css';
+import React, { useState } from 'react';
+import BottomNav from './components/BottomNav';
+import HomeTab from './tabs/Home/HomeTab';
 
-function App() {
-  const [dbStatus, setDbStatus] = useState('Checking connection...');
+const APP_TABS = [
+    { id: 'momentum', component: <div className="app-tab" style={{ padding: '20px', color: 'var(--color-text)' }}>Momentum Placeholder</div> },
+    { id: 'planner', component: <div className="app-tab" style={{ padding: '20px', color: 'var(--color-text)' }}>Planner Placeholder</div> },
+    { id: 'home', component: <HomeTab /> },
+    { id: 'todo', component: <div className="app-tab" style={{ padding: '20px', color: 'var(--color-text)' }}>Todo Placeholder</div> },
+    { id: 'settings', component: <div className="app-tab" style={{ padding: '20px', color: 'var(--color-text)' }}>Settings Placeholder</div> }
+];
 
-  useEffect(() => {
-    try {
-      if (!db) {
-        throw new Error("Firebase Service not initialized");
-      }
-      setDbStatus('Firebase Connected');
-    } catch (error) {
-      setDbStatus(`Error: ${error.message}`);
-      console.error("Critical System Failure:", error);
-    }
-  }, []);
+export default function App() {
+    const startingIndex = APP_TABS.findIndex(tab => tab.id === 'home');
+    const [activeIndex, setActiveIndex] = useState(startingIndex !== -1 ? startingIndex : 0);
 
-  return (
-    <main className="app-container">
-      <header className="dashboard-header">
-        <h1>Billu's Diary</h1>
-        <div className="status-badge">{dbStatus}</div>
-      </header>
+    return (
+        <>
+            {/* REMOVED inline height/overflow constraints so the window can scroll natively */}
+            <main id="app-container">
+                <div style={{ width: '100%' }}>
+                    {APP_TABS.map((tab, idx) => (
+                        <div 
+                            key={tab.id} 
+                            style={{ 
+                                display: activeIndex === idx ? 'block' : 'none', 
+                                width: '100%' 
+                            }}
+                        >
+                            {tab.component}
+                        </div>
+                    ))}
+                </div>
+            </main>
 
-      <section className="main-content">
-        {/*insert feature components here */}
-        <p style={{ color: 'var(--text-muted)' }}>Work in Progress...</p>
-      </section>
-    </main>
-  );
+            <BottomNav activeIndex={activeIndex} onTabChange={setActiveIndex} />
+        </>
+    );
 }
-
-export default App;

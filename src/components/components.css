@@ -1,0 +1,39 @@
+/* =================================================================
+   COMPONENTS.CSS - All reusable UI widget styles
+   ================================================================= */
+
+/* ----------------------------------------
+   1. BOTTOM NAVIGATION PILL
+---------------------------------------- */
+.bottom-pill-nav {
+    /* Pin to the screen viewport */
+    position: fixed;
+    bottom: 20px; /* Adjust this to match your vanilla spacing */
+    left: 50%;
+    z-index: 1000; /* Ensure it stays above the bento cards */
+    
+    /* Animation & Centering */
+    transform: translate(-50%, 0);
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* The state class we toggle in React */
+.bottom-pill-nav.nav-hidden {
+    transform: translate(-50%, 150%);
+}
+
+
+
+/* ----------------------------------------
+   2. BENTO CARD WIDGET
+---------------------------------------- */
+.bento-card {
+    opacity: 0; 
+    animation: cardEnter 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes cardEnter {
+    0% { opacity: 0; transform: translate3d(0, 15px, 0); }
+    100% { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
