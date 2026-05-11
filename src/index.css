@@ -1506,3 +1506,104 @@ input[type="search"]::-webkit-search-results-decoration { display: none !importa
     from { opacity: 0; transform: scale(0.98); }
     to { opacity: 1; transform: scale(1); }
 }
+
+/* =================================================================
+   CSS FOR REACT
+   ================================================================= */
+
+/* =================================================================
+   THE BENTO ENGINE (React-Grid-Layout NATIVE Styling)
+   ================================================================= */
+/* Ensure the grid spans the column */
+.react-grid-layout {
+    width: 100%;
+}
+
+/* Beautiful Dropzone Placeholder */
+.react-grid-layout .react-grid-placeholder {
+    background: rgba(96, 165, 250, 0.15) !important; 
+    border: 2px dashed #60A5FA !important;
+    border-radius: var(--rad-lg, 24px) !important;
+    opacity: 1 !important;
+    transition-duration: 150ms !important;
+    z-index: 1;
+}
+
+/* Safe interaction effects that won't make the widget disappear */
+.react-draggable-dragging {
+    opacity: 0.9;
+    /* Adding the ring directly to the dragged element safely */
+    box-shadow: 0 0 0 2px #60A5FA, 0 8px 20px rgba(0,0,0,0.4);
+    border-radius: var(--rad-lg, 24px);
+    z-index: 100 !important; /* Ensure it floats above everything */
+}
+
+/* We blur the inner content, not the wrapper, to prevent DOM render crashes */
+.react-draggable-dragging .glass-panel,
+.react-resizable-resizing .glass-panel {
+    filter: blur(3px);
+    transition: filter 0.2s ease;
+}
+/* =================================================================
+   2. THE GLASS PANEL AESTHETIC (Base UI Only)
+   ================================================================= */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.05); 
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.15); 
+    border-radius: var(--rad-lg, 24px); 
+    
+    padding: var(--pad-lg, 24px);
+    width: 100%;
+    flex: 1; 
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), 
+                background 0.2s ease,
+                border-color 0.2s ease;
+}
+
+.glass-panel[onClick], 
+button.glass-panel {
+    cursor: pointer;
+}
+.glass-panel[onClick]:active,
+button.glass-panel:active {
+    transform: scale(0.96);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* =================================================================
+   3. BENTO TYPOGRAPHY (Global Typography Rules)
+   ================================================================= */
+.bento-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.6); 
+    margin-bottom: auto; /* Keeps title top, content bottom */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bento-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin: 12px 0 4px 0;
+    color: var(--color-text, #ffffff);
+}
+
+.bento-sub {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+}
