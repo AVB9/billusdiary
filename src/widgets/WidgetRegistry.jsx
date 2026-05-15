@@ -3,19 +3,26 @@ import { GoalTestWidget, FocusTestWidget, HabitsTestWidget, StatsTestWidget } fr
 export const WIDGET_DICTIONARY = {
     'goal-countdown': { 
         component: GoalTestWidget, 
-        // Speak native RGL: Width and Height integers
-        allowedSizes: [ {w: 2, h: 1}, {w: 4, h: 1} ] 
+        // Mobile spans full screen (12). Desktop spans half screen (6).
+        oDW: 6, oDH: 1, 
+        oMW: 12, oMH: 1  
     },
     'focus-clock': { 
         component: FocusTestWidget, 
-        allowedSizes: [ {w: 2, h: 1}, {w: 3, h: 1}, {w: 2, h: 2} ] 
+        // A nice square layout (1/3rd of the screen on desktop)
+        oDW: 4, oDH: 2, 
+        oMW: 12, oMH: 2 
     },
     'daily-habits': { 
         component: HabitsTestWidget, 
-        allowedSizes: [ {w: 2, h: 1}, {w: 3, h: 1}, {w: 2, h: 2}, {w: 2, h: 2} ] 
+        // Half screen width, taller layout
+        oDW: 6, oDH: 3, 
+        oMW: 12, oMH: 2 
     },
     'weekly-stats': { 
         component: StatsTestWidget, 
-        allowedSizes: [ {w: 2, h: 1}, {w: 3, h: 1}, {w: 2, h: 1}, {w: 4, h: 2} ] 
+        // Full width banner on desktop and mobile!
+        oDW: 12, oDH: 1, 
+        oMW: 12, oMH: 2 
     }
 };

@@ -37,3 +37,63 @@
     100% { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
+.bento-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.6); 
+    margin-bottom: auto; /* Keeps title top, content bottom */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bento-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin: 12px 0 4px 0;
+    color: var(--color-text, #ffffff);
+}
+
+.bento-sub {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* ----------------------------------------
+   2. GLASS PANEL 
+---------------------------------------- */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.05); 
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.15); 
+    border-radius: var(--rad-lg, 24px); 
+    
+    padding: var(--pad-lg, 24px);
+    width: 100%;
+    flex: 1; 
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), 
+                background 0.2s ease,
+                border-color 0.2s ease;
+}
+
+.glass-panel[onClick], 
+button.glass-panel {
+    cursor: pointer;
+}
+.glass-panel[onClick]:active,
+button.glass-panel:active {
+    transform: scale(0.96);
+    background: rgba(255, 255, 255, 0.08);
+}

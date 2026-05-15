@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import BottomNav from './components/BottomNav';
-import HomeTab from './tabs/Home/HomeTab';
+//./src/App.jsx
+import React, { useState, useEffect, useRef } from 'react';
+import BottomNav from '@layout/BottomNav';
+import HomeTab from '@tabs/home/HomeTab';
 
 const APP_TABS = [
     { id: 'momentum', component: <div className="app-tab" style={{ padding: '20px', color: 'var(--color-text)' }}>Momentum Placeholder</div> },
@@ -13,10 +14,35 @@ const APP_TABS = [
 export default function App() {
     const startingIndex = APP_TABS.findIndex(tab => tab.id === 'home');
     const [activeIndex, setActiveIndex] = useState(startingIndex !== -1 ? startingIndex : 0);
+    
+    // =======================================================
+    // THE SCROLL MEMORY ENGINE
+    // =======================================================
+    // This object silently remembers where every tab was scrolled to.
+    const scrollPositions = useRef({});
+
+    const handleTabChange = (newIndex) => {
+        // 1. Right before switching, save the CURRENT tab's scroll position
+        scrollPositions.current[activeIndex] = window.scrollY;
+        
+        // 2. Change the tab
+        setActiveIndex(newIndex);
+    };
+
+    useEffect(() => {
+        // 3. Right after the new tab renders, teleport the window.
+        if (APP_TABS[activeIndex].id === 'home') {
+            // ALWAYS force Home to the top for the clean animation
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        } else {
+            // Restore the saved scroll position for other tabs (default to 0 if they haven't visited yet)
+            const savedScroll = scrollPositions.current[activeIndex] || 0;
+            window.scrollTo({ top: savedScroll, left: 0, behavior: 'instant' });
+        }
+    }, [activeIndex]);
 
     return (
         <>
-            {/* REMOVED inline height/overflow constraints so the window can scroll natively */}
             <main id="app-container">
                 <div style={{ width: '100%' }}>
                     {APP_TABS.map((tab, idx) => (
@@ -33,7 +59,8 @@ export default function App() {
                 </div>
             </main>
 
-            <BottomNav activeIndex={activeIndex} onTabChange={setActiveIndex} />
+            {/* Hook up our custom handleTabChange instead of directly setting the index */}
+            <BottomNav activeIndex={activeIndex} onTabChange={handleTabChange} />
         </>
     );
 }

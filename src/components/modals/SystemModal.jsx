@@ -1,56 +1,94 @@
+// src/components/modals/SystemModal.jsx
 import React from 'react';
-import ModalOverlay from './ModalOverlay';
+import Dialog from '@mui/material/Dialog';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Stack from '@mui/material/Stack';
+import Divider from '@mui/material/Divider';
+import ActionPair from '@ui/ActionPair';
 
 export default function SystemModal({ 
     isOpen, 
     onClose, 
-    onDone, 
     title, 
     subtitle, 
-    layout = 'vertical', // defaults to vertical
-    cancelText = 'Cancel',
-    doneText = 'Done',
-    children 
+    children, 
+    onConfirm, 
+    confirmText = "Save",
+    cancelText = "Cancel",
+    customLeftAction = null 
 }) {
     return (
-        <ModalOverlay isOpen={isOpen} onClose={onClose}>
-            {/* The layout string determines horizontal vs vertical CSS classes */}
-            <div className={`system-modal modal-${layout} glass-panel`} style={{ minWidth: '300px', maxWidth: '500px', padding: '0' }}>
+        <Dialog 
+            open={isOpen} 
+            onClose={onClose}
+            // THE BILLU'S DIARY SCRIM: Darken the background and blur it heavily!
+            slotProps={{
+                backdrop: {
+                    sx: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                        backdropFilter: 'blur(10px)',
+                    }
+                },
+                // This targets the actual white box MUI generates
+                paper: {
+                    sx: {
+                        width: '90vw',
+                        maxWidth: '400px',
+                        background: 'rgba(15, 15, 15, 0.85)', // Stealth black
+                        border: '1px solid rgba(255, 255, 255, 0.1)', 
+                        borderRadius: '16px', // Billu's Diary sharp edges
+                        boxShadow: '0 24px 48px rgba(0,0,0,0.5)',
+                        backgroundImage: 'none', // Kills MUI's default elevation gradient
+                        m: 2 // Margin so it doesn't touch screen edges on tiny phones
+                    }
+                }
+            }}
+        >
+            <Box sx={{ p: 3, display: 'flex', flexDirection: 'column' }}>
                 
-                {/* Header Section */}
-                <div className="modal-header" style={{ padding: '20px', textAlign: 'center' }}>
-                    <h3 style={{ margin: '0 0 5px 0' }}>{title}</h3>
-                    {subtitle && <p style={{ margin: 0, opacity: 0.7, fontSize: '0.9em' }}>{subtitle}</p>}
-                </div>
-                
-                {/* Top Divider */}
-                <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: 0 }} />
-                
-                {/* Dynamic Content Section */}
-                <div className="modal-content" style={{ padding: '20px' }}>
-                    {children} 
-                </div>
+                {/* 1. TITLE & SUBTITLE */}
+                <Box sx={{ textAlign: 'center', mb: 2 }}>
+                    {title && (
+                        <Typography variant="h6" sx={{ fontWeight: 700, color: 'white', letterSpacing: '-0.5px' }}>
+                            {title}
+                        </Typography>
+                    )}
+                    {subtitle && (
+                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', mt: 0.5 }}>
+                            {subtitle}
+                        </Typography>
+                    )}
+                </Box>
 
-                {/* Bottom Divider */}
-                <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: 0 }} />
-                
-                {/* Footer Actions */}
-                <div className="modal-footer" style={{ display: 'flex' }}>
-                    <button 
-                        onClick={onClose}
-                        style={{ flex: 1, padding: '15px', background: 'transparent', border: 'none', borderRight: '1px solid rgba(255,255,255,0.1)', color: 'var(--color-text)', cursor: 'pointer' }}
-                    >
-                        {cancelText}
-                    </button>
-                    <button 
-                        onClick={onDone}
-                        style={{ flex: 1, padding: '15px', background: 'transparent', border: 'none', color: 'var(--color-primary)', fontWeight: 'bold', cursor: 'pointer' }}
-                    >
-                        {doneText}
-                    </button>
-                </div>
+                {/* --- HORIZONTAL SEPARATOR --- */}
+                <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', mb: 3 }} />
 
-            </div>
-        </ModalOverlay>
+                {/* 2. MODAL CONTENT */}
+                <Box sx={{ width: '100%', mb: 3 }}>
+                    {children}
+                </Box>
+
+                {/* --- HORIZONTAL SEPARATOR --- */}
+                <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', mb: 2 }} />
+
+                {/* 3. ACTION PAIR */}
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Box>
+                        {customLeftAction}
+                    </Box>
+                    
+                    <Box sx={{ ml: 'auto' }}>
+                        <ActionPair 
+                            onCancel={onClose} 
+                            onConfirm={onConfirm}
+                            cancelText={cancelText}
+                            confirmText={confirmText}
+                        />
+                    </Box>
+                </Stack>
+
+            </Box>
+        </Dialog>
     );
 }

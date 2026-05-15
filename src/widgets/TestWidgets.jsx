@@ -1,5 +1,6 @@
 import React from 'react';
-import GlassPanel from '../components/GlassPanel';
+import GlassPanel from '../components/ui/GlassPanel';
+import '../components/components.css';
 
 export const GoalTestWidget = () => (
     <GlassPanel>

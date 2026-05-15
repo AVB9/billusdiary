@@ -1,0 +1,118 @@
+/* =================================================================
+   RGL ENGINE & PLACEHOLDER AESTHETICS
+   ================================================================= */
+.react-grid-layout { width: 100%; }
+
+/* 1. The Dropzone Placeholder */
+.react-grid-layout .react-grid-placeholder {
+    background: rgba(96, 165, 250, 0.15) !important; 
+    border: 2px dashed #60A5FA !important;
+    border-radius: var(--rad-lg, 24px) !important;
+    opacity: 1 !important;
+    transition-duration: 150ms !important;
+    z-index: 1;
+}
+
+/* 2. KILL THE PLACEHOLDER DURING RESIZE 
+   THE JS FIX: Now relying on the class injected by our React state
+*/
+.layout.is-resizing .react-grid-placeholder {
+    display: none !important;
+    opacity: 0 !important;
+}
+
+/* 3. THE GLOW RING (Only on Drag, NEVER on Resize) */
+.react-draggable-dragging:not(.react-resizable-resizing) {
+    box-shadow: 0 0 0 2px var(--color-primary, #60A5FA), 0 20px 40px rgba(0,0,0,0.6) !important;
+    border-radius: var(--rad-lg, 24px) !important;
+    z-index: 100 !important; 
+}
+
+/* =================================================================
+   RED RING FIX & SMART FOCUS RING
+   ================================================================= */
+* {
+    /* Prevents the blue/red tap box on mobile and some desktop clicks */
+    -webkit-tap-highlight-color: transparent; 
+}
+
+/* Aggressively strip all browser defaults during dragging and clicking */
+.react-grid-item,
+.react-grid-item:focus, 
+.react-grid-item:active, 
+.react-grid-item:focus-within,
+.react-grid-item:focus-visible,
+.react-draggable-dragging { 
+    outline: none !important; 
+    border: none !important; 
+    box-shadow: none !important; /* Kills Firefox drag shadow */
+}
+
+/* 1. THE NATIVE RGL HITBOX (Invisible) */
+.react-resizable-handle { 
+    background-image: none !important; 
+    width: 40px !important;
+    height: 40px !important;
+    bottom: -5px !important; 
+    right: -5px !important;  
+    z-index: 100 !important;
+    cursor: nwse-resize !important;
+    opacity: 0 !important; 
+}
+.react-resizable-handle::after { display: none !important; content: none !important; }
+
+/* 2. THE SMART SVG CONTAINER */
+.smart-focus-ring-container {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    animation: fadeInRing 0.15s ease-out; /* Slightly faster snap-in */
+}
+
+@keyframes fadeInRing {
+    0% { opacity: 0; transform: scale(0.98); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* Hide the ring while resizing to kill visual jitter */
+.react-resizable-resizing .smart-focus-ring-container {
+    opacity: 0 !important;
+}
+
+/* ==============================================
+   LOCAL WIDGET ANIMATION (Synchronized Slide-Up)
+   ============================================== */
+@keyframes widgetSlideUp {
+    0% { 
+        opacity: 0; 
+        transform: translateY(24px); 
+    }
+    100% { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+.widget-glass-wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    opacity: 0; /* Base state ensures it stays hidden before the JS trigger */
+}
+
+/* Base trigger for the initial load */
+.widget-glass-wrapper.revealed {
+    animation: widgetSlideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* THE FIX: Override the animation and force opacity to 100% during 
+   interactions. This stops the visual flashing when RGL recalculates the DOM!
+*/
+.layout.edit-mode-on .widget-glass-wrapper,
+.react-grid-item.react-draggable-dragging .widget-glass-wrapper,
+.react-grid-item.react-resizable-resizing .widget-glass-wrapper {
+    opacity: 1 !important;
+    animation: none !important;
+    transform: none !important;
+}

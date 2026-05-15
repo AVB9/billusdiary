@@ -1,16 +1,150 @@
-# React + Vite
+marcosavb@PEGASUS:~/Billu's Diary /src$ tree
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+.
 
-Currently, two official plugins are available:
+├── App.css
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+├── App.jsx
 
-## React Compiler
+├── assets
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+│   ├── favicon.svg
 
-## Expanding the ESLint configuration
+│   ├── hero.png
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+│   ├── react.svg
+
+│   └── vite.svg
+
+├── components
+
+│   ├── components.css
+
+│   ├── layout
+
+│   │   └── BottomNav.jsx
+
+│   ├── modals
+
+│   │   ├── AlertModal.jsx
+
+│   │   ├── ModalOverlay.jsx
+
+│   │   └── SystemModal.jsx
+
+│   └── ui
+
+│       ├── ActionPair.jsx
+
+│       ├── BentoCard.jsx
+
+│       ├── GlassPanel.jsx
+
+│       ├── Icons.jsx
+
+│       └── Toggle.jsx
+
+├── designsys.css
+
+├── index.css
+
+├── main.jsx
+
+├── services
+
+│   ├── auth.js
+
+│   ├── db.js
+
+│   └── firebase.js
+
+├── tabs
+
+│   ├── home
+
+│   │   ├── grid
+
+│   │   │   ├── EditBar.jsx
+
+│   │   │   ├── EditWidgetsModal.jsx
+
+│   │   │   └── Grid.jsx
+
+│   │   ├── header
+
+│   │   │   └── Greetings.jsx
+
+│   │   ├── hometab.css
+
+│   │   ├── HomeTab.jsx
+
+│   │   └── hta.md
+
+│   ├── momentum
+
+│   │   ├── MomentumDesktop.jsx
+
+│   │   ├── MomentumMobile.jsx
+
+│   │   └── MomentumTab.jsx
+
+│   ├── planner
+
+│   │   ├── PlannerDesktop.jsx
+
+│   │   ├── PlannerMobile.jsx
+
+│   │   └── PlannerTab.jsx
+
+│   ├── settings
+
+│   │   └── SettingsTab.jsx
+
+│   └── todo
+
+│       ├── TodoDesktop.jsx
+
+│       ├── TodoMobile.jsx
+
+│       └── TodoTab.jsx
+
+├── utils
+
+│   ├── dates.js
+
+│   └── sanitize.js
+
+└── widgets
+
+    ├── TestWidgets.jsx
+
+    └── WidgetRegistry.jsx
+
+
+alias: {
+
+      // master root alias
+
+      '@': path.resolve(__dirname, './src'),
+
+      
+
+      // folder-specific aliases
+
+      '@components': path.resolve(__dirname, './src/components'),
+
+      '@ui': path.resolve(__dirname, './src/components/ui'),
+
+      '@modals': path.resolve(__dirname, './src/components/modals'),
+
+      '@layout': path.resolve(__dirname, './src/components/layout'),
+
+      '@widgets': path.resolve(__dirname, './src/widgets'),
+
+      '@tabs': path.resolve(__dirname, './src/tabs'),  
+
+      '@home': path.resolve(__dirname, './src/tabs/home'),    
+
+    },
+
+

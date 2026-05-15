@@ -1,3 +1,4 @@
+//.src/components/ui/GlassPanel.jsx
 import React from 'react';
 
 export default function GlassPanel({ children, className = '', ...props }) {

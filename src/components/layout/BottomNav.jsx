@@ -1,5 +1,6 @@
+//.src/components/BottomNav.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import './components.css';
+import '@components/components.css';
 
 export default function BottomNav({ activeIndex, onTabChange }) {
     const [isVisible, setIsVisible] = useState(true);
@@ -19,7 +20,7 @@ export default function BottomNav({ activeIndex, onTabChange }) {
     ];
 
     // =======================================================
-    // THE NEW USEEFFECT: Jitter Fix & Tab Change Handler
+    // USEEFFECT: Jitter Fix & Tab Change Handler
     // =======================================================
     useEffect(() => {
         setIsVisible(true);

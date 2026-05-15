@@ -1,3 +1,4 @@
+//.src/tabs/home/header/Greetings.jsx
 import React, { useState, useEffect } from 'react';
 
 // You can eventually move this to a separate data file, but it's fine here for now.

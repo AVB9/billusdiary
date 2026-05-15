@@ -1,0 +1,67 @@
+/* src/styles/designsys.css */
+/* =================================================================
+   1. CORE VARIABLES (The Absolute Source of Truth)
+   ================================================================= */
+   :root {
+    /* Colors */
+    --color-bg: #0a0a0a;
+    --color-surface: #1a1a1a;
+    --color-text: #ffffff;
+    --color-text-muted: #888888;
+    --color-primary: #ff3b3b; /* Billu's Red */
+    
+    /* Glass & Alpha Colors */
+    --color-glass-bg: rgba(30, 30, 30, 0.45);
+    --color-glass-tint: rgba(10, 10, 10, 0.45);
+    --color-glass-border: rgba(255, 255, 255, 0.08);
+    --color-glass-white: rgba(255, 255, 255, 0.15);
+    --color-danger: #ff5252;
+    --color-danger-bg: rgba(255, 59, 59, 0.15);
+    --color-danger-border: rgba(255, 59, 59, 0.3);
+    --color-success: #1fcc61;
+    --color-success-bg: rgba(31, 204, 97, 0.15);
+    --color-success-border: rgba(31, 204, 97, 0.3);
+    
+    /* Spacing & Layout (HARDWARE AWARE) */
+    --max-mobile-width: 480px;
+    --max-desktop-width: 1200px;
+    --safe-bottom: env(safe-area-inset-bottom, 20px);
+    --nav-height: calc(120px + var(--safe-bottom));
+    --planner-bottom-clear: calc(90px + var(--safe-bottom));
+    --pad-sm: 8px;
+    --pad-md: 15px;
+    --pad-lg: 20px;
+    --pad-xl: 25px;
+    
+    /* Radii & Borders */
+    --rad-sm: 10px;
+    --rad-md: 12px;
+    --rad-lg: 20px;
+    --rad-pill: 50px;
+    --rad-circle: 50%;
+    
+    /* Shadows & Blurs */
+    --blur-glass: blur(15px);
+    --blur-heavy: blur(25px);
+    --shadow-sm: 0 4px 10px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 40px color-mix(in srgb, var(--color-primary) 40%, transparent);
+    --shadow-inset: inset 0 0 0 1px var(--color-primary);
+    
+    /* Animations & Fonts */
+    --trans-fast: all 0.2s ease;
+    --trans-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --trans-slow: all 0.8s ease-in-out;
+    --font-main: 'Nova Flat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Base Body Reset */
+body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-main);
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+}
