@@ -1,13 +1,20 @@
-//.src/components/ui/GlassPanel.jsx
+// src/components/ui/GlassPanel.jsx
 import React from 'react';
+import Box from '@mui/material/Box'; 
 
-export default function GlassPanel({ children, className = '', ...props }) {
+export default function GlassPanel({ children, className = '', sx = {}, ...props }) {
     return (
-        <div 
+        <Box 
             className={`glass-panel ${className}`} 
-            {...props} // This safely catches style, onClick, id, and anything else you throw at it!
+            sx={{ 
+                position: 'relative', 
+                overflow: 'hidden',
+                ...sx 
+            }}
+            {...props} 
         >
+            
             {children}
-        </div>
+        </Box>
     );
 }
