@@ -1,132 +1,129 @@
 // src/widgets/wordle/useWordleEngine.js
 import { useState, useEffect, useMemo } from 'react';
 
-const VALID_WORDS = [
+export const VALID_WORDS = [
     "BETA", "TEST", "WORD", "PLAY", "GAME", "CODE", "DATA", "NODE",
     "ROOT", "TREE", "LEAF", "CORE", "BASE", "LINK", "HTTP", "USER"
 ]; 
 const MAX_GUESSES = 4;
 
-export default function useWordleEngine(isActive, dateStr) {
+export const getWordForDateStr = (dateStr) => {
+    if (!dateStr) return "BETA"; 
+    const numericSeed = parseInt(dateStr.replace(/-/g, ''), 10);
+    const index = numericSeed % VALID_WORDS.length;
+    return VALID_WORDS[index];
+};
+
+export const getSaveDataForDate = (dateStr) => {
+    const key = `wordle_save_v1_${dateStr}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+        try { return JSON.parse(saved); } 
+        catch (e) { return null; }
+    }
+    return null;
+};
+
+// THE UPDATE: Added Guess Distribution Math
+export const getGlobalWordleStats = () => {
+    let played = 0, won = 0, maxStreak = 0, currentStreak = 0;
+    let previousDate = null;
+    const playedDates = [];
     
-    // 1. DYNAMIC STORAGE KEY
-    const storageKey = dateStr ? `wordle_save_v1_${dateStr}` : null;
+    // Array representing wins in [1 guess, 2 guesses, 3 guesses, 4 guesses]
+    const distribution = [0, 0, 0, 0]; 
 
-    // Helper to fetch data safely
-    const loadSavedState = (key) => {
-        if (!key) return { guesses: [], gameStatus: "playing" };
-        const saved = localStorage.getItem(key);
-        if (saved) {
-            try { return JSON.parse(saved); } 
-            catch (e) { console.error("Failed to parse save", e); }
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('wordle_save_v1_')) {
+            const puzzleDate = key.replace('wordle_save_v1_', '');
+            const data = JSON.parse(localStorage.getItem(key));
+
+            if (data.gameStatus === 'won' || data.gameStatus === 'lost' || data.isRevealed) {
+                played++;
+                const isLegitWin = data.gameStatus === 'won' && !data.isRevealed;
+                
+                if (isLegitWin) {
+                    won++;
+                    // Tally the distribution!
+                    const guessCount = data.guesses?.length || 0;
+                    if (guessCount >= 1 && guessCount <= 4) {
+                        distribution[guessCount - 1]++;
+                    }
+                }
+
+                const playedOn = data.playedOn || puzzleDate; 
+                if (playedOn === puzzleDate) playedDates.push({ date: puzzleDate, won: isLegitWin });
+            }
         }
-        return { guesses: [], gameStatus: "playing" };
-    };
+    }
 
-    // 2. STATE INITIALIZATION
-    const [guesses, setGuesses] = useState(() => loadSavedState(storageKey).guesses);
-    const [gameStatus, setGameStatus] = useState(() => loadSavedState(storageKey).gameStatus);
+    playedDates.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    playedDates.forEach(record => {
+        if (record.won) {
+            if (previousDate) {
+                const prev = new Date(previousDate);
+                const curr = new Date(record.date);
+                const diffDays = Math.round(Math.abs(curr - prev) / (1000 * 60 * 60 * 24));
+                if (diffDays === 1) currentStreak++; 
+                else if (diffDays > 1) currentStreak = 1; 
+            } else { currentStreak = 1; }
+            if (currentStreak > maxStreak) maxStreak = currentStreak;
+        } else { currentStreak = 0; }
+        previousDate = record.date;
+    });
+
+    const winPercent = played === 0 ? 0 : Math.round((won / played) * 100);
+    
+    // RETURN THE NEW DATA
+    return { played, winPercent, maxStreak, distribution };
+};
+
+export default function useWordleEngine(isActive, dateStr) {
+    const storageKey = dateStr ? `wordle_save_v1_${dateStr}` : null;
+    const [guesses, setGuesses] = useState(() => getSaveDataForDate(dateStr)?.guesses || []);
+    const [gameStatus, setGameStatus] = useState(() => getSaveDataForDate(dateStr)?.gameStatus || "playing");
+    const [isRevealed, setIsRevealed] = useState(() => getSaveDataForDate(dateStr)?.isRevealed || false);
+    const [playedOn, setPlayedOn] = useState(() => getSaveDataForDate(dateStr)?.playedOn || null);
     const [currentGuess, setCurrentGuess] = useState("");
     const [toastMessage, setToastMessage] = useState(null); 
-
-    // 3. THE BUG FIX: SYNCHRONOUS STATE DERIVATION
-    // We track the active date. If it changes, we instantly wipe and reload the state 
-    // BEFORE the render finishes, completely preventing the race condition.
     const [activeDate, setActiveDate] = useState(dateStr);
     
     if (dateStr !== activeDate) {
-        const newState = loadSavedState(storageKey);
-        setGuesses(newState.guesses);
-        setGameStatus(newState.gameStatus);
-        setCurrentGuess("");
-        setActiveDate(dateStr);
+        const newState = getSaveDataForDate(dateStr) || { guesses: [], gameStatus: 'playing', isRevealed: false, playedOn: null };
+        setGuesses(newState.guesses); setGameStatus(newState.gameStatus);
+        setIsRevealed(newState.isRevealed); setPlayedOn(newState.playedOn);
+        setCurrentGuess(""); setActiveDate(dateStr);
     }
 
-    // 4. DETERMINISTIC DAILY WORD GENERATOR
-    const TARGET_WORD = useMemo(() => {
-        if (!dateStr) return "BETA"; 
-        
-        // Convert "2026-05-20" into a mathematical seed: 20260520
-        const numericSeed = parseInt(dateStr.replace(/-/g, ''), 10);
-        const index = numericSeed % VALID_WORDS.length;
-        
-        return VALID_WORDS[index];
-    }, [dateStr]);
-
-    // 5. AUTO-SAVE TO LOCAL STORAGE
-    // Now that the state is guaranteed to be clean, it is safe to save whenever it changes.
-    useEffect(() => {
-        if (storageKey) {
-            localStorage.setItem(storageKey, JSON.stringify({ guesses, gameStatus }));
-        }
-    }, [guesses, gameStatus, storageKey]);
-
-    // 6. GAME LOGIC & KEYBOARD ENGINE
-    const evaluateGuess = (guess, target) => {
-        const result = Array(4).fill('absent'); 
-        const targetChars = target.split('');
-        const guessChars = guess.split('');
-
-        guessChars.forEach((char, i) => {
-            if (char === targetChars[i]) {
-                result[i] = 'correct';
-                targetChars[i] = null; 
-                guessChars[i] = null;
-            }
-        });
-
-        guessChars.forEach((char, i) => {
-            if (char !== null && targetChars.includes(char)) {
-                result[i] = 'present';
-                targetChars[targetChars.indexOf(char)] = null; 
-            }
-        });
-
-        return result;
-    };
-
-    const showToast = (msg) => {
-        setToastMessage(msg);
-        setTimeout(() => setToastMessage(null), 2000);
-    };
+    const TARGET_WORD = useMemo(() => getWordForDateStr(dateStr), [dateStr]);
 
     useEffect(() => {
+        if (storageKey) localStorage.setItem(storageKey, JSON.stringify({ guesses, gameStatus, isRevealed, playedOn }));
+    }, [guesses, gameStatus, isRevealed, playedOn, storageKey]);
+
+    const showToast = (msg) => { setToastMessage(msg); setTimeout(() => setToastMessage(null), 2000); };
+    const stampFinishedDate = () => { if (!playedOn) setPlayedOn(new Date().toISOString().split('T')[0]); };
+
+    const markRevealed = () => { setIsRevealed(true); stampFinishedDate(); };
+
+    const handleKeyInput = (keyString) => {
         if (!isActive || gameStatus !== 'playing') return;
+        const key = keyString.toUpperCase();
 
-        const handleKeyDown = (e) => {
-            if (e.ctrlKey || e.metaKey || e.altKey) return;
-
-            if (e.key === 'Backspace') {
-                setCurrentGuess(prev => prev.slice(0, -1));
-            } 
-            else if (e.key === 'Enter') {
-                if (currentGuess.length === 4) {
-                    if (!VALID_WORDS.includes(currentGuess)) {
-                        showToast("Not in word list");
-                        return;
-                    }
-
-                    const colors = evaluateGuess(currentGuess, TARGET_WORD);
-                    const newGuesses = [...guesses, { word: currentGuess, colors }];
-                    
-                    setGuesses(newGuesses);
-                    setCurrentGuess(""); 
-
-                    if (currentGuess === TARGET_WORD) {
-                        setGameStatus("won");
-                    } else if (newGuesses.length >= MAX_GUESSES) {
-                        setGameStatus("lost");
-                    }
-                }
-            } 
-            else if (/^[a-zA-Z]$/.test(e.key) && currentGuess.length < 4) {
-                setCurrentGuess(prev => prev + e.key.toUpperCase());
+        if (key === 'BACKSPACE' || key === 'BACK') setCurrentGuess(prev => prev.slice(0, -1));
+        else if (key === 'ENTER') {
+            if (currentGuess.length === 4) {
+                if (!VALID_WORDS.includes(currentGuess)) { showToast("Not in word list"); return; }
+                const newGuesses = [...guesses, currentGuess];
+                setGuesses(newGuesses); setCurrentGuess(""); 
+                if (currentGuess === TARGET_WORD) { setGameStatus("won"); stampFinishedDate(); } 
+                else if (newGuesses.length >= MAX_GUESSES) { setGameStatus("lost"); stampFinishedDate(); }
             }
-        };
+        } 
+        else if (/^[A-Z]$/.test(key) && currentGuess.length < 4) setCurrentGuess(prev => prev + key);
+    };
 
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isActive, gameStatus, currentGuess, guesses, TARGET_WORD]); 
-
-    return { guesses, currentGuess, gameStatus, targetWord: TARGET_WORD, toastMessage };
+    return { guesses, currentGuess, gameStatus, targetWord: TARGET_WORD, toastMessage, onKeyPress: handleKeyInput, isRevealed, markRevealed };
 }

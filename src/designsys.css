@@ -21,6 +21,9 @@
     --color-success: #1fcc61;
     --color-success-bg: rgba(31, 204, 97, 0.15);
     --color-success-border: rgba(31, 204, 97, 0.3);
+    --color-wordle-correct: #538d4e;
+    --color-wordle-present: #b59f3b;
+    --color-wordle-absent: #3a3a3c;
     
     /* Spacing & Layout (HARDWARE AWARE) */
     --max-mobile-width: 480px;

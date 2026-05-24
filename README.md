@@ -1,232 +1,270 @@
-marcosavb@PEGASUS:~/Billu's Diary /src$ tree
+# Architecture Specification: Billu's Diary
 
-.
+## 1. System Overview
+Billu's Diary is a Single Page Application (SPA) built on React and Vite. It utilizes a mobile-first, **Modular Dashboard Operating System** paradigm mimicking a native application. Instead of standard URL-based routing, it employs a persistent DOM Tab Engine combined with a highly encapsulated, state-driven Widget Engine to maintain maximum performance and layout stability.
 
-├── App.css
+---
 
-├── App.jsx
+## 2. Directory Structure & Path Resolution
+The project utilizes Vite's `resolve.alias` configuration to enforce a strict import hierarchy, preventing relative path hell and enforcing domain boundaries.
 
-├── assets
+```text
+src/
+├── components/      # Reusable, domain-agnostic UI elements
+│   ├── layout/      # Global layout wrappers (BottomNav)
+│   ├── modals/      # System-wide modal overlays and dialogs
+│   └── ui/          # Atomic components (Buttons, GlassPanels, DevPanel)
+├── services/        # External integrations (Firebase, IndexedDB)
+├── tabs/            # Top-level route modules
+│   ├── home/        # The Bento Grid dashboard (entry point)
+│   ├── momentum/    # Habit/streak tracking logic
+│   ├── planner/     # Scheduling and calendar logic
+│   └── todo/        # Task management system
+├── utils/           # Pure functional utilities (date parsing, sanitization)
+└── widgets/         # Pluggable micro-apps for the Home grid (WidgetBase, OverlayBase)
 
-│   ├── favicon.svg
+```
 
-│   ├── hero.png
+---
 
-│   ├── react.svg
+## 3. Core Subsystems
 
-│   └── vite.svg
+### 3.1. Routing & Tab Engine (`App.jsx`)
 
-├── components
+The application bypasses traditional routing in favor of a **Persistent DOM Strategy**.
 
-│   ├── components.css
+* **DOM Retention:** All tabs are rendered simultaneously within the DOM, but non-active tabs are hidden using `display: 'none'`. This prevents the unmounting/remounting of complex component trees (like the grid layout), ensuring instantaneous tab switching.
+* **Scroll Memory Engine:** A `useRef` hook (`scrollPositions`) tracks the exact `window.scrollY` coordinate before a tab unmounts. Upon navigation return, a `useEffect` synchronously restores the scroll position (`window.scrollTo({ top, behavior: 'instant' })`).
+* **Home Overrides:** The Home tab is explicitly forced to `[0, 0]` coordinates upon mounting to ensure animation cleanliness and predictable user experience.
 
-│   ├── layout
+### 3.2. Theming & Styling Strategy
 
-│   │   └── BottomNav.jsx
+The visual architecture is a hybrid system marrying Material-UI (MUI) structural components with a highly customized, **zero-neon** glassmorphism design system (`designsys.css`).
 
-│   ├── modals
+* **Single Source of Truth:** `designsys.css` acts as the master token registry. It defines spatial hardware awareness (e.g., `env(safe-area-inset-bottom)`), glassmorphism alpha channels, and shadows.
+* **MUI Integration:** `main.jsx` utilizes MUI's `ThemeProvider` to overwrite internal logic. By injecting exact hex values directly into the MUI palette, standard MUI components inherit the custom design system perfectly, allowing native ripple effects, focus states, and contrast calculations to function inside the glass UI.
+* **The "Lumber" Rule:** * Use `<GlassPanel>` (Custom Component) when you need a distinct visual container, card, or popup.
+* Use `<Box>` (MUI) when you just need invisible "lumber" to push, pull, flex, or center items without adding visual weight. Avoid "Glassception" (nesting GlassPanels unnecessarily).
 
-│   │   ├── AlertModal.jsx
 
-│   │   ├── ModalOverlay.jsx
 
-│   │   └── SystemModal.jsx
+### 3.3. Bento Layout Engine (`HomeTab.jsx` & `Grid.jsx`)
 
-│   └── ui
+The core dashboard is built upon `react-grid-layout`, heavily modified for responsive resizing and dynamic component injection.
 
-│       ├── ActionPair.jsx
+* **Widget Registry:** Widgets are decoupled from the grid. `HomeTab.jsx` reads a layout configuration array from `localStorage`. It cross-references this with `WIDGET_DICTIONARY` to dynamically instantiate components based on type, `minW`, and optimal dimensions.
+* **Responsive Width Synchronization:** `Grid.jsx` uses a `ResizeObserver` to monitor the container. To prevent infinite loops caused by scrollbar toggling, it utilizes a debouncing-style check (`currentWidthRef`) that ignores sub-pixel or minor (`<10px`) width shifts.
 
-│       ├── BentoCard.jsx
+### 3.4. The Smart Focus Ring (`Grid.jsx`)
 
-│       ├── GlassPanel.jsx
+Standard CSS borders cannot accommodate complex custom resizing handles cleanly. The `SmartFocusRing` is a dedicated sub-component that calculates exact SVG paths dynamically.
 
-│       ├── Icons.jsx
+* **Dynamic Geometry:** It utilizes a `ResizeObserver` to track the exact boundaries of the selected widget.
+* **Path Calculation:** Using raw geometry, it plots an SVG path mapping the perimeter (`mainRingPath`) and mathematically subtracts the exact dimensions required for the bottom-right grab handle (`resizeHandlePath`), rendering a seamless focus state.
 
-│       └── Toggle.jsx
+---
 
-├── designsys.css
+## 4. The Widget Architecture (The Sandbox)
 
-├── index.css
+Micro-apps (Widgets) run inside strict, mathematically locked constraints. Widgets have a `[3x2]` base span, yielding highly compressed physical content areas (e.g., `231x225px`).
 
-├── main.jsx
+### 4.1. `WidgetBase.jsx` (The Stage)
 
-├── services
+The universal wrapper for every micro-app.
 
-│   ├── auth.js
+* **The Frozen Header:** Implements a mathematically locked `28px` header to prevent layout bouncing when inner content changes.
+* **TRS (Top Right Stuff):** A dedicated, flex-protected zone in the header for contextual actions, stats, or close buttons.
+* **The Content Area:** A strictly defined `.widget-content-area` node where the micro-app renders.
+* **The Overlay Layer:** Exposes an `overlays` prop to render modals at the root widget level (covering the header), rather than trapping them inside the content area.
 
-│   ├── db.js
+### 4.2. `OverlayBase.jsx` (The Blueprint)
 
-│   └── firebase.js
+The standard for widget-level interruptions (settings, hints, inputs).
 
-├── tabs
+* Renders a `rgba(0,0,0,0.7)` backdrop confined strictly to the widget's outer borders.
+* Uses a flex-protected (`flexShrink: 0`), scrollable internal `GlassPanel` (`overflowY: 'auto'`) so content never breaks if the widget is physically squished.
 
-│   ├── home
+### 4.3. Micro-App Implementation (State & Overlays)
 
-│   │   ├── grid
+Widgets must **not** rely on standard routing. They use a strict **State Machine** and **Overlay Engine**.
 
-│   │   │   ├── EditBar.jsx
+* **Example (Wordle):** The orchestrator (`WordleWidget.jsx`) manages 5 standard views (`lobby`, `board`, `stats`, `admire`, `room`) and routes localized overlays (`RoomOverlay`). The TRS dynamically swaps UI (Date vs. Icons) based on the active state.
 
-│   │   │   ├── EditWidgetsModal.jsx
+---
 
-│   │   │   └── Grid.jsx
+## 5. Developer & Debugging Tools
 
-│   │   ├── header
+* **The Telemetry Uplink:** Micro-apps emit custom DOM events (`widget_telemetry_uplink`).
+* **`DevPanel.jsx`:** A floating, draggable diagnostic tool that intercepts telemetry.
+* **Precision Targeting:** Bypasses padding by pointing a `ResizeObserver` directly at the `.widget-content-area` and `.widget-outer-area` class tags, providing exact, sub-pixel accurate layout dimensions for developers.
+* **Dev Notes:** Integrated `localStorage` text area tied dynamically to the `selectedWidget.type` for persistent alignment/todo notes.
 
-│   │   │   └── Greetings.jsx
+---
 
-│   │   ├── hometab.css
+## 6. State Persistence Hierarchy
 
-│   │   ├── HomeTab.jsx
+Data is tiered based on volatility and access speed requirements:
 
-│   │   └── hta.md
+1. **Component State (`useState`):** Highly volatile runtime data (e.g., `isEditMode`, `isFading`, `activeOverlay`).
+2. **DOM/Memory State (`useRef`):** Persistent runtime data that does not trigger re-renders (e.g., Scroll coordinates, width tracking debouncers).
+3. **Local Storage:** Fast, synchronous persistence for client-side configurations (e.g., `bento_layout_v4`, widget save states, user names).
+4. **Database/Backend (Pending):** Asynchronous, authoritative persistence for core application data.
 
-│   ├── momentum
+---
 
-│   │   ├── MomentumDesktop.jsx
+## 7. Strict Directives for AI Agents
 
-│   │   ├── MomentumMobile.jsx
+1. **Never use inline styles for colors or radii.** Always use CSS variables (`var(--color-...)` or `var(--rad-...)`).
+2. **Never hardcode layout heights if flexbox can solve it.** Content area is heavily restricted; build for responsiveness using `flexGrow: 1` and `flexShrink: 0`.
+3. **Respect the aliases.** Use `@ui/`, `@widgets/`, and `@tabs/` for clean imports. Do not use relative pathing.
+4. **No UI Libraries inside Widgets.** Do not introduce heavy external routing or animation libraries inside the micro-apps. Use State Machines and native CSS keyframes.
 
-│   │   └── MomentumTab.jsx
+```
 
-│   ├── planner
+***
 
-│   │   ├── PlannerDesktop.jsx
+Now that the master architecture is permanently codified in a way that blends the high-level React mechanics with our strict widget rules, I am ready. 
 
-│   │   ├── PlannerMobile.jsx
+Just say the word, and I will generate the **Technical Spec Sheet** for building the Wordle grid logic inside `WordleBoard.jsx`.
 
-│   │   └── PlannerTab.jsx
+```
 
-│   ├── settings
 
-│   │   └── SettingsTab.jsx
+ok now that is in place lets make hint overlay and answer overlay so i want you to make a prompt for the agent to make these 
 
-│   └── todo
+Overlay: hint
 
-│       ├── TodoDesktop.jsx
+Triggers: from the hint icon in the wordle board view
 
-│       ├── TodoMobile.jsx
+structure
 
-│       └── TodoTab.jsx
+    - header 
+        title: Hint 
+        TRS: close overlay icon
 
-├── utils
+    - content 
+        ~ hint view: 2 column inside both column there is a "wordle board like cell which will be clickable below the reight cell consonant will be written and below the left cell vovel wil be written in small font and in a away that fits just below and exactly of the width of the respective cell when the cell is clicked it reveals the letter  
 
-│   ├── dates.js
+        ~ button: "Reveal Answer" takes user to answer overlay 
 
-│   └── sanitize.js
+overlay: answer
 
-└── widgets
+Triggers: 
+            1. from the "Reveal Answer" button in int overlay (it should be made sure the hint overlay closes before the answer overlay is shown)
+            2. when user guesses the correct word
+            3. when user runs out of guesses  
 
-    ├── TestWidgets.jsx
 
-    └── WidgetRegistry.jsx
+structure
 
+    - header 
+        title: Answer 
+        TRS: close overlay icon
 
-alias: {
+    - content 
+        ~ message view: user should be conditionally shown different messages 
+            condition: user guesses the word in min guess  message: Genius!!
+            condition: user guesses the word in max guess  message: Pheww!!
+            condition: user guesses the word in any nth guess which isnt the max or min guess message: Well Done!!
+            condition: user comes from "Reveal Answer" button  message: Meow whyy🐾 
+        note: these message should decrease or increse there size tin order to sit in the message view 
 
-      // master root alias
+        ~ answer view: the word which is the answer 
 
-      '@': path.resolve(__dirname, './src'),
+        ~ defination view: 2 line defination of the word (very small font can be scrollabe if the defination exceeds 2 lines) 
+        
+        ~ button: there should be a action bar of 2 button 
+                    button 1:- Home [takes user to the lobby] (occupies 80% space)    
+                    button 2:- Stats [takes user to stats view] (this is a icon button should be like a square occuping 20% of the total width)
 
-      
 
-      // folder-specific aliases
+bug :- user can frst reveal the answer even before the try to guess even a single word and then they can just enter the revealed answer and they will get the message genius insteaf we will have a check that isrevealed if positive the message will be "Hmmmm Smartie" and isrevealed if negative then we will run our current messaging system 
 
-      '@components': path.resolve(__dirname, './src/components'),
+ok we will now make stats but befor we make stats i want to  make a coustom ui component for the wordie widget 
 
-      '@ui': path.resolve(__dirname, './src/components/ui'),
 
-      '@modals': path.resolve(__dirname, './src/components/modals'),
+so you knwo hw we have this couston date picker pill for our billus diary app we even use that in our wordle lobby but for stats tab i want a coustom date picker see how we inject today tomorrow or yesterday in MUI date picker i want to inject the words of the day instead and below those worlds we will have the date written in small accent color and use that as date selector for stats tab we will call this the worddatepicker also as i suggested above if the user has not solved current days wordle and isrevealed negative then we will just make it say TODAY instead of inject todays word 
 
-      '@layout': path.resolve(__dirname, './src/components/layout'),
+fix that bug and just give a review on this new component and then we will get on the task of coding up the stats state
 
-      '@widgets': path.resolve(__dirname, './src/widgets'),
 
-      '@tabs': path.resolve(__dirname, './src/tabs'),  
+ok now i will tell you the physical design of the states and overlays 
 
-      '@home': path.resolve(__dirname, './src/tabs/home'),    
 
-    },
+in lobby state 3 buttons which connect to rooms
 
+    1. join room :- opens join room overlay
+    2. my rooms :- opens manage room state 
+    3. room icon in TRS :- opens room state 
 
-Use <GlassPanel> when you need a distinct visual container, card, popup, or background layer.
+states :- room, manage room 
 
-Use <Box> when you just need invisible "lumber" to push, pull, flex, or center items without adding any visual weight. 
+state :- room
 
-there is a alias for ui and widgets so it can be 
 
-import WidgetBase from '@widgets/WidgetBase';
+TRS :-  1. "stats icon" takes user to stats state 
 
-import GlassPanel from '@ui/GlassPanel'; 
+        2. "admire text" takes user to admire state
 
 
-also i have restructed the wordle widget states states will have the "widget title" in the top left and it will always help the user to go to the lobby, top right will show dfferent stuff based on the state (we need a name for this "top right stuff" wont it be funny if we just call it TRS lol)
+content :-
 
-i have now introduced the concept of overlays overlay is a glasspanel on top of the state the size and shape of the overlay completely depends on the size and shape of the widget, it should be the shrunk down version of the widget glasspanel every overlay should have a header and content similar to the main widgets the header of all the overlays should have overlay title in thw top left and a small close svg (solid circle but masked X inside it) as the TRS lol and when the overlay pops the widget should become dark (a dark overlay on the widget on which over overlay wouuld sit if that makes sense) and if the user clicks anywhere outseide the overlay and inside the widget when overlay is actiive it should close the overlay 
+rectangular room picker dropdown on left and word date picker on the right (both take 50% space)
 
-we now have 5 states and 4 overlays 
+then a table with 2 column with title players and score 
+below will be list of players and their score 
 
-States 
+then a manage room button which takes user to manage room state
 
-State 1: Lobby
-State 2: Board
-State 3: Stats 
-State 4: Admire wordle
-State 5: Room
+state :- manage room
 
-Overlays 
 
-Overlay 1: roomoverlay
-Overlay 2: hintoverlay
-Overlay 3: answeroverlay
-Overlay 4: guessdistrooverlay
+TRS :- "request" text takes user to managerequestoverlay
 
+content :-
 
-below is what the top right stuff (TRS) of all the different states will show
+rectangular room picker dropdown on left (80% space) and edit room icon button on the right (20% space) the edit room icon button will only be active if the user is the room owner 
 
-Lobby :- a stats svg (a podium svg basically) [takes user to stats state]
-Board :- hint icon [triggers hintoverlay] and Date of the wordle
-Stats :- Admire wordle [takes user to Admire wordle state ]
-Admire wordle :- Date of the wordle
-Room :- A edit icon [triggers roomoverlay] and Room name with a Drop down [enabes user to select which room is ckecking] 
+then a table with 2 column with title players and actions 
+below will be the list of all the player with action options depending upon if the user is the room owner or memeber 
 
-1. State Lobby 
+if room owner :- for themselves they will have leave option and make mod and remove option for others 
+if mod :- for themselves they will have leave option and remove option for others except owner
+if member :- for themselves they will have leave option thats it 
 
-Headder at top 
-below it W O R D L E (E with accent color)
-below it datepicker pill
-below it single player and multiplayer pills
-below it a button which says START GAME if singleplayer is selected (which is selected by default) and  JOIN ROOM if multiplayer is selected when user selects multiplayer and then clicks join room roomoverlay should pop up
 
-    A. Overlay roomoverlay 
-    
-    Header  
-        - Title: Rooms 
-        - TRS: close svg 
+overlays:- joinroom, editroom, roomrequest
 
-    Content
-        - subtitle text "Just enter the room code if you wish to join existing room"
-        - below it text area "enter room name" [max 6 letters should be allowed]
-        - below it text area "enter room code"
-            ~ this should be like those google code text are where the code is G-XXXX will we will let the user change the alphabet too so for example "S-2435" is a valid room code
-            ~ this text are should be the wordle box the alphabet and then a "-" then a text area which should allow 4 numbers  
-        - below it button which should say CREATE ROOM if unused room name and room code is   entered and JOIN ROOM if existing room name and room code is used  
+Overlay: joinroom
 
+Triggers: "JOIN ROOM" button in the wordle lobby
 
-2. State Board
+structure
 
-header at top 
-wordle board content 
+    - header 
+        title: JOIN ROOM 
+        TRS: close overlay icon
 
+    - content 
+        ~ room code textarea: alpha numerical one letter 4 numbers A-XXXX there should be 2 input feild seperated by "-" 
 
-it has come to my realization that playing multiplayer or single player dosent make a difference at all there is a daily wordle user solves it before if it was a single player the stats were not public and if it was multiplayer the stats were public thats it 
+    - footer
+        ~ button: "JOIN ROOM" only becomes active or clickable when all charachters are entered  
+        if the user enters correct existing room code they get a toast saying "request sent"
+        if invalid room code  is entered then they get a toast sayng "invalid room code"
 
-so we should remove the single player and multi player pills completely and replace it with a ROOMS buto and the start game button now should just say PLAY WORDLE also the text wordle and all the content is not at all optimised for 231.933×225.883 which is the actual content area inside the widget of grid span of [ 3 × 2 ] also one thing i noticed is the size of grid span in [ 3 × 2 ] shown by dev panel is 288w × 310h but if i check using the browsers inspect tool its 281.267×303.8 why is discriprency? 
+Overlay: editroom
 
-we need to correct that error in the data of dev pannel 
+Triggers: "edit room icon button" in the manage room state
 
-and we should make a new seperate section for sizes and will have a small copy button 
+structure
 
-grid span 
-widget area (px)
-content area (px)
-[ name of the clicke component] area (px)
+    - header 
+        title: EDIT ROOM 
+        TRS: close overlay icon
+
+    - content 
+        ~ room name textarea: existing room name will be shown which the user can change only 8 character allowed 
+
+    - footer
+        ~ button: "DONE" only becomes active or clickable when all charachters are entered  

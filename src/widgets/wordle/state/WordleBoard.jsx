@@ -1,103 +1,209 @@
-// src/widgets/wordle/WordleBoard.jsx
-import React from 'react';
+// src/widgets/wordle/state/WordleBoard.jsx
+import React, { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 
-const WORD_LENGTH = 4;
-const MAX_GUESSES = 4;
+const KEYBOARD_ROWS = [
+    ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+    ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'BACK']
+];
 
-export default function WordleBoard({ guesses, currentGuess, gameStatus }) {
-    
-    const getColorStyles = (status) => {
-        switch (status) {
-            case 'correct':
-                return { bg: '#10B981', border: '#10B981' };
-            case 'present':
-                return { bg: '#F59E0B', border: '#F59E0B' };
-            case 'absent':
-                return { bg: '#374151', border: '#374151' };
-            default:
-                return { bg: 'rgba(255, 255, 255, 0.05)', border: 'rgba(255, 255, 255, 0.1)' };
+export default function WordleBoard({ engine, showKeyboard }) {
+    const boardRef = useRef(null);
+    const [isShaking, setIsShaking] = useState(false);
+    const wordLength = 4;
+
+    if (!engine) return null;
+    const { guesses = [], currentGuess = '', targetWord = '', onKeyPress, toastMessage } = engine;
+
+    useEffect(() => {
+        if (boardRef.current) boardRef.current.focus();
+    }, []);
+
+    useEffect(() => {
+        if (toastMessage) {
+            setIsShaking(true);
+            const timer = setTimeout(() => setIsShaking(false), 370); 
+            return () => clearTimeout(timer);
         }
+    }, [toastMessage]);
+
+    const handleKeyDown = (e) => {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        onKeyPress?.(e.key);
     };
 
-    const renderRow = (guessObj, isCurrentRow, rowIndex) => {
-        // Handle both historical guess objects and the current active string
-        const word = typeof guessObj === 'string' ? guessObj : (guessObj?.word || "");
-        const colors = guessObj?.colors || Array(4).fill(null);
-        
-        const letters = word.padEnd(WORD_LENGTH, " ").split('');
-        
-        return (
-            <Box key={rowIndex} sx={{ display: 'flex', gap: 1, mb: 1, justifyContent: 'center' }}>
-                {letters.map((char, i) => {
-                    const hasLetter = char.trim() !== '';
-                    const isEvaluated = colors[i] !== null;
-                    const styles = getColorStyles(colors[i]);
+    const getLetterStatus = (letter, index, isEvaluatedRow) => {
+        if (!isEvaluatedRow || !letter || !targetWord) return 'unused';
+        if (targetWord[index] === letter) return 'correct';
+        if (targetWord.includes(letter)) return 'present';
+        return 'absent';
+    };
+
+    const getKeyboardKeyStatus = (key) => {
+        if (!guesses.length || !targetWord) return 'unused';
+        let status = 'unused';
+        for (const guess of guesses) {
+            for (let i = 0; i < wordLength; i++) {
+                if (guess[i] === key) {
+                    if (targetWord[i] === key) return 'correct'; 
+                    if (targetWord.includes(key) && status !== 'correct') status = 'present';
+                    else if (status === 'unused') status = 'absent';
+                }
+            }
+        }
+        return status;
+    };
+
+    const rows = Array.from({ length: 4 }).map((_, i) => {
+        let rowStr = '';
+        let isEvaluatedRow = false;
+        if (i < guesses.length) {
+            rowStr = guesses[i];
+            isEvaluatedRow = true;
+        } else if (i === guesses.length) {
+            rowStr = currentGuess;
+        }
+        const letters = rowStr.padEnd(wordLength, ' ').split('');
+        return { letters, isEvaluatedRow };
+    });
+
+    return (
+        <Box 
+            ref={boardRef}
+            tabIndex={0}
+            onKeyDown={handleKeyDown}
+            sx={{ 
+                display: 'flex', flexDirection: 'column', height: '100%', width: '100%', 
+                justifyContent: 'space-between', pb: 0.5, outline: 'none' 
+            }}
+        >
+            
+            {/* THE GRID AREA */}
+            <Box sx={{ 
+                flexGrow: 1, display: 'flex', flexDirection: 'column', 
+                alignItems: 'center', justifyContent: 'center', 
+                // Smoothly scale the gap between rows as the board expands
+                gap: showKeyboard ? '4px' : '8px', 
+                transition: 'gap 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                minHeight: 0 
+            }}>
+                {rows.map((row, rowIndex) => {
+                    const isActiveRow = rowIndex === guesses.length;
+                    const applyShake = isActiveRow && isShaking;
 
                     return (
-                        <Box 
-                            key={i}
-                            sx={{
-                                width: '45px', 
-                                height: '45px',
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center',
-                                fontSize: '1.5rem', 
-                                fontWeight: 800, 
-                                textTransform: 'uppercase',
-                                color: 'white',
-                                backgroundColor: isEvaluated ? styles.bg : (hasLetter ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.02)'),
-                                border: '2px solid',
-                                borderColor: isEvaluated ? styles.border : (hasLetter ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.1)'),
-                                borderRadius: '8px',
+                        <Box key={rowIndex} sx={{ 
+                            display: 'flex', 
+                            gap: showKeyboard ? '4px' : '8px', 
+                            transition: 'gap 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            width: '100%', justifyContent: 'center',
+                            animation: applyShake ? 'shake 0.37s ease-in-out' : 'none',
+                            '@keyframes shake': {
+                                '0%, 100%': { transform: 'translate3d(0, 0, 0)' },
+                                '20%, 60%': { transform: 'translate3d(-4px, 0, 0)' },
+                                '40%, 80%': { transform: 'translate3d(4px, 0, 0)' }
+                            }
+                        }}>
+                            {row.letters.map((char, colIndex) => {
+                                const status = getLetterStatus(char !== ' ' ? char : '', colIndex, row.isEvaluatedRow);
                                 
-                                // Hardware-accelerated animations
-                                transition: 'transform 0.1s ease-out, background-color 0.3s ease, border-color 0.3s ease',
-                                transform: hasLetter && isCurrentRow ? 'scale(1.05)' : 'scale(1)',
-                                
-                                // Flip animation for evaluated tiles
-                                animation: isEvaluated ? `flipIn 0.5s ease forwards ${i * 0.1}s` : 'none',
-                                opacity: isEvaluated ? 0 : 1
-                            }}
-                        >
-                            {char}
+                                let cellSx = {
+                                    width: '100%',
+                                    // Smoothly glide the box size
+                                    maxWidth: showKeyboard ? '36px' : '52px', 
+                                    aspectRatio: '1/1',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    borderRadius: 'var(--rad-sm)', color: 'var(--color-text)',
+                                    background: 'transparent', border: '1px solid var(--color-glass-border)',
+                                    // The master transition for buttery scaling
+                                    transition: 'max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, border-color 0.2s ease'
+                                };
+
+                                if (row.isEvaluatedRow) {
+                                    const colors = {
+                                        correct: 'var(--color-wordle-correct, #538d4e)',
+                                        present: 'var(--color-wordle-present, #b59f3b)',
+                                        absent: 'var(--color-wordle-absent, #3a3a3c)'
+                                    };
+                                    const color = colors[status];
+                                    
+                                    cellSx = {
+                                        ...cellSx,
+                                        border: '1px solid var(--color-text-muted)',
+                                        animation: `flip_${status} 0.5s ease-in-out forwards`,
+                                        animationDelay: `${colIndex * 150}ms`,
+                                        [`@keyframes flip_${status}`]: {
+                                            '0%': { transform: 'rotateX(0deg)', background: 'transparent', borderColor: 'var(--color-text-muted)' },
+                                            '49.9%': { transform: 'rotateX(90deg)', background: 'transparent', borderColor: 'var(--color-text-muted)' },
+                                            '50%': { transform: 'rotateX(90deg)', background: color, borderColor: color },
+                                            '100%': { transform: 'rotateX(0deg)', background: color, borderColor: color }
+                                        }
+                                    };
+                                } else if (char !== ' ') {
+                                    cellSx.border = '1px solid var(--color-text-muted)';
+                                }
+
+                                return (
+                                    <Box key={colIndex} sx={cellSx}>
+                                        <Typography sx={{ 
+                                            fontWeight: 900, 
+                                            // Smoothly glide the font size
+                                            fontSize: showKeyboard ? '1.25rem' : '1.75rem', 
+                                            transition: 'font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
+                                            lineHeight: 1,
+                                            whiteSpace: 'nowrap' // Prevents the letter from breaking to a new line mid-animation
+                                        }}>
+                                            {char !== ' ' ? char : ''}
+                                        </Typography>
+                                    </Box>
+                                );
+                            })}
                         </Box>
                     );
                 })}
             </Box>
-        );
-    };
 
-    return (
-        <Box sx={{ 
-            flexGrow: 1, 
-            display: 'flex', 
-            flexDirection: 'column', 
-            justifyContent: 'center', 
-            alignItems: 'center',
-            animation: 'fadeIn 0.3s ease'
-        }}>
-            {/* Historical Guesses */}
-            {guesses.map((guess, i) => renderRow(guess, false, i))}
-            
-            {/* Active Input Row */}
-            {gameStatus === "playing" && guesses.length < MAX_GUESSES && renderRow(currentGuess, true, guesses.length)}
-            
-            {/* Remaining Empty Rows */}
-            {Array.from({ length: MAX_GUESSES - guesses.length - (gameStatus === "playing" ? 1 : 0) }).map((_, i) => 
-                renderRow("", false, i + guesses.length + 1)
-            )}
+            {/* THE KEYBOARD AREA (Always rendered, animated via CSS) */}
+            <Box sx={{ 
+                display: 'flex', flexDirection: 'column', gap: 0.5, flexShrink: 0, width: '100%', px: 0.5,
+                // THE SLIDE ANIMATION LOGIC
+                maxHeight: showKeyboard ? '100px' : '0px',
+                opacity: showKeyboard ? 1 : 0,
+                overflow: 'hidden',
+                transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease',
+                pointerEvents: showKeyboard ? 'auto' : 'none' // Prevents ghost clicks when hidden
+            }}>
+                {KEYBOARD_ROWS.map((row, rowIndex) => (
+                    <Box key={rowIndex} sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
+                        {row.map(key => {
+                            const status = getKeyboardKeyStatus(key);
+                            let keyBg = 'var(--color-glass-white)';
+                            if (status === 'correct') keyBg = 'var(--color-wordle-correct, #538d4e)';
+                            else if (status === 'present') keyBg = 'var(--color-wordle-present, #b59f3b)';
+                            else if (status === 'absent') keyBg = 'var(--color-wordle-absent, #3a3a3c)';
 
-            {/* Global Keyframes for the Board */}
-            <style>
-                {`
-                @keyframes flipIn {
-                    0% { transform: rotateX(-90deg); opacity: 0; }
-                    100% { transform: rotateX(0); opacity: 1; }
-                }
-                `}
-            </style>
+                            return (
+                                <Box key={key} onClick={() => onKeyPress?.(key)}
+                                    sx={{
+                                        flex: key === 'ENTER' || key === 'BACK' ? 1.5 : 1,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        height: '24px', borderRadius: 'var(--rad-sm)',
+                                        background: keyBg, border: '1px solid var(--color-glass-border)',
+                                        cursor: 'pointer', userSelect: 'none',
+                                        '&:active': { transform: 'scale(0.95)' }
+                                    }}
+                                >
+                                    <Typography sx={{ fontSize: key === 'ENTER' || key === 'BACK' ? '0.55rem' : '0.75rem', fontWeight: 900, color: status === 'absent' ? 'var(--color-text-muted)' : 'var(--color-text)' }}>
+                                        {key === 'BACK' ? '⌫' : key}
+                                    </Typography>
+                                </Box>
+                            );
+                        })}
+                    </Box>
+                ))}
+            </Box>
         </Box>
     );
 }

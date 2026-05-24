@@ -1,72 +1,84 @@
-// src/widgets/wordle/WordleLobby.jsx
-import React, { useState } from 'react';
+// src/widgets/wordle/state/WordleLobby.jsx
+import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
-
-import PillTray from '@ui/PillTray';
-import Pill from '@ui/Pill';
 import DatePicker from '@ui/DatePicker';
 
-export default function WordleLobby({ onStartSolo, onOpenRoomOverlay }) {
-    const [mode, setMode] = useState('single'); 
+export default function WordleLobby({ onStartSolo, onAdmire }) {
     const [selectedDate, setSelectedDate] = useState(new Date());
+    const [isCompleted, setIsCompleted] = useState(false);
 
-    const handleAction = () => {
+    useEffect(() => {
         const dateStr = selectedDate.toISOString().split('T')[0];
-        if (mode === 'single') {
-            onStartSolo(dateStr);
+        const key = `wordle_save_v1_${dateStr}`;
+        const saved = localStorage.getItem(key);
+        
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                setIsCompleted(parsed.gameStatus === 'won' || parsed.gameStatus === 'lost');
+            } catch (e) { 
+                setIsCompleted(false); 
+            }
         } else {
-            onOpenRoomOverlay(dateStr);
+            setIsCompleted(false);
         }
-    };
+    }, [selectedDate]);
+
+    const dateStr = selectedDate.toISOString().split('T')[0];
 
     return (
         <Box sx={{ 
             display: 'flex', flexDirection: 'column', height: '100%', 
             justifyContent: 'center', alignItems: 'center',
-            px: 1, py: 0, textAlign: 'center', animation: 'fadeIn 0.3s ease'
+            px: 1, textAlign: 'center', animation: 'fadeIn 0.3s ease'
         }}>
             
-            {/* GIANT WORDLE TEXT */}
+            {/* THE FIX: Larger font, wider letter spacing, and huge bottom margin for breathing room */}
             <Typography sx={{ 
-                fontWeight: 900, fontSize: '2.5rem', letterSpacing: '8px', 
-                color: 'var(--color-text-main, #FFF)', mb: 3 
+                fontWeight: 900, fontSize: '2.1rem', letterSpacing: '8px', 
+                color: 'var(--color-text-main, #FFF)', mb: 4, lineHeight: 1
             }}>
                 WORDL<span style={{ color: 'var(--color-primary, #EF4444)' }}>E</span>
             </Typography>
 
-            <Stack spacing={2.5} sx={{ width: '100%', maxWidth: '280px', alignItems: 'center' }}>
+            {/* THE FIX: Increased Stack spacing so the elements aren't cramped */}
+            <Stack spacing={2.5} sx={{ width: '100%', maxWidth: '240px', alignItems: 'center' }}>
                 
-                {/* DATE PICKER PILL */}
                 <DatePicker 
                     value={selectedDate} 
                     onChange={setSelectedDate} 
                     disableFuture={true} 
                 />
 
-                {/* MODE SELECTOR */}
-                <Box sx={{ transform: 'scale(0.95)', width: '100%' }}>
-                    <PillTray layout="brick">
-                        <Pill label="Single Player" isActive={mode === 'single'} onClick={() => setMode('single')} />
-                        <Pill label="Multiplayer" isActive={mode === 'multi'} onClick={() => setMode('multi')} />
-                    </PillTray>
-                </Box>
+                {isCompleted ? (
+                    <Button 
+                        fullWidth variant="contained" 
+                        onClick={() => onAdmire(dateStr)}
+                        sx={{ 
+                            py: 1.2, borderRadius: 'var(--rad-sm)', fontWeight: 900, fontSize: '0.85rem',
+                            color: 'var(--color-bg)', background: 'var(--color-primary)',
+                            boxShadow: 'none', '&:hover': { background: 'var(--color-primary)', filter: 'brightness(1.1)', boxShadow: 'none' }
+                        }}
+                    >
+                        ADMIRE WORDLE
+                    </Button>
+                ) : (
+                    <Button 
+                        fullWidth variant="contained" 
+                        onClick={() => onStartSolo(dateStr)}
+                        sx={{ 
+                            py: 1.2, borderRadius: 'var(--rad-sm)', fontWeight: 900, fontSize: '0.85rem',
+                            color: 'var(--color-bg)', background: 'var(--color-primary)',
+                            boxShadow: 'none', '&:hover': { background: 'var(--color-primary)', filter: 'brightness(1.1)', boxShadow: 'none' }
+                        }}
+                    >
+                        PLAY WORDLE
+                    </Button>
+                )}
 
-                {/* ACTION BUTTON */}
-                <Button 
-                    fullWidth 
-                    variant="contained" 
-                    onClick={handleAction}
-                    sx={{ 
-                        py: 1.5, borderRadius: '12px', fontWeight: 900, fontSize: '0.85rem',
-                        color: 'var(--color-text-on-primary, #000)', background: 'var(--color-primary, #EF4444)',
-                        '&:hover': { background: 'var(--color-primary, #EF4444)', filter: 'brightness(1.1)' }
-                    }}
-                >
-                    {mode === 'single' ? 'START GAME' : 'JOIN ROOM'}
-                </Button>
             </Stack>
         </Box>
     );

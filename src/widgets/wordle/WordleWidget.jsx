@@ -1,101 +1,174 @@
 // src/widgets/wordle/WordleWidget.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-
-import WidgetBase from '@widgets/WidgetBase'; // Using your alias!
-
-// Views
+import WidgetBase from '@widgets/WidgetBase';
 import WordleLobby from './state/WordleLobby';
 import WordleBoard from './state/WordleBoard';
-
-// Overlays
+import WordleAdmire from './state/WordleAdmire';
+import WordleStats from './state/WordleStats';
 import RoomOverlay from './overlays/RoomOverlay';
+import HintOverlay from './overlays/HintOverlay';
+import AnswerOverlay from './overlays/AnswerOverlay';
+import * as Icons from '@ui/Icons'; 
+import useWordleEngine from './useWordleEngine';
 
 export default function WordleWidget({ widgetId }) {
-    // STATE MACHINE (5 States: 'lobby', 'board', 'stats', 'admire', 'room')
     const [currentState, setCurrentState] = useState('lobby');
-    
-    // OVERLAY ENGINE (4 Overlays: null, 'room', 'hint', 'answer', 'guessdistro')
     const [activeOverlay, setActiveOverlay] = useState(null);
+    const [gameDate, setGameDate] = useState(new Date().toLocaleDateString());
+    const [showKeyboard, setShowKeyboard] = useState(false);
+    const [answerReason, setAnswerReason] = useState('won');
 
-    const [gameDate, setGameDate] = useState(null);
+    const isPlaying = currentState === 'board';
+    const engine = useWordleEngine(isPlaying, gameDate);
 
-    // --- TRS RENDERING LOGIC ---
+    useEffect(() => {
+        const telemetry = { renders: 1, view: currentState, syncScope: 'ISOLATED_SOLO' };
+        window.dispatchEvent(new CustomEvent('widget_telemetry_uplink', {
+            detail: { type: 'wordle', data: telemetry }
+        }));
+    }, [currentState]);
+
+    useEffect(() => {
+        // Only trigger the delay sequence if the user is actively playing on the board.
+        if (currentState !== 'board') return;
+
+        if (engine.gameStatus === 'won') {
+            setAnswerReason('won');
+            const timer = setTimeout(() => setActiveOverlay('answer'), 1500);
+            return () => clearTimeout(timer);
+        } else if (engine.gameStatus === 'lost') {
+            setAnswerReason('lost');
+            const timer = setTimeout(() => setActiveOverlay('answer'), 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [engine.gameStatus, currentState]);
+
     const renderTRS = () => {
+        const iconStyle = { cursor: 'pointer', display: 'flex', color: 'var(--color-text-muted)', transition: 'color 0.2s ease', '&:hover': { color: 'var(--color-text-main, #FFF)' } };
+        
         switch (currentState) {
             case 'lobby':
-                // Stats Icon SVG
                 return (
-                    <Box onClick={() => setCurrentState('stats')} sx={{ cursor: 'pointer', color: 'var(--color-text-muted)', '&:hover': { color: 'var(--color-text-main, #FFF)' }}}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M4 20h16v2H4zM4 14h4v6H4zM10 8h4v12h-4zM16 11h4v9h-4z"/></svg>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Typography 
+                            sx={{ cursor: 'pointer', fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-text-muted)', transition: 'color 0.2s ease', '&:hover': { color: 'var(--color-text)' } }} 
+                            onClick={() => setActiveOverlay('room')}
+                        >
+                            ROOMS
+                        </Typography>
+                        <Box sx={iconStyle} onClick={() => setCurrentState('stats')}><Icons.Stats /></Box>
                     </Box>
                 );
             case 'board':
                 return (
-                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                        <Box onClick={() => setActiveOverlay('hint')} sx={{ cursor: 'pointer', color: 'var(--color-primary, #EF4444)' }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7zm1 18h-2v1a1 1 0 0 0 2 0v-1z"/></svg>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={iconStyle} onClick={() => setShowKeyboard(!showKeyboard)}>
+                            {showKeyboard ? <Icons.KeyboardShow /> : <Icons.KeyboardHide />}
                         </Box>
-                        <Typography sx={{ fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{gameDate || 'DAILY'}</Typography>
+                        <Box sx={{ ...iconStyle, color: 'var(--color-primary, #EF4444)' }} onClick={() => setActiveOverlay('hint')}><Icons.Hint /></Box>
+                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-text-muted)' }}>{gameDate}</Typography>
                     </Box>
                 );
             case 'stats':
                 return (
-                    <Typography onClick={() => setCurrentState('admire')} sx={{ cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--color-primary, #EF4444)' }}>
-                        ADMIRE WORDLE
-                    </Typography>
-                );
-            case 'admire':
-                return <Typography sx={{ fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{gameDate}</Typography>;
-            case 'room':
-                return (
-                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                        <Box onClick={() => setActiveOverlay('room')} sx={{ cursor: 'pointer', color: 'var(--color-text-muted)', '&:hover': { color: 'var(--color-text-main, #FFF)' }}}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        {/* The Rooms Icon shifted to the Header */}
+                        <Box sx={iconStyle} onClick={() => setActiveOverlay('room')}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
                         </Box>
-                        <Typography sx={{ fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>ROOM NAME ▾</Typography>
+                        <Typography sx={{ cursor: 'pointer', fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-primary, #EF4444)' }} onClick={() => setCurrentState('admire')}>
+                            ADMIRE
+                        </Typography>
                     </Box>
                 );
-            default:
-                return null;
+            case 'admire':
+                return (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={iconStyle} onClick={() => setCurrentState('stats')}><Icons.Stats /></Box>
+                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-text-muted)' }}>{gameDate}</Typography>
+                    </Box>
+                );
+            case 'room':
+                return (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={iconStyle} onClick={() => setActiveOverlay('room')}><Icons.Edit /></Box>
+                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-text-muted)' }}>ROOM ▾</Typography>
+                    </Box>
+                );
+            default: return null;
         }
     };
 
     return (
-        <WidgetBase 
+        <WidgetBase
             title="WORDLE"
             onTitleClick={() => setCurrentState('lobby')}
             headerActions={renderTRS()}
+            toastMessage={engine.toastMessage}
+            overlays={
+                <>
+                    <RoomOverlay
+                        isOpen={activeOverlay === 'room'}
+                        onClose={() => setActiveOverlay(null)}
+                        onConfirm={() => { setActiveOverlay(null); setCurrentState('room'); }}
+                    />
+                    <HintOverlay
+                        isOpen={activeOverlay === 'hint'}
+                        onClose={() => setActiveOverlay(null)}
+                        targetWord={engine.targetWord}
+                        onRevealAnswer={() => {
+                            engine.markRevealed(); 
+                            setAnswerReason('revealed');
+                            setActiveOverlay('answer'); 
+                        }}
+                    />
+                    <AnswerOverlay
+                        isOpen={activeOverlay === 'answer'}
+                        onClose={() => setActiveOverlay(null)}
+                        targetWord={engine.targetWord}
+                        reason={answerReason}
+                        guessCount={engine.guesses.length}
+                        isRevealed={engine.isRevealed} 
+                        onGoHome={() => {
+                            setActiveOverlay(null);
+                            setCurrentState('lobby');
+                        }}
+                        onGoStats={() => {
+                            setActiveOverlay(null);
+                            setCurrentState('stats');
+                        }}
+                    />
+                </>
+            }
         >
-            {/* --- 1. STATE RENDERER --- */}
             {currentState === 'lobby' && (
-                <WordleLobby 
+                <WordleLobby
                     onStartSolo={(date) => { setGameDate(date); setCurrentState('board'); }}
-                    onOpenRoomOverlay={(date) => { setGameDate(date); setActiveOverlay('room'); }}
+                    onAdmire={(date) => { setGameDate(date); setCurrentState('admire'); }}
                 />
             )}
             
             {currentState === 'board' && (
-                <WordleBoard /> // We'll re-wire the engine in the next step
+                <WordleBoard engine={engine} showKeyboard={showKeyboard} />
             )}
             
-            {currentState === 'stats' && <Box sx={{ p: 2 }}>Stats State Placeholder</Box>}
-            {currentState === 'admire' && <Box sx={{ p: 2 }}>Admire State Placeholder</Box>}
-            {currentState === 'room' && <Box sx={{ p: 2 }}>Room State Placeholder</Box>}
-
-            {/* --- 2. OVERLAY RENDERER --- */}
-            <RoomOverlay 
-                isOpen={activeOverlay === 'room'} 
-                onClose={() => setActiveOverlay(null)} 
-                onConfirm={(roomData) => {
-                    console.log("Joined Room:", roomData);
-                    setActiveOverlay(null);
-                    setCurrentState('room');
-                }}
-            />
-            {/* Future overlays: HintOverlay, AnswerOverlay, GuessDistroOverlay will go here */}
+            {currentState === 'admire' && <WordleAdmire engine={engine} />}
             
+            
+            {currentState === 'stats' && <WordleStats engine={engine} />}
+            {currentState === 'room' && (
+                <Box sx={{ p: 1, color: 'var(--color-text-muted)', textAlign: 'center', animation: 'fadeIn 0.2s ease' }}>
+                    ROOM PLACEHOLDER
+                </Box>
+            )}
         </WidgetBase>
     );
 }
+       
