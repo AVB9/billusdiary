@@ -12,14 +12,11 @@ const KEYBOARD_ROWS = [
 export default function WordleBoard({ engine, showKeyboard }) {
     const boardRef = useRef(null);
     const [isShaking, setIsShaking] = useState(false);
+    const [isBoardActive, setIsBoardActive] = useState(true); 
     const wordLength = 4;
 
     if (!engine) return null;
     const { guesses = [], currentGuess = '', targetWord = '', onKeyPress, toastMessage } = engine;
-
-    useEffect(() => {
-        if (boardRef.current) boardRef.current.focus();
-    }, []);
 
     useEffect(() => {
         if (toastMessage) {
@@ -29,10 +26,38 @@ export default function WordleBoard({ engine, showKeyboard }) {
         }
     }, [toastMessage]);
 
-    const handleKeyDown = (e) => {
-        if (e.ctrlKey || e.metaKey || e.altKey) return;
-        onKeyPress?.(e.key);
-    };
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (boardRef.current && !boardRef.current.contains(e.target)) {
+                setIsBoardActive(false); 
+            } else {
+                setIsBoardActive(true);  
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        const handleGlobalKeyDown = (e) => {
+            if (!isBoardActive) return;
+
+            const activeTag = document.activeElement?.tagName?.toLowerCase();
+            if (activeTag === 'input' || activeTag === 'textarea') return;
+
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+            if (e.key === 'Backspace' || e.key === ' ') {
+                e.preventDefault(); 
+            }
+
+            onKeyPress?.(e.key);
+        };
+
+        window.addEventListener('keydown', handleGlobalKeyDown, { passive: false });
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    }, [onKeyPress, isBoardActive]); 
 
     const getLetterStatus = (letter, index, isEvaluatedRow) => {
         if (!isEvaluatedRow || !letter || !targetWord) return 'unused';
@@ -72,19 +97,14 @@ export default function WordleBoard({ engine, showKeyboard }) {
     return (
         <Box 
             ref={boardRef}
-            tabIndex={0}
-            onKeyDown={handleKeyDown}
             sx={{ 
                 display: 'flex', flexDirection: 'column', height: '100%', width: '100%', 
                 justifyContent: 'space-between', pb: 0.5, outline: 'none' 
             }}
         >
-            
-            {/* THE GRID AREA */}
             <Box sx={{ 
                 flexGrow: 1, display: 'flex', flexDirection: 'column', 
                 alignItems: 'center', justifyContent: 'center', 
-                // Smoothly scale the gap between rows as the board expands
                 gap: showKeyboard ? '4px' : '8px', 
                 transition: 'gap 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 minHeight: 0 
@@ -111,14 +131,15 @@ export default function WordleBoard({ engine, showKeyboard }) {
                                 
                                 let cellSx = {
                                     width: '100%',
-                                    // Smoothly glide the box size
                                     maxWidth: showKeyboard ? '36px' : '52px', 
                                     aspectRatio: '1/1',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     borderRadius: 'var(--rad-sm)', color: 'var(--color-text)',
-                                    background: 'transparent', border: '1px solid var(--color-glass-border)',
-                                    // The master transition for buttery scaling
-                                    transition: 'max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, border-color 0.2s ease'
+                                    background: 'transparent', 
+                                    border: '1px solid var(--color-glass-border)',
+                                    opacity: 1,
+                                    // THE FIX: Added opacity to the transition block for a smooth fade
+                                    transition: 'max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease'
                                 };
 
                                 if (row.isEvaluatedRow) {
@@ -142,18 +163,23 @@ export default function WordleBoard({ engine, showKeyboard }) {
                                         }
                                     };
                                 } else if (char !== ' ') {
+                                    // Filled but not evaluated yet (The "White" border)
                                     cellSx.border = '1px solid var(--color-text-muted)';
+                                } else if (isBoardActive && isActiveRow && colIndex === currentGuess.length) {
+                                    // THE FIX: The minimalist static cursor
+                                    // Perfectly matches 50% brightness of the filled border color
+                                    cellSx.border = '1px solid var(--color-text-muted)';
+                                    cellSx.opacity = 0.5;
                                 }
 
                                 return (
                                     <Box key={colIndex} sx={cellSx}>
                                         <Typography sx={{ 
                                             fontWeight: 900, 
-                                            // Smoothly glide the font size
                                             fontSize: showKeyboard ? '1.25rem' : '1.75rem', 
                                             transition: 'font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
                                             lineHeight: 1,
-                                            whiteSpace: 'nowrap' // Prevents the letter from breaking to a new line mid-animation
+                                            whiteSpace: 'nowrap'
                                         }}>
                                             {char !== ' ' ? char : ''}
                                         </Typography>
@@ -165,15 +191,13 @@ export default function WordleBoard({ engine, showKeyboard }) {
                 })}
             </Box>
 
-            {/* THE KEYBOARD AREA (Always rendered, animated via CSS) */}
             <Box sx={{ 
                 display: 'flex', flexDirection: 'column', gap: 0.5, flexShrink: 0, width: '100%', px: 0.5,
-                // THE SLIDE ANIMATION LOGIC
                 maxHeight: showKeyboard ? '100px' : '0px',
                 opacity: showKeyboard ? 1 : 0,
                 overflow: 'hidden',
                 transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease',
-                pointerEvents: showKeyboard ? 'auto' : 'none' // Prevents ghost clicks when hidden
+                pointerEvents: showKeyboard ? 'auto' : 'none' 
             }}>
                 {KEYBOARD_ROWS.map((row, rowIndex) => (
                     <Box key={rowIndex} sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>

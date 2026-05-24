@@ -3,15 +3,29 @@ import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import WidgetBase from '@widgets/WidgetBase';
+import OverlayBase from '@widgets/OverlayBase'; 
+
 import WordleLobby from './state/WordleLobby';
 import WordleBoard from './state/WordleBoard';
 import WordleAdmire from './state/WordleAdmire';
 import WordleStats from './state/WordleStats';
-import RoomOverlay from './overlays/RoomOverlay';
+import RoomStats from './state/WordleRoomStats';
+import ManageRoom from './state/WordleManageRoom';
+
 import HintOverlay from './overlays/HintOverlay';
 import AnswerOverlay from './overlays/AnswerOverlay';
+
 import * as Icons from '@ui/Icons'; 
 import useWordleEngine from './useWordleEngine';
+
+const RoomIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+    </svg>
+);
 
 export default function WordleWidget({ widgetId }) {
     const [currentState, setCurrentState] = useState('lobby');
@@ -31,7 +45,6 @@ export default function WordleWidget({ widgetId }) {
     }, [currentState]);
 
     useEffect(() => {
-        // Only trigger the delay sequence if the user is actively playing on the board.
         if (currentState !== 'board') return;
 
         if (engine.gameStatus === 'won') {
@@ -52,12 +65,7 @@ export default function WordleWidget({ widgetId }) {
             case 'lobby':
                 return (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Typography 
-                            sx={{ cursor: 'pointer', fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-text-muted)', transition: 'color 0.2s ease', '&:hover': { color: 'var(--color-text)' } }} 
-                            onClick={() => setActiveOverlay('room')}
-                        >
-                            ROOMS
-                        </Typography>
+                        <Box sx={iconStyle} onClick={() => setCurrentState('roomstats')}><RoomIcon /></Box>
                         <Box sx={iconStyle} onClick={() => setCurrentState('stats')}><Icons.Stats /></Box>
                     </Box>
                 );
@@ -67,25 +75,15 @@ export default function WordleWidget({ widgetId }) {
                         <Box sx={iconStyle} onClick={() => setShowKeyboard(!showKeyboard)}>
                             {showKeyboard ? <Icons.KeyboardShow /> : <Icons.KeyboardHide />}
                         </Box>
-                        <Box sx={{ ...iconStyle, color: 'var(--color-primary, #EF4444)' }} onClick={() => setActiveOverlay('hint')}><Icons.Hint /></Box>
+                        <Box sx={{ ...iconStyle, color: 'var(--color-primary)' }} onClick={() => setActiveOverlay('hint')}><Icons.Hint /></Box>
                         <Typography sx={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-text-muted)' }}>{gameDate}</Typography>
                     </Box>
                 );
             case 'stats':
+                // THE FIX: Removed ADMIRE bypass. Only the Room Icon is left.
                 return (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        {/* The Rooms Icon shifted to the Header */}
-                        <Box sx={iconStyle} onClick={() => setActiveOverlay('room')}>
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="9" cy="7" r="4"></circle>
-                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                            </svg>
-                        </Box>
-                        <Typography sx={{ cursor: 'pointer', fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-primary, #EF4444)' }} onClick={() => setCurrentState('admire')}>
-                            ADMIRE
-                        </Typography>
+                        <Box sx={iconStyle} onClick={() => setCurrentState('roomstats')}><RoomIcon /></Box>
                     </Box>
                 );
             case 'admire':
@@ -95,11 +93,23 @@ export default function WordleWidget({ widgetId }) {
                         <Typography sx={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-text-muted)' }}>{gameDate}</Typography>
                     </Box>
                 );
-            case 'room':
+            case 'roomstats':
+                // THE FIX: Removed ADMIRE bypass. Only the Stats Icon is left.
                 return (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box sx={iconStyle} onClick={() => setActiveOverlay('room')}><Icons.Edit /></Box>
-                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-text-muted)' }}>ROOM ▾</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box sx={iconStyle} onClick={() => setCurrentState('stats')}><Icons.Stats /></Box>
+                    </Box>
+                );
+            case 'manageroom':
+                return (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box sx={iconStyle} onClick={() => setActiveOverlay('createroom')}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </Box>
+                        <Box sx={{ ...iconStyle, position: 'relative' }} onClick={() => setActiveOverlay('managerequest')}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                            <Box sx={{ position: 'absolute', top: -2, right: -2, width: 8, height: 8, background: 'var(--color-primary)', borderRadius: '50%', border: '2px solid var(--color-glass-bg)' }} />
+                        </Box>
                     </Box>
                 );
             default: return null;
@@ -114,11 +124,6 @@ export default function WordleWidget({ widgetId }) {
             toastMessage={engine.toastMessage}
             overlays={
                 <>
-                    <RoomOverlay
-                        isOpen={activeOverlay === 'room'}
-                        onClose={() => setActiveOverlay(null)}
-                        onConfirm={() => { setActiveOverlay(null); setCurrentState('room'); }}
-                    />
                     <HintOverlay
                         isOpen={activeOverlay === 'hint'}
                         onClose={() => setActiveOverlay(null)}
@@ -145,6 +150,22 @@ export default function WordleWidget({ widgetId }) {
                             setCurrentState('stats');
                         }}
                     />
+
+                    <OverlayBase isOpen={activeOverlay === 'joinroom'} title="JOIN ROOM" onClose={() => setActiveOverlay(null)}>
+                        <Typography sx={{ color: 'var(--color-text-muted)', textAlign: 'center', p: 2 }}>[A - X X X X] Input goes here</Typography>
+                    </OverlayBase>
+                    <OverlayBase isOpen={activeOverlay === 'createroom'} title="CREATE ROOM" onClose={() => setActiveOverlay(null)}>
+                        <Typography sx={{ color: 'var(--color-text-muted)', textAlign: 'center', p: 2 }}>Room Name Input goes here</Typography>
+                    </OverlayBase>
+                    <OverlayBase isOpen={activeOverlay === 'editroom'} title="EDIT ROOM" onClose={() => setActiveOverlay(null)}>
+                        <Typography sx={{ color: 'var(--color-text-muted)', textAlign: 'center', p: 2 }}>Edit Room UI goes here</Typography>
+                    </OverlayBase>
+                    <OverlayBase isOpen={activeOverlay === 'managerequest'} title="REQUESTS" onClose={() => setActiveOverlay(null)}>
+                        <Typography sx={{ color: 'var(--color-text-muted)', textAlign: 'center', p: 2 }}>Inbox UI goes here</Typography>
+                    </OverlayBase>
+                    <OverlayBase isOpen={activeOverlay === 'inviteplayer'} title="INVITE PLAYER" onClose={() => setActiveOverlay(null)}>
+                        <Typography sx={{ color: 'var(--color-text-muted)', textAlign: 'center', p: 2 }}>Search UI goes here</Typography>
+                    </OverlayBase>
                 </>
             }
         >
@@ -152,6 +173,8 @@ export default function WordleWidget({ widgetId }) {
                 <WordleLobby
                     onStartSolo={(date) => { setGameDate(date); setCurrentState('board'); }}
                     onAdmire={(date) => { setGameDate(date); setCurrentState('admire'); }}
+                    onJoinRoom={() => setActiveOverlay('joinroom')}
+                    onManageRooms={() => setCurrentState('manageroom')}
                 />
             )}
             
@@ -161,14 +184,20 @@ export default function WordleWidget({ widgetId }) {
             
             {currentState === 'admire' && <WordleAdmire engine={engine} />}
             
-            
             {currentState === 'stats' && <WordleStats engine={engine} />}
-            {currentState === 'room' && (
-                <Box sx={{ p: 1, color: 'var(--color-text-muted)', textAlign: 'center', animation: 'fadeIn 0.2s ease' }}>
-                    ROOM PLACEHOLDER
-                </Box>
+
+            {currentState === 'roomstats' && (
+                <RoomStats 
+                    onManageRoom={() => setCurrentState('manageroom')} 
+                />
+            )}
+
+            {currentState === 'manageroom' && (
+                <ManageRoom 
+                    onOpenEdit={() => setActiveOverlay('editroom')}
+                    onOpenInvite={() => setActiveOverlay('inviteplayer')}
+                />
             )}
         </WidgetBase>
     );
 }
-       

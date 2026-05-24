@@ -130,7 +130,7 @@ Just say the word, and I will generate the **Technical Spec Sheet** for building
 ```
 
 
-ok now that is in place lets make hint overlay and answer overlay so i want you to make a prompt for the agent to make these 
+ok now that is in place lets see hint overlay and answer overlay 
 
 Overlay: hint
 
@@ -183,88 +183,190 @@ bug :- user can frst reveal the answer even before the try to guess even a singl
 ok we will now make stats but befor we make stats i want to  make a coustom ui component for the wordie widget 
 
 
-so you knwo hw we have this couston date picker pill for our billus diary app we even use that in our wordle lobby but for stats tab i want a coustom date picker see how we inject today tomorrow or yesterday in MUI date picker i want to inject the words of the day instead and below those worlds we will have the date written in small accent color and use that as date selector for stats tab we will call this the worddatepicker also as i suggested above if the user has not solved current days wordle and isrevealed negative then we will just make it say TODAY instead of inject todays word 
+so you knwo how we have this couston date picker pill for our billus diary app we even use that in our wordle lobby but for stats tab i want a coustom date picker see how we inject today tomorrow or yesterday in MUI date picker i want to inject the words of the day instead and below those worlds we will have the date written in small accent color and use that as date selector for stats tab we will call this the worddatepicker also as i suggested above if the user has not solved current days wordle and isrevealed negative then we will just make it say TODAY instead of injecting todays word 
 
 fix that bug and just give a review on this new component and then we will get on the task of coding up the stats state
 
 
-ok now i will tell you the physical design of the states and overlays 
+ok now i will tell you the physical design of the states and overlays related to the multiplayer architecture 
 
 
-in lobby state 3 buttons which connect to rooms
+1. Global Architecture & Database Constraints
 
-    1. join room :- opens join room overlay
-    2. my rooms :- opens manage room state 
-    3. room icon in TRS :- opens room state 
+To maintain a fast, cost-effective database and a clean UI, the multiplayer ecosystem operates under strict physical limits:
 
-states :- room, manage room 
+    Room Capacity: Max 20 players per room.
 
-state :- room
+    User Capacity: A single user can join a max of 5 rooms.
 
+    Room ID Format: A-XXXX (1 Alpha, 4 Numeric). This creates a visually distinct, easy-to-type invite code (e.g., W-4928) that differs completely from Wordle text inputs.
 
-TRS :-  1. "stats icon" takes user to stats state 
+    Role-Based Access Control (RBAC): Three tiers of permissions: Owner, Mod, and Member.
 
-        2. "admire text" takes user to admire state
+2. Core States (The Views)
+2.1 The Lobby State
 
+The entry point. It focuses on getting the user into a game, while cleanly providing paths to the multiplayer ecosystem.
 
-content :-
+    TRS (Top Right Section): * [Room Icon] ➔ Routes to Room Stats State (Data Consumption).
 
-rectangular room picker dropdown on left and word date picker on the right (both take 50% space)
+    Content Area (Main):
 
-then a table with 2 column with title players and score 
-below will be list of players and their score 
+        [Join Room] Button ➔ Pops Join Room Overlay.
 
-then a manage room button which takes user to manage room state
+        [My Rooms] Button ➔ Routes to Manage Room State (Administration). (UI Polish: Displays a red notification dot if there are pending inbox requests).
 
-state :- manage room
+2.2 Room Stats State (roomstats)
 
+The competitive viewing hub. This is where users experience "FOMO" and track their friends.
 
-TRS :- "request" text takes user to managerequestoverlay
+    TRS:
 
-content :-
+        [Stats Icon] ➔ Routes to Solo Stats.
 
-rectangular room picker dropdown on left (80% space) and edit room icon button on the right (20% space) the edit room icon button will only be active if the user is the room owner 
+        [ADMIRE] Text ➔ Routes to Admire Board.
 
-then a table with 2 column with title players and actions 
-below will be the list of all the player with action options depending upon if the user is the room owner or memeber 
+    Content Area:
 
-if room owner :- for themselves they will have leave option and make mod and remove option for others 
-if mod :- for themselves they will have leave option and remove option for others except owner
-if member :- for themselves they will have leave option thats it 
+        Header (50/50 Split): * Left: Rectangular Room Picker Dropdown.
 
+            Right: Wordle DatePicker.
 
-overlays:- joinroom, editroom, roomrequest
+        Leaderboard Table:
 
-Overlay: joinroom
+            Columns: PLAYERS | SCORE
 
-Triggers: "JOIN ROOM" button in the wordle lobby
+            Body: Scrollable list of players and their scores for the selected date. (Edge Case Fix: If a user hasn't played yet, their score shows as - / 4. This prevents spoilers while driving immense competitive curiosity).
 
-structure
+        Footer:
 
-    - header 
-        title: JOIN ROOM 
-        TRS: close overlay icon
+            [Manage Room] Button ➔ Routes to Manage Room State.
 
-    - content 
-        ~ room code textarea: alpha numerical one letter 4 numbers A-XXXX there should be 2 input feild seperated by "-" 
+2.3 Manage Room State (manageroom)
 
-    - footer
-        ~ button: "JOIN ROOM" only becomes active or clickable when all charachters are entered  
-        if the user enters correct existing room code they get a toast saying "request sent"
-        if invalid room code  is entered then they get a toast sayng "invalid room code"
+The administrative dashboard for handling settings, requests, and kicking inactive players.
 
-Overlay: editroom
+    TRS:
 
-Triggers: "edit room icon button" in the manage room state
+        [+] New Room Icon ➔ Pops Create Room Overlay.
 
-structure
+        [Inbox] Request Icon ➔ Pops Manage Request Overlay. (UI Polish: Displays a red dot if requests are pending).
 
-    - header 
-        title: EDIT ROOM 
-        TRS: close overlay icon
+    Content Area:
 
-    - content 
-        ~ room name textarea: existing room name will be shown which the user can change only 8 character allowed 
+        Header (70/15/15 Split):
 
-    - footer
-        ~ button: "DONE" only becomes active or clickable when all charachters are entered  
+            Left (70%): Rectangular Room Picker Dropdown.
+
+            Middle (15%): [Edit Icon] ➔ Pops Edit Room Overlay.
+
+            Right (15%): [Invite Icon] ➔ Pops Invite Player Overlay.
+
+            RBAC Security: The Edit and Invite icons are visually disabled/hidden unless the viewing user is the Owner.
+
+        Permissions Table:
+
+            Columns: PLAYERS | ACTIONS
+
+            Body: Scrollable list of players. Action buttons change dynamically based on the viewer's role:
+
+                If Owner: Can Leave (Self), Make Mod (Others), Remove (Others).
+
+                If Mod: Can Leave (Self), Remove (Others, except Owner).
+
+                If Member: Can Leave (Self). No other actions.
+
+3. The Overlays (The Actions)
+3.1 Join Room (joinroom)
+
+Triggered from the Lobby.
+
+    Header: JOIN ROOM | [X] Close
+
+    Content: Two input fields separated by a hyphen [ _ ] - [ _ _ _ _ ]. Auto-advances focus.
+
+    Footer: [JOIN ROOM] Button. Only active when exactly 5 valid alphanumeric characters are entered.
+
+    System Toasts:
+
+        Success: "Request Sent" (If code exists in DB).
+
+        Error: "Invalid Room Code" (If code does not exist).
+
+3.2 Create Room (createroom)
+
+Triggered from manageroom TRS.
+
+    Header: CREATE ROOM | [X] Close
+
+    Content: Room Name input field. (UI Polish Note: Database uses A-XXXX as the primary key, so we can safely allow the display name to be up to 12-15 characters to give users more freedom, rather than a strict 8).
+
+    Footer: [DONE] Button. Creates room, assigns the user as Owner, and generates the A-XXXX code.
+
+3.3 Edit Room (editroom)
+
+Triggered from manageroom Header.
+
+    Header: EDIT ROOM | [X] Close
+
+    Content: Room Name input field (pre-filled with current name).
+
+    Footer: [DONE] Button. Updates the display name in the database.
+
+3.4 Manage Requests (managerequest)
+
+Triggered from manageroom TRS. Acts as a unified Inbox.
+
+    Header: REQUESTS | [X] Close
+
+    Content:
+
+        Toggle Pill: [ Join Requests (2) | Invites (1) ]. Strictly separates users asking to enter your room from rooms asking you to enter.
+
+        Scrollable List: Left side shows User/Room name. Right side shows a sleek checkbox. Clicking the row toggles the box.
+
+        Empty State: Ghosted icon reading "You're all caught up!" if the selected tab has no requests.
+
+    Footer (Batch Actions):
+
+        Left (50%): [IGNORE] (Deletes request).
+
+        Right (50%): [ACCEPT] (Approves request, updates DB).
+
+        Safety Logic: Both buttons are locked/dimmed until at least 1 checkbox is selected. (UI Polish: Batch-accepting fires a single toast: "X Players Added", not multiple).
+
+3.5 Invite Player (inviteplayer) Implicitly required by Invite Icon
+
+Triggered from manageroom Header.
+
+    Header: INVITE PLAYER | [X] Close
+
+    Content: Search/Input field for a friend's Username or ID.
+
+    Footer: [SEND INVITE] Button. Triggers an "Add Request" in the recipient's Inbox.
+
+4. Edge Cases & Architectural Solutions (The Bulletproofing)
+Edge Case 1: The Orphaned Room (Succession Logic)
+
+    The Problem: The Room Owner clicks "Leave Room".
+
+    The Fix: The database runs a sequence check. Ownership automatically transfers to the user who has been in the room the longest chronologically (Player #2). If the room hits 0 players, the DB deletes the room to save space.
+
+Edge Case 2: The Synchronized State Paradigm
+
+    The Problem: A user is in manageroom looking at "Room B", then clicks the TRS icon to go to roomstats and sees "Room A", causing severe data confusion.
+
+    The Fix: The "Active Room ID" must be held in a Global React State Context (or Redux), not local component state. Changing the dropdown in either state universally updates the other.
+
+Edge Case 3: The Ghost User / Kick Spam
+
+    The Problem: Kicked toxic players spamming the Join code, or users losing their LocalStorage UUID and becoming un-kickable "ghosts."
+
+    The Fix: 1. Kicking a user adds their UUID to an invisible bannedList array on the Room object, automatically rejecting future Join requests.
+    2. Mod/Owner controls inherently solve the Ghost User issue—if a player stops playing for 3 weeks because they lost their device, the Owner simply kicks the dead profile to free up 1 of the 20 slots.
+
+Edge Case 4: The Time Zone Paradox
+
+    The Problem: An Indian user (IST) plays Tuesday's word while a New York user (EST) is still on Monday night.
+
+    The Fix: We rely entirely on the absolute UI logic of the Date Picker. Scores are tied strictly to the YYYY-MM-DD string in the database, not relative "Today/Yesterday" timestamps. If the NYC user looks at Monday in the dropdown, they see Monday's scores. They won't see the IST user's Tuesday score until they manually change the date picker to Tuesday.

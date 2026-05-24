@@ -6,7 +6,7 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import DatePicker from '@ui/DatePicker';
 
-export default function WordleLobby({ onStartSolo, onAdmire }) {
+export default function WordleLobby({ onStartSolo, onAdmire, onJoinRoom, onManageRooms }) {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [isCompleted, setIsCompleted] = useState(false);
 
@@ -36,7 +36,6 @@ export default function WordleLobby({ onStartSolo, onAdmire }) {
             px: 1, textAlign: 'center', animation: 'fadeIn 0.3s ease'
         }}>
             
-            {/* THE FIX: Larger font, wider letter spacing, and huge bottom margin for breathing room */}
             <Typography sx={{ 
                 fontWeight: 900, fontSize: '2.1rem', letterSpacing: '8px', 
                 color: 'var(--color-text-main, #FFF)', mb: 4, lineHeight: 1
@@ -44,7 +43,6 @@ export default function WordleLobby({ onStartSolo, onAdmire }) {
                 WORDL<span style={{ color: 'var(--color-primary, #EF4444)' }}>E</span>
             </Typography>
 
-            {/* THE FIX: Increased Stack spacing so the elements aren't cramped */}
             <Stack spacing={2.5} sx={{ width: '100%', maxWidth: '240px', alignItems: 'center' }}>
                 
                 <DatePicker 
@@ -52,6 +50,32 @@ export default function WordleLobby({ onStartSolo, onAdmire }) {
                     onChange={setSelectedDate} 
                     disableFuture={true} 
                 />
+
+                {/* THE MULTIPLAYER ROW: 50/50 Split */}
+                <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
+                    <Button 
+                        variant="outlined" 
+                        onClick={onJoinRoom}
+                        sx={{ 
+                            flex: 1, py: 1, borderRadius: 'var(--rad-sm)', fontWeight: 900, fontSize: '0.75rem',
+                            color: 'var(--color-text-main, #FFF)', borderColor: 'var(--color-glass-border)',
+                            '&:hover': { background: 'var(--color-glass-white)', borderColor: 'var(--color-text-main, #FFF)' }
+                        }}
+                    >
+                        JOIN ROOM
+                    </Button>
+                    <Button 
+                        variant="outlined" 
+                        onClick={onManageRooms}
+                        sx={{ 
+                            flex: 1, py: 1, borderRadius: 'var(--rad-sm)', fontWeight: 900, fontSize: '0.75rem',
+                            color: 'var(--color-text-main, #FFF)', borderColor: 'var(--color-glass-border)',
+                            '&:hover': { background: 'var(--color-glass-white)', borderColor: 'var(--color-text-main, #FFF)' }
+                        }}
+                    >
+                        MY ROOMS
+                    </Button>
+                </Box>
 
                 {isCompleted ? (
                     <Button 
