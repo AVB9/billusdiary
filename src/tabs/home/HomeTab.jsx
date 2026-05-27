@@ -4,7 +4,6 @@ import Greetings from '@tabs/home/header/Greetings';
 import Grid from '@tabs/home/grid/Grid';
 import EditWidgetsModal from '@tabs/home/grid/EditWidgetsModal';
 import EditBar from '@tabs/home/grid/EditBar';
-import DevPanel from '@components/ui/DevPanel'; 
 import { WIDGET_DICTIONARY } from '@widgets/WidgetRegistry';
 import '@tabs/home/hometab.css';
 
@@ -23,6 +22,34 @@ export default function HomeTab() {
 
     // Derive the live widget from the layout array
     const inspectedWidget = userLayout.find(w => w.id === inspectedWidgetId) || null;
+
+
+    // 1. Broadcast the selected widget anytime it changes
+    useEffect(() => {
+        window.dispatchEvent(new CustomEvent('DEV_PANEL_SYNC', {
+            // FIX: We pass 'inspectedWidget' instead of the undefined 'selectedWidget'
+            detail: { selectedWidget: inspectedWidget, isEditMode } 
+        }));
+    }, [inspectedWidget, isEditMode]); // FIX: Updated dependency array
+
+    // 2. Listen for the DevPanel telling us to toggle Edit Mode
+    useEffect(() => {
+        const handleToggle = () => {
+            setIsEditMode(prev => {
+                if (!prev) {
+                    // If we are turning edit mode ON, take a backup of the layout first
+                    setBackupLayout(userLayout);
+                    return true;
+                } else {
+                    // If we are turning it OFF, just close it
+                    return false;
+                }
+            });
+        };
+        
+        window.addEventListener('DEV_PANEL_TOGGLE_EDIT', handleToggle);
+        return () => window.removeEventListener('DEV_PANEL_TOGGLE_EDIT', handleToggle);
+    }, [userLayout]); // We need userLayout in the dependency array so the backup is fresh!
 
     useEffect(() => {
         if (!isEditMode) {
@@ -69,12 +96,6 @@ export default function HomeTab() {
 
     return (
         <div className="app-tab">
-            <DevPanel 
-                selectedWidget={inspectedWidget}
-                isEditMode={isEditMode}
-                toggleEditMode={isEditMode ? handleCancelEdit : handleEnterEditMode}
-            />
-
             <div className="central-column">
                 <Greetings />
 

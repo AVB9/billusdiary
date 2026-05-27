@@ -405,13 +405,6 @@ input, textarea { appearance: none; -webkit-appearance: none; }
     }
 }
 
-/* PWA Hardware Fix: GPU Accelerated & Notch Aware */
-.bottom-pill-nav { position: fixed; bottom: calc(30px + var(--safe-bottom)); left: 50%; display: flex; gap: 8px; padding: 8px 16px; border-radius: var(--rad-pill); z-index: 1000; background: var(--color-glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--color-glass-border); box-shadow: var(--shadow-lg); transform: translateX(-50%) translateZ(0); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); will-change: transform; }
-.bottom-pill-nav.nav-hidden { transform: translate(-50%, 150px) translateZ(0); }
-.bottom-pill-btn { background: transparent; border: none; color: var(--color-text-muted); padding: 12px; border-radius: var(--rad-circle); cursor: pointer; transition: background-color 0.3s ease, transform 0.3s ease; display: flex; align-items: center; justify-content: center; }
-.bottom-pill-btn svg { transition: stroke 0.2s ease; }
-.bottom-pill-btn.active { background: rgba(255, 255, 255, 0.08); }
-.bottom-pill-btn.active svg { stroke: var(--color-primary); }
 
 /* =================================================================
    8. RESPONSIVENESS

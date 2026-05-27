@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import WordDatePicker from '../WordDatePicker';
-import { getWordForDateStr, getSaveDataForDate, getGlobalWordleStats } from '../useWordleEngine';
+import { getWordForDateStr, getSaveDataForDate, getGlobalWordleStats } from '../usewordleengine';
 
 export default function WordleStats() {
     const [viewDate, setViewDate] = useState(new Date());

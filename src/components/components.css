@@ -3,29 +3,76 @@
    ================================================================= */
 
 /* ----------------------------------------
-   1. BOTTOM NAVIGATION PILL
+   0. THE MINIFIER SHIELD
+   Vite cannot delete properties that use var()
 ---------------------------------------- */
-.bottom-pill-nav {
-    /* Pin to the screen viewport */
-    position: fixed;
-    bottom: 20px; /* Adjust this to match your vanilla spacing */
-    left: 50%;
-    z-index: 1000; /* Ensure it stays above the bento cards */
-    
-    /* Animation & Centering */
-    transform: translate(-50%, 0);
-    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+:root {
+    --shielded-blur-nav: blur(20px);
+    --shielded-blur-panel: blur(16px);
 }
-
-/* The state class we toggle in React */
-.bottom-pill-nav.nav-hidden {
-    transform: translate(-50%, 150%);
-}
-
-
 
 /* ----------------------------------------
-   2. BENTO CARD WIDGET
+   1. BOTTOM NAVIGATION PILL
+---------------------------------------- */
+.bottom-pill-nav { 
+    position: fixed; 
+    bottom: calc(30px + var(--safe-bottom, 0px)); 
+    left: 50%; 
+    z-index: 1000; 
+    
+    display: flex; 
+    gap: 8px; 
+    padding: 8px 16px; 
+    border-radius: var(--rad-pill, 50px); 
+    
+    /* Shielded Glass Properties */
+    background: rgba(255, 255, 255, 0.05); 
+    -webkit-backdrop-filter: var(--shielded-blur-nav) !important; 
+    backdrop-filter: var(--shielded-blur-nav) !important; 
+    
+    border: 1px solid rgba(255, 255, 255, 0.08); 
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: var(--shadow-lg, 0 10px 30px rgba(0,0,0,0.5)); 
+    
+    transform: translateX(-50%) translateZ(0); 
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+    will-change: transform; 
+}
+
+.bottom-pill-nav.nav-hidden { 
+    transform: translate(-50%, 150px) translateZ(0); 
+}
+
+/* ----------------------------------------
+   2. BOTTOM NAVIGATION BUTTONS
+---------------------------------------- */
+.bottom-pill-btn { 
+    background: transparent; 
+    border: none; 
+    color: var(--color-text-muted, rgba(255,255,255,0.5)); 
+    padding: 12px; 
+    border-radius: var(--rad-circle, 50%); 
+    cursor: pointer; 
+    transition: background-color 0.3s ease, transform 0.3s ease; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+}
+
+.bottom-pill-btn svg { 
+    transition: stroke 0.2s ease; 
+}
+
+.bottom-pill-btn.active { 
+    background: rgba(255, 255, 255, 0.08); 
+}
+
+.bottom-pill-btn.active svg { 
+    stroke: var(--color-primary, #EF4444); 
+}
+
+/* ----------------------------------------
+   3. BENTO CARD WIDGET
 ---------------------------------------- */
 .bento-card {
     opacity: 0; 
@@ -43,7 +90,7 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: rgba(255, 255, 255, 0.6); 
-    margin-bottom: auto; /* Keeps title top, content bottom */
+    margin-bottom: auto; 
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -63,17 +110,10 @@
 }
 
 /* ----------------------------------------
-   2. GLASS PANEL 
+   4. GLASS PANEL WIDGETS
 ---------------------------------------- */
 .glass-panel {
-    background: rgba(255, 255, 255, 0.05); 
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-top: 1px solid rgba(255, 255, 255, 0.15); 
     border-radius: var(--rad-lg, 24px); 
-    
     padding: var(--pad-lg, 24px);
     width: 100%;
     flex: 1; 
@@ -82,6 +122,14 @@
     flex-direction: column;
     position: relative;
     overflow: hidden;
+    
+    /* Shielded Glass Properties */
+    background: rgba(255, 255, 255, 0.05); 
+    -webkit-backdrop-filter: var(--shielded-blur-panel) !important;
+    backdrop-filter: var(--shielded-blur-panel) !important;
+    
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.15); 
     
     transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), 
                 background 0.2s ease,
