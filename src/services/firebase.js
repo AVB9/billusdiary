@@ -19,13 +19,14 @@ export const db = getFirestore(app);
 
 // =================================================================
 // THE EMULATOR HIJACK
-// If the app is running locally, trap all data on this computer.
 // =================================================================
-if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-    // connectAuthEmulator often throws a harmless warning in React StrictMode, so we disable the warning.
-    connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
-    connectFirestoreEmulator(db, '127.0.0.1', 8080);
-    console.log("🛠️ TEST MODE ENGAGED: Connected to Local Firebase Emulator!");
+const currentHost = window.location.hostname;
+const isLocal = currentHost === "localhost" || currentHost === "127.0.0.1" || currentHost.startsWith("192.168.") || currentHost.startsWith("10.");
+
+if (isLocal) {
+    connectAuthEmulator(auth, `http://${currentHost}:9099`, { disableWarnings: true });
+    connectFirestoreEmulator(db, currentHost, 8080);
+    console.log(`🛠️ Connected to Local Firebase Emulator via ${currentHost}`);
 }
 
 export default app;

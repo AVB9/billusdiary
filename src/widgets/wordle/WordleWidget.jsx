@@ -1,6 +1,7 @@
 // src/widgets/wordle/WordleWidget.jsx
 import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import WidgetBase from '@widgets/WidgetBase';
 import OverlayBase from '@widgets/OverlayBase'; 
@@ -37,6 +38,28 @@ export default function WordleWidget({ widgetId }) {
 
     const isPlaying = currentState === 'board';
     const engine = useWordleEngine(isPlaying, gameDate);
+
+
+    // Room Creation State
+    const [newRoomName, setNewRoomName] = useState('');
+    const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+
+    const handleCreateRoom = async () => {
+        if (!newRoomName.trim()) return;
+        setIsCreatingRoom(true);
+        try {
+            const roomId = await createWordleRoom(newRoomName);
+            alert(`Boom! Room "${newRoomName}" created!\n\nJoin Code: ${roomId}`);
+            setNewRoomName('');
+            setActiveOverlay(null); 
+            // Future step: Automatically switch view to manage this new room!
+        } catch (error) {
+            console.error(error);
+            alert("Failed to create room.");
+        } finally {
+            setIsCreatingRoom(false);
+        }
+    };
 
     useEffect(() => {
         const telemetry = { renders: 1, view: currentState, syncScope: 'ISOLATED_SOLO' };
@@ -155,9 +178,35 @@ export default function WordleWidget({ widgetId }) {
                     <OverlayBase isOpen={activeOverlay === 'joinroom'} title="JOIN ROOM" onClose={() => setActiveOverlay(null)}>
                         <Typography sx={{ color: 'var(--color-text-muted)', textAlign: 'center', p: 2 }}>[A - X X X X] Input goes here</Typography>
                     </OverlayBase>
-                    <OverlayBase isOpen={activeOverlay === 'createroom'} title="CREATE ROOM" onClose={() => setActiveOverlay(null)}>
-                        <Typography sx={{ color: 'var(--color-text-muted)', textAlign: 'center', p: 2 }}>Room Name Input goes here</Typography>
-                    </OverlayBase>
+                   <OverlayBase isOpen={activeOverlay === 'createroom'} title="CREATE SQUAD" onClose={() => setActiveOverlay(null)}>
+    <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <input 
+            type="text" 
+            placeholder="e.g. Peaky Blinders..." 
+            value={newRoomName}
+            onChange={(e) => setNewRoomName(e.target.value)}
+            maxLength={20}
+            style={{ 
+                padding: '12px', borderRadius: '12px', border: '1px solid var(--color-glass-border)', 
+                background: 'rgba(0,0,0,0.5)', color: 'var(--color-text)', fontSize: '1rem', outline: 'none',
+                textAlign: 'center', fontWeight: 'bold'
+            }}
+        />
+        <Button 
+            variant="contained" 
+            disabled={isCreatingRoom || !newRoomName.trim()}
+            onClick={handleCreateRoom}
+            sx={{ 
+                py: 1.5, borderRadius: '12px', fontWeight: 900, 
+                background: newRoomName.trim() ? 'var(--color-primary)' : 'rgba(255,255,255,0.1)', 
+                color: newRoomName.trim() ? 'var(--color-bg)' : 'rgba(255,255,255,0.3)',
+                boxShadow: 'none', '&:hover': { boxShadow: 'none', filter: 'brightness(1.1)' }
+            }}
+        >
+            {isCreatingRoom ? 'CREATING...' : 'CREATE ROOM'}
+        </Button>
+    </Box>
+</OverlayBase>
                     <OverlayBase isOpen={activeOverlay === 'editroom'} title="EDIT ROOM" onClose={() => setActiveOverlay(null)}>
                         <Typography sx={{ color: 'var(--color-text-muted)', textAlign: 'center', p: 2 }}>Edit Room UI goes here</Typography>
                     </OverlayBase>
