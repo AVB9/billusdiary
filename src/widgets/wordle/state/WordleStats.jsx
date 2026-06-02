@@ -5,11 +5,15 @@ import Typography from '@mui/material/Typography';
 import WordDatePicker from '../WordDatePicker';
 import { getWordForDateStr, getSaveDataForDate, getGlobalWordleStats } from '../usewordleengine';
 
-export default function WordleStats() {
-    const [viewDate, setViewDate] = useState(new Date());
+const getLocalYYYYMMDD = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 
-    const dateStr = viewDate.toISOString().split('T')[0];
-    
+export default function WordleStats() {
+    // THE FIX: Store the string directly!
+    const [viewDateStr, setViewDateStr] = useState(getLocalYYYYMMDD());
+
     const realDataResolver = (dateLookupStr) => {
         const word = getWordForDateStr(dateLookupStr);
         const saveData = getSaveDataForDate(dateLookupStr);
@@ -24,7 +28,7 @@ export default function WordleStats() {
         return { status, word, guesses: saveData.guesses?.length || 0 };
     };
 
-    const activeDayData = realDataResolver(dateStr);
+    const activeDayData = realDataResolver(viewDateStr);
     const globalStats = getGlobalWordleStats(); 
 
     let dailyStatText = '- / 4';
@@ -57,28 +61,27 @@ export default function WordleStats() {
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: 1, animation: 'fadeIn 0.3s ease' }}>
             
-            {/* TOP ROW: Daily Score Card (Left) & WordDatePicker (Right) */}
-            {/* THE FIX: Added gap: 1 to guarantee a buffer zone between the two elements */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 0.5, pt: 0.5, gap: 1 }}>
-                
-                {/* THE FIX: Reverted to rectangle, reduced width to 90px to prevent collision */}
                 <Box sx={{ 
-                    background: 'var(--color-glass-white)', 
-                    border: '1px solid var(--color-glass-border)', 
-                    borderRadius: 'var(--rad-sm)', 
                     width: '90px',       
                     height: '42px',       
                     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                    boxShadow: 'var(--shadow-sm)'
+                    background: 'transparent',
                 }}>
-                    <Typography sx={{ fontSize: '1.1rem', fontWeight: 900, color: dailyStatColor, letterSpacing: '1px', lineHeight: 1 }}>
+                    <Typography sx={{ 
+                        fontSize: activeDayData.status === 'unplayed' ? '1.2rem' : '1.1rem', 
+                        fontWeight: 900, 
+                        color: dailyStatColor, 
+                        letterSpacing: '1px', 
+                        lineHeight: 1
+                    }}>
                         {dailyStatText}
                     </Typography>
                 </Box>
 
                 <WordDatePicker 
-                    value={viewDate} 
-                    onChange={setViewDate} 
+                    value={viewDateStr} 
+                    onChange={setViewDateStr} 
                     disableFuture={true}
                     getWordForDate={realDataResolver}
                 />
@@ -99,10 +102,7 @@ export default function WordleStats() {
                     <StatBlock value={globalStats.maxStreak} label="Max Streak" />
                 </Box>
 
-                <Box sx={{ 
-                    display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'center', width: '100%', 
-                    px: 1, py: 0.5 
-                }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'center', width: '100%', px: 1, py: 0.5 }}>
                     <Typography sx={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--color-text-muted)', textTransform: 'uppercase', mb: 1, letterSpacing: '1px' }}>
                         Guess Distribution
                     </Typography>
@@ -115,11 +115,9 @@ export default function WordleStats() {
 
                             return (
                                 <Box key={guessNum} sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
-                                    
                                     <Typography sx={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-text)', width: '8px', textAlign: 'center' }}>
                                         {guessNum}
                                     </Typography>
-                                    
                                     <Box sx={{ flexGrow: 1, display: 'flex' }}>
                                         <Box sx={{ 
                                             width: `${barWidth}%`, 
@@ -130,10 +128,7 @@ export default function WordleStats() {
                                             px: 1, py: 0.25, borderRadius: 'var(--rad-sm)',
                                             transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s'
                                         }}>
-                                            <Typography sx={{ 
-                                                fontSize: '0.7rem', fontWeight: 900, lineHeight: 1,
-                                                color: isCurrentDayMatch ? 'var(--color-bg)' : 'var(--color-text)' 
-                                            }}>
+                                            <Typography sx={{ fontSize: '0.7rem', fontWeight: 900, lineHeight: 1, color: isCurrentDayMatch ? 'var(--color-bg)' : 'var(--color-text)' }}>
                                                 {count}
                                             </Typography>
                                         </Box>
@@ -143,7 +138,6 @@ export default function WordleStats() {
                         })}
                     </Box>
                 </Box>
-                
             </Box>
         </Box>
     );

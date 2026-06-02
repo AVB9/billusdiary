@@ -1,6 +1,7 @@
 // src/components/widgets/wordle/Wordle.jsx
 import React, { useState, useEffect } from 'react';
 import WordleWidget from './WordleWidget'; // Boom. Importing YOUR widget.
+import Typography from '@mui/material/Typography';
 
 export default function Wordle({ user }) {
     const [isInIframe, setIsInIframe] = useState(false);

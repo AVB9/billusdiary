@@ -1493,10 +1493,9 @@ input[type="search"]::-webkit-search-results-decoration { display: none !importa
     background-color: var(--color-primary);
     color: var(--color-bg);
     font-weight: bold;
-}
+} 
 
 @keyframes fadeIn {
     from { opacity: 0; transform: scale(0.98); }
     to { opacity: 1; transform: scale(1); }
 }
-

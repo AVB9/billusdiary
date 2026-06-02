@@ -1,4 +1,3 @@
-// src/widgets/wordle/WordDatePicker.jsx
 import React, { useState, useRef } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -35,11 +34,16 @@ export default function WordDatePicker({ value, onChange, disableFuture, getWord
 
     const bottomText = currentValue.format('MMM D').toUpperCase();
 
-    const handlePrevDay = (e) => { e.stopPropagation(); onChange(currentValue.subtract(1, 'day').toDate()); };
+    // FIX: Pass explicit YYYY-MM-DD strings instead of .toDate() to prevent UTC rollback
+    const handlePrevDay = (e) => { 
+        e.stopPropagation(); 
+        onChange(currentValue.subtract(1, 'day').format('YYYY-MM-DD')); 
+    };
+    
     const handleNextDay = (e) => {
         e.stopPropagation();
         if (disableFuture && isToday) return;
-        onChange(currentValue.add(1, 'day').toDate());
+        onChange(currentValue.add(1, 'day').format('YYYY-MM-DD'));
     };
 
     return (
@@ -47,9 +51,9 @@ export default function WordDatePicker({ value, onChange, disableFuture, getWord
             <style>
                 {`.glass-date-arrow { background: transparent; border: none; padding: 0 4px; margin: 0; color: var(--color-text-main, #FFFFFF); font-size: 1.6rem; cursor: pointer; transition: color 0.15s ease; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transform: translateY(-2px); } .glass-date-arrow:hover:not(:disabled) { color: var(--color-primary, #EF4444); } .glass-date-arrow:disabled { color: var(--color-text-muted, rgba(255,255,255,0.4)); cursor: default; }`}
             </style>
-            <GlassPanel style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'center', justifyContent: 'space-between', borderRadius: '50px', padding: '2px 10px', boxSizing: 'border-box', minWidth: '150px' }}>
+            <GlassPanel style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'center', justifyContent: 'space-between', borderRadius: '50px', padding: '2px 6px', boxSizing: 'border-box', minWidth: '110px' }}>
                 <button type="button" onClick={handlePrevDay} className="glass-date-arrow">‹</button>
-                <Box onClick={() => setOpen(true)} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', flexGrow: 1, margin: '0 8px', transition: 'opacity 0.15s ease', '&:hover': { opacity: 0.8 } }}>
+                <Box onClick={() => setOpen(true)} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', flexGrow: 1, margin: '0 4px', transition: 'opacity 0.15s ease', '&:hover': { opacity: 0.8 } }}>
                     <Typography sx={{ fontWeight: 900, fontSize: '0.85rem', color: 'var(--color-text)', textDecoration, opacity: textOpacity, lineHeight: 1.1 }}>{topText}</Typography>
                     <Typography sx={{ fontSize: '0.55rem', fontWeight: 900, color: 'var(--color-primary)', mt: 0.25, lineHeight: 1 }}>{bottomText}</Typography>
                 </Box>
@@ -59,7 +63,10 @@ export default function WordDatePicker({ value, onChange, disableFuture, getWord
             <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <MuiDatePicker
                     open={open} onClose={() => setOpen(false)} value={currentValue}
-                    onChange={(newValue) => { if (newValue) onChange(newValue.toDate()); setOpen(false); }}
+                    onChange={(newValue) => { 
+                        if (newValue) onChange(newValue.format('YYYY-MM-DD')); 
+                        setOpen(false); 
+                    }}
                     disableFuture={disableFuture}
                     slotProps={{
                         textField: { sx: { position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' } },
