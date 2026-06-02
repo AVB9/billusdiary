@@ -4,15 +4,9 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import WordDatePicker from '../WordDatePicker';
-import { getWordForDateStr, getSaveDataForDate } from '../usewordleengine';
-
-const getLocalYYYYMMDD = () => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
+import { getWordForDateStr, getSaveDataForDate, getLocalYYYYMMDD } from '../usewordleengine';
 
 export default function WordleRoomStats({ onManageRoom, onOpenRoomSelect }) {
-    // THE FIX: Store the string directly!
     const [viewDateStr, setViewDateStr] = useState(getLocalYYYYMMDD());
 
     // Mock Data - To be replaced by Firebase Global Context

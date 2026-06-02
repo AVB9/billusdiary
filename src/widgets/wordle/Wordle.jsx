@@ -1,16 +1,10 @@
-// src/components/widgets/wordle/Wordle.jsx
-import React, { useState, useEffect } from 'react';
-import WordleWidget from './WordleWidget'; // Boom. Importing YOUR widget.
+// src/widgets/wordle/Wordle.jsx
+import React, { useState } from 'react';
+import WordleWidget from './WordleWidget'; 
 import Typography from '@mui/material/Typography';
 
 export default function Wordle({ user }) {
-    const [isInIframe, setIsInIframe] = useState(false);
-
-    useEffect(() => {
-        if (window.self !== window.top) {
-            setIsInIframe(true);
-        }
-    }, []);
+    const [isInIframe] = useState(() => window.self !== window.top);
 
     return (
         <div style={{ 
@@ -35,7 +29,6 @@ export default function Wordle({ user }) {
             <main style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: isInIframe ? '0' : '20px' }}>
                 <div style={{ width: '100%', maxWidth: '500px', height: '500px' }}>
                     
-                    {/* We pass isStandalone=true so the widget knows to stretch out! */}
                     <WordleWidget user={user} isStandalone={true} />
                     
                 </div>

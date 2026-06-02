@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import { GAME_CONFIG, getLetterStatus } from '../usewordleengine';
 
 const KEYBOARD_ROWS = [
     ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
@@ -13,13 +14,11 @@ export default function WordleBoard({ engine, showKeyboard }) {
     const boardRef = useRef(null);
     const [isShaking, setIsShaking] = useState(false);
     const [isBoardActive, setIsBoardActive] = useState(true); 
-    const wordLength = 4;
 
     if (!engine) return null;
     
     const { guesses = [], currentGuess = '', targetWord = '', onKeyPress, toastMessage, gameStatus } = engine;
 
-    // THE FIX: Automatically hide keyboard if the game is over!
     const isKeyboardVisible = showKeyboard && gameStatus === 'playing';
 
     useEffect(() => {
@@ -43,38 +42,25 @@ export default function WordleBoard({ engine, showKeyboard }) {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    useEffect(() => {
-        const handleGlobalKeyDown = (e) => {
-            if (!isBoardActive) return;
+    const handleKeyDown = (e) => {
+        if (!isBoardActive) return;
+        
+        const activeTag = document.activeElement?.tagName?.toLowerCase();
+        if (activeTag === 'input' || activeTag === 'textarea') return;
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
 
-            const activeTag = document.activeElement?.tagName?.toLowerCase();
-            if (activeTag === 'input' || activeTag === 'textarea') return;
+        if (e.key === 'Backspace' || e.key === ' ') {
+            e.preventDefault(); 
+        }
 
-            if (e.ctrlKey || e.metaKey || e.altKey) return;
-
-            if (e.key === 'Backspace' || e.key === ' ') {
-                e.preventDefault(); 
-            }
-
-            onKeyPress?.(e.key);
-        };
-
-        window.addEventListener('keydown', handleGlobalKeyDown, { passive: false });
-        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-    }, [onKeyPress, isBoardActive]); 
-
-    const getLetterStatus = (letter, index, isEvaluatedRow) => {
-        if (!isEvaluatedRow || !letter || !targetWord) return 'unused';
-        if (targetWord[index] === letter) return 'correct';
-        if (targetWord.includes(letter)) return 'present';
-        return 'absent';
+        onKeyPress?.(e.key);
     };
 
     const getKeyboardKeyStatus = (key) => {
         if (!guesses.length || !targetWord) return 'unused';
         let status = 'unused';
         for (const guess of guesses) {
-            for (let i = 0; i < wordLength; i++) {
+            for (let i = 0; i < GAME_CONFIG.WORD_LENGTH; i++) {
                 if (guess[i] === key) {
                     if (targetWord[i] === key) return 'correct'; 
                     if (targetWord.includes(key) && status !== 'correct') status = 'present';
@@ -85,7 +71,7 @@ export default function WordleBoard({ engine, showKeyboard }) {
         return status;
     };
 
-    const rows = Array.from({ length: 4 }).map((_, i) => {
+    const rows = Array.from({ length: GAME_CONFIG.MAX_GUESSES }).map((_, i) => {
         let rowStr = '';
         let isEvaluatedRow = false;
         if (i < guesses.length) {
@@ -94,13 +80,15 @@ export default function WordleBoard({ engine, showKeyboard }) {
         } else if (i === guesses.length) {
             rowStr = currentGuess;
         }
-        const letters = rowStr.padEnd(wordLength, ' ').split('');
+        const letters = rowStr.padEnd(GAME_CONFIG.WORD_LENGTH, ' ').split('');
         return { letters, isEvaluatedRow };
     });
 
     return (
         <Box 
             ref={boardRef}
+            tabIndex={0}
+            onKeyDown={handleKeyDown}
             sx={{ 
                 display: 'flex', flexDirection: 'column', height: '100%', width: '100%', 
                 justifyContent: 'space-between', pb: 0.5, outline: 'none' 
@@ -131,8 +119,8 @@ export default function WordleBoard({ engine, showKeyboard }) {
                             }
                         }}>
                             {row.letters.map((char, colIndex) => {
-                                const status = getLetterStatus(char !== ' ' ? char : '', colIndex, row.isEvaluatedRow);
-                                
+                                const status = getLetterStatus(char !== ' ' ? char : '', colIndex, targetWord, row.isEvaluatedRow);
+                               
                                 let cellSx = {
                                     width: '100%',
                                     maxWidth: isKeyboardVisible ? '36px' : '52px', 
@@ -152,7 +140,7 @@ export default function WordleBoard({ engine, showKeyboard }) {
                                         absent: 'var(--color-wordle-absent, #3a3a3c)'
                                     };
                                     const color = colors[status];
-                                    
+                                   
                                     cellSx = {
                                         ...cellSx,
                                         border: '1px solid var(--color-text-muted)',

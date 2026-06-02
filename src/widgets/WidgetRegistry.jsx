@@ -7,7 +7,6 @@ const withTelemetry = (WrappedComponent, widgetType) => {
     return function TelemetryWrapper(props) {
         const renderCount = useRef(0);
         
-        // 1. FIX: Track initialization vs actual mount time
         const initTime = useRef(performance.now());
         const mountLatency = useRef(0);
         const isMounted = useRef(false);
@@ -18,7 +17,6 @@ const withTelemetry = (WrappedComponent, widgetType) => {
         renderCount.current += 1;
 
         useEffect(() => {
-            // 2. FIX: Only calculate latency once, the first time it hits the DOM
             if (!isMounted.current) {
                 mountLatency.current = Math.round(performance.now() - initTime.current);
                 isMounted.current = true;
@@ -29,14 +27,14 @@ const withTelemetry = (WrappedComponent, widgetType) => {
                     type: widgetType,
                     data: {
                         renders: renderCount.current,
-                        mountTime: mountLatency.current, // Now a static number!
+                        mountTime: mountLatency.current,
                         view: liveView,
                         syncScope: liveScope
                     }
                 }
             });
             window.dispatchEvent(event);
-        }); 
+        }, [liveView, liveScope]); 
 
         return (
             <WrappedComponent 

@@ -2,23 +2,16 @@
 import React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import { GAME_CONFIG, getLetterStatus } from '../usewordleengine';
 
 export default function WordleAdmire({ engine }) {
     if (!engine) return null;
 
     const { guesses = [], targetWord = '' } = engine;
-    const wordLength = 4;
 
-    const getLetterStatus = (letter, index, isEvaluatedRow) => {
-        if (!isEvaluatedRow || !letter || !targetWord) return 'unused';
-        if (targetWord[index] === letter) return 'correct';
-        if (targetWord.includes(letter)) return 'present';
-        return 'absent';
-    };
-
-    const rows = Array.from({ length: 4 }).map((_, i) => {
+    const rows = Array.from({ length: GAME_CONFIG.MAX_GUESSES }).map((_, i) => {
         const rowStr = i < guesses.length ? guesses[i] : '';
-        const letters = rowStr.padEnd(wordLength, ' ').split('');
+        const letters = rowStr.padEnd(GAME_CONFIG.WORD_LENGTH, ' ').split('');
         return { letters, isEvaluatedRow: i < guesses.length };
     });
 
@@ -35,8 +28,9 @@ export default function WordleAdmire({ engine }) {
                 {rows.map((row, rowIndex) => (
                     <Box key={rowIndex} sx={{ display: 'flex', gap: '6px', width: '100%', justifyContent: 'center' }}>
                         {row.letters.map((char, colIndex) => {
-                            const status = getLetterStatus(char !== ' ' ? char : '', colIndex, row.isEvaluatedRow);
-                            
+                            // Passing targetWord to our centralized evaluation function
+                            const status = getLetterStatus(char !== ' ' ? char : '', colIndex, targetWord, row.isEvaluatedRow);
+                           
                             let cellSx = {
                                 width: '100%',
                                 maxWidth: '36px',
@@ -88,8 +82,7 @@ export default function WordleAdmire({ engine }) {
                 <Typography sx={{ fontSize: '1.2rem', fontWeight: 900, letterSpacing: '2px', color: 'var(--color-text)', flexShrink: 0 }}>
                     {targetWord}
                 </Typography>
-                
-                {/* THE FIX: Locked to exactly 2 lines of height (2.8em), but naturally scrollable! */}
+               
                 <Typography sx={{ 
                     fontSize: '0.65rem', 
                     color: 'var(--color-text-muted)', 

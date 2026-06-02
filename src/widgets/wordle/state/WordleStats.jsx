@@ -3,15 +3,9 @@ import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import WordDatePicker from '../WordDatePicker';
-import { getWordForDateStr, getSaveDataForDate, getGlobalWordleStats } from '../usewordleengine';
-
-const getLocalYYYYMMDD = () => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
+import { getWordForDateStr, getSaveDataForDate, getGlobalWordleStats, getLocalYYYYMMDD } from '../usewordleengine';
 
 export default function WordleStats() {
-    // THE FIX: Store the string directly!
     const [viewDateStr, setViewDateStr] = useState(getLocalYYYYMMDD());
 
     const realDataResolver = (dateLookupStr) => {
@@ -63,8 +57,8 @@ export default function WordleStats() {
             
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 0.5, pt: 0.5, gap: 1 }}>
                 <Box sx={{ 
-                    width: '90px',       
-                    height: '42px',       
+                    width: '90px',      
+                    height: '42px',      
                     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                     background: 'transparent',
                 }}>

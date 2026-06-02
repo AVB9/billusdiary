@@ -2,10 +2,26 @@
 import { useState, useEffect, useMemo } from 'react';
 
 export const VALID_WORDS = [
-    "BETA", "TEST", "WORD", "PLAY", "GAME", "CODE", "DATA", "NODE",
-    "ROOT", "TREE", "LEAF", "CORE", "BASE", "LINK", "HTTP", "USER"
+    "BETAS", "TESTS", "WORDS", "PLAYS", "GAMES", "CODES", "DATAS", "NODES",
+    "ROOTS", "TREES", "LEAFS", "CORES", "BASES", "LINKS", "HTTPS", "USERS"
 ]; 
-const MAX_GUESSES = 4;
+
+export const GAME_CONFIG = {
+    WORD_LENGTH: 4,
+    MAX_GUESSES: 4
+};
+
+export const getLocalYYYYMMDD = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+export const getLetterStatus = (letter, index, targetWord, isEvaluatedRow) => {
+    if (!isEvaluatedRow || !letter || !targetWord) return 'unused';
+    if (targetWord[index] === letter) return 'correct';
+    if (targetWord.includes(letter)) return 'present';
+    return 'absent';
+};
 
 export const getWordForDateStr = (dateStr) => {
     if (!dateStr) return "BETA"; 
@@ -24,14 +40,12 @@ export const getSaveDataForDate = (dateStr) => {
     return null;
 };
 
-// THE UPDATE: Added Guess Distribution Math
 export const getGlobalWordleStats = () => {
     let played = 0, won = 0, maxStreak = 0, currentStreak = 0;
     let previousDate = null;
     const playedDates = [];
     
-    // Array representing wins in [1 guess, 2 guesses, 3 guesses, 4 guesses]
-    const distribution = [0, 0, 0, 0]; 
+    const distribution = Array(GAME_CONFIG.MAX_GUESSES).fill(0); 
 
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -45,9 +59,8 @@ export const getGlobalWordleStats = () => {
                 
                 if (isLegitWin) {
                     won++;
-                    // Tally the distribution!
                     const guessCount = data.guesses?.length || 0;
-                    if (guessCount >= 1 && guessCount <= 4) {
+                    if (guessCount >= 1 && guessCount <= GAME_CONFIG.MAX_GUESSES) {
                         distribution[guessCount - 1]++;
                     }
                 }
@@ -75,8 +88,6 @@ export const getGlobalWordleStats = () => {
     });
 
     const winPercent = played === 0 ? 0 : Math.round((won / played) * 100);
-    
-    // RETURN THE NEW DATA
     return { played, winPercent, maxStreak, distribution };
 };
 
@@ -104,7 +115,8 @@ export default function useWordleEngine(isActive, dateStr) {
     }, [guesses, gameStatus, isRevealed, playedOn, storageKey]);
 
     const showToast = (msg) => { setToastMessage(msg); setTimeout(() => setToastMessage(null), 2000); };
-    const stampFinishedDate = () => { if (!playedOn) setPlayedOn(new Date().toISOString().split('T')[0]); };
+    
+    const stampFinishedDate = () => { if (!playedOn) setPlayedOn(getLocalYYYYMMDD()); };
 
     const markRevealed = () => { setIsRevealed(true); stampFinishedDate(); };
 
@@ -114,15 +126,15 @@ export default function useWordleEngine(isActive, dateStr) {
 
         if (key === 'BACKSPACE' || key === 'BACK') setCurrentGuess(prev => prev.slice(0, -1));
         else if (key === 'ENTER') {
-            if (currentGuess.length === 4) {
+            if (currentGuess.length === GAME_CONFIG.WORD_LENGTH) {
                 if (!VALID_WORDS.includes(currentGuess)) { showToast("Not in word list"); return; }
                 const newGuesses = [...guesses, currentGuess];
                 setGuesses(newGuesses); setCurrentGuess(""); 
                 if (currentGuess === TARGET_WORD) { setGameStatus("won"); stampFinishedDate(); } 
-                else if (newGuesses.length >= MAX_GUESSES) { setGameStatus("lost"); stampFinishedDate(); }
+                else if (newGuesses.length >= GAME_CONFIG.MAX_GUESSES) { setGameStatus("lost"); stampFinishedDate(); }
             }
         } 
-        else if (/^[A-Z]$/.test(key) && currentGuess.length < 4) setCurrentGuess(prev => prev + key);
+        else if (/^[A-Z]$/.test(key) && currentGuess.length < GAME_CONFIG.WORD_LENGTH) setCurrentGuess(prev => prev + key);
     };
 
     return { guesses, currentGuess, gameStatus, targetWord: TARGET_WORD, toastMessage, onKeyPress: handleKeyInput, isRevealed, markRevealed };
