@@ -162,6 +162,7 @@ export default function WordleWidget({ widgetId }) {
                     onKeyPress={engine.onKeyPress}
                     toastMessage={engine.toastMessage}
                     shakeTrigger={engine.shakeTrigger}
+                    isValidating={engine.isValidating} 
                     showKeyboard={showKeyboard} 
                 />
             )}

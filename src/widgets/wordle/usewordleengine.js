@@ -44,6 +44,13 @@ export const getSaveDataForDate = (dateStr) => {
     return null;
 };
 
+// FIX 2: Pure helper function to prevent view-layer data leaks
+export const checkIfPlayed = (dateStr) => {
+    const data = getSaveDataForDate(dateStr);
+    if (!data) return false;
+    return data.gameStatus === 'won' || data.gameStatus === 'lost';
+};
+
 export const getGlobalWordleStats = () => {
     let played = 0, won = 0, maxStreak = 0, currentStreak = 0;
     let previousDate = null;
@@ -185,6 +192,7 @@ export default function useWordleEngine(isActive, dateStr) {
 
     return { 
         guesses, currentGuess, gameStatus, toastMessage, shakeTrigger, onKeyPress: handleKeyInput, isRevealed, markRevealed,
+        isValidating, // FIX 3: Export the validation lock state
         targetWord: TARGET_WORD, 
         targetDefinition: TARGET_DEF 
     };

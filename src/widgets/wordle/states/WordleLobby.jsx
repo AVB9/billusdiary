@@ -1,35 +1,21 @@
-// src/widgets/wordle/state/WordleLobby.jsx
-import React, { useState, useEffect } from 'react';
+// src/widgets/wordle/states/WordleLobby.jsx
+import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import DatePicker from '@ui/DatePicker';
+import { checkIfPlayed } from '../usewordleengine';
 
 // Timezone-safe local formatter
 const formatLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export default function WordleLobby({ onStartSolo, onAdmire, onJoinRoom, onManageRooms }) {
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [isCompleted, setIsCompleted] = useState(false);
-
+    
     const dateStr = formatLocal(selectedDate);
-
-    useEffect(() => {
-        const key = `wordle_save_v1_${dateStr}`;
-        const saved = localStorage.getItem(key);
-        
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                setIsCompleted(parsed.gameStatus === 'won' || parsed.gameStatus === 'lost');
-            } catch (e) { 
-                setIsCompleted(false); 
-            }
-        } else {
-            setIsCompleted(false);
-        }
-    }, [dateStr]);
+    // FIX 2: Using the pure helper function instead of direct localStorage access!
+    const isCompleted = checkIfPlayed(dateStr);
 
     return (
         <Box sx={{ 

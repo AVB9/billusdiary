@@ -1,4 +1,4 @@
-// src/widgets/wordle/state/WordleBoard.jsx
+// src/widgets/wordle/states/WordleBoard.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -11,16 +11,13 @@ const KEYBOARD_ROWS = [
     ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'BACK']
 ];
 
-export default function WordleBoard({ guesses = [], currentGuess = '', targetWord = '', onKeyPress, shakeTrigger = 0, gameStatus, showKeyboard }) {
+export default function WordleBoard({ guesses = [], currentGuess = '', targetWord = '', onKeyPress, shakeTrigger = 0, isValidating = false, gameStatus, showKeyboard }) {
     const boardRef = useRef(null);
     const hiddenInputRef = useRef(null);
     const [isBoardActive, setIsBoardActive] = useState(false); 
     const [isShaking, setIsShaking] = useState(false); 
     
-    // FIX 1: Strict-Mode immune mount guard. 
-    // We store the numeric value it mounts with, and ONLY shake if the number actually increases.
     const prevShakeRef = useRef(shakeTrigger);
-
     const isKeyboardVisible = showKeyboard && gameStatus === 'playing';
 
     useEffect(() => {
@@ -49,10 +46,11 @@ export default function WordleBoard({ guesses = [], currentGuess = '', targetWor
 
         if (e.key === 'Backspace' || e.key === ' ') {
             e.preventDefault(); 
+            e.stopPropagation(); // FIX 1: Prevent parent dashboard from navigating back
         }
 
         if (/^[a-zA-Z]$/.test(e.key) || e.key === 'Enter' || e.key === 'Backspace') {
-            e.stopPropagation(); // Stop Bubbling
+            e.stopPropagation(); 
             onKeyPress?.(e.key);
         }
     };
@@ -69,7 +67,7 @@ export default function WordleBoard({ guesses = [], currentGuess = '', targetWor
     const handleInputKeyDown = (e) => {
         if (e.key === 'Backspace' || e.key === 'Enter') {
             e.preventDefault();
-            e.stopPropagation(); // FIX 2: Stop bubbling so the parent Box doesn't double-fire!
+            e.stopPropagation(); 
             onKeyPress?.(e.key);
         }
     };
@@ -241,6 +239,10 @@ export default function WordleBoard({ guesses = [], currentGuess = '', targetWor
                             else if (status === 'present') keyBg = 'var(--color-wordle-present, #b59f3b)';
                             else if (status === 'absent') keyBg = 'var(--color-wordle-absent, #3a3a3c)';
 
+                            // FIX 3: Display network loading status specifically on the ENTER key
+                            const isEnterKey = key === 'ENTER';
+                            const showLoader = isEnterKey && isValidating;
+
                             return (
                                 <Box key={key} onClick={(e) => { e.stopPropagation(); onKeyPress?.(key); }}
                                     role="button"
@@ -250,12 +252,13 @@ export default function WordleBoard({ guesses = [], currentGuess = '', targetWor
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                                         height: '24px', borderRadius: 'var(--rad-sm)',
                                         background: keyBg, border: '1px solid var(--color-glass-border)',
-                                        cursor: 'pointer', userSelect: 'none',
-                                        '&:active': { transform: 'scale(0.95)' }
+                                        cursor: showLoader ? 'wait' : 'pointer', userSelect: 'none',
+                                        opacity: showLoader ? 0.6 : 1,
+                                        '&:active': { transform: showLoader ? 'none' : 'scale(0.95)' }
                                     }}
                                 >
                                     <Typography sx={{ fontSize: key === 'ENTER' || key === 'BACK' ? '0.55rem' : '0.75rem', fontWeight: 900, color: status === 'absent' ? 'var(--color-text-muted)' : 'var(--color-text)' }}>
-                                        {key === 'BACK' ? '⌫' : key}
+                                        {key === 'BACK' ? '⌫' : (showLoader ? '...' : key)}
                                     </Typography>
                                 </Box>
                             );
