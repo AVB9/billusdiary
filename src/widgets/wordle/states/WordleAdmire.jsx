@@ -4,10 +4,8 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { GAME_CONFIG, getLetterStatus } from '../usewordleengine';
 
-export default function WordleAdmire({ engine }) {
-    if (!engine) return null;
-
-    const { guesses = [], targetWord = '' } = engine;
+export default function WordleAdmire({ guesses = [], targetWord = '' }) {
+    if (!targetWord) return null;
 
     const rows = Array.from({ length: GAME_CONFIG.MAX_GUESSES }).map((_, i) => {
         const rowStr = i < guesses.length ? guesses[i] : '';

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { GAME_CONFIG, getLetterStatus } from '../usewordleengine';
+import '../style.css'; 
 
 const KEYBOARD_ROWS = [
     ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
@@ -10,39 +11,36 @@ const KEYBOARD_ROWS = [
     ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'BACK']
 ];
 
-export default function WordleBoard({ engine, showKeyboard }) {
+export default function WordleBoard({ guesses = [], currentGuess = '', targetWord = '', onKeyPress, shakeTrigger = 0, gameStatus, showKeyboard }) {
     const boardRef = useRef(null);
-    const [isShaking, setIsShaking] = useState(false);
-    const [isBoardActive, setIsBoardActive] = useState(true); 
-
-    if (!engine) return null;
+    const hiddenInputRef = useRef(null);
+    const [isBoardActive, setIsBoardActive] = useState(false); 
+    const [isShaking, setIsShaking] = useState(false); 
     
-    const { guesses = [], currentGuess = '', targetWord = '', onKeyPress, toastMessage, gameStatus } = engine;
+    // FIX 1: Strict-Mode immune mount guard. 
+    // We store the numeric value it mounts with, and ONLY shake if the number actually increases.
+    const prevShakeRef = useRef(shakeTrigger);
 
     const isKeyboardVisible = showKeyboard && gameStatus === 'playing';
 
     useEffect(() => {
-        if (toastMessage) {
+        if (shakeTrigger > prevShakeRef.current) {
             setIsShaking(true);
-            const timer = setTimeout(() => setIsShaking(false), 370); 
+            prevShakeRef.current = shakeTrigger;
+            const timer = setTimeout(() => setIsShaking(false), 400);
             return () => clearTimeout(timer);
         }
-    }, [toastMessage]);
+    }, [shakeTrigger]);
 
-    useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (boardRef.current && !boardRef.current.contains(e.target)) {
-                setIsBoardActive(false); 
-            } else {
-                setIsBoardActive(true);  
-            }
-        };
+    const handleBoardClick = () => {
+        if (gameStatus === 'playing') {
+            hiddenInputRef.current?.focus();
+            setIsBoardActive(true);
+        }
+    };
 
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    const handleKeyDown = (e) => {
+    const handleBoxKeyDown = (e) => {
+        if (document.activeElement === hiddenInputRef.current) return; 
         if (!isBoardActive) return;
         
         const activeTag = document.activeElement?.tagName?.toLowerCase();
@@ -53,7 +51,27 @@ export default function WordleBoard({ engine, showKeyboard }) {
             e.preventDefault(); 
         }
 
-        onKeyPress?.(e.key);
+        if (/^[a-zA-Z]$/.test(e.key) || e.key === 'Enter' || e.key === 'Backspace') {
+            e.stopPropagation(); // Stop Bubbling
+            onKeyPress?.(e.key);
+        }
+    };
+
+    const handleInput = (e) => {
+        const val = e.target.value.toUpperCase();
+        const lastChar = val.charAt(val.length - 1);
+        if (/^[A-Z]$/.test(lastChar)) {
+            onKeyPress?.(lastChar);
+        }
+        e.target.value = ' ';
+    };
+
+    const handleInputKeyDown = (e) => {
+        if (e.key === 'Backspace' || e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation(); // FIX 2: Stop bubbling so the parent Box doesn't double-fire!
+            onKeyPress?.(e.key);
+        }
     };
 
     const getKeyboardKeyStatus = (key) => {
@@ -88,12 +106,35 @@ export default function WordleBoard({ engine, showKeyboard }) {
         <Box 
             ref={boardRef}
             tabIndex={0}
-            onKeyDown={handleKeyDown}
+            onClick={handleBoardClick}
+            onKeyDown={handleBoxKeyDown}
+            onFocus={() => setIsBoardActive(true)}
+            onBlur={() => setIsBoardActive(false)}
             sx={{ 
                 display: 'flex', flexDirection: 'column', height: '100%', width: '100%', 
-                justifyContent: 'space-between', pb: 0.5, outline: 'none' 
+                justifyContent: 'space-between', pb: 0.5, outline: 'none',
+                position: 'relative', cursor: 'text'
             }}
         >
+            <input 
+                ref={hiddenInputRef}
+                type="text"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="characters"
+                spellCheck="false"
+                defaultValue=" " 
+                onInput={handleInput}
+                onKeyDown={handleInputKeyDown}
+                onBlur={() => setIsBoardActive(false)}
+                onFocus={() => setIsBoardActive(true)}
+                style={{ 
+                    position: 'absolute', opacity: 0, 
+                    pointerEvents: 'none', width: '1px', height: '1px', 
+                    top: 0, left: 0 
+                }}
+            />
+
             <Box sx={{ 
                 flexGrow: 1, display: 'flex', flexDirection: 'column', 
                 alignItems: 'center', justifyContent: 'center', 
@@ -104,20 +145,24 @@ export default function WordleBoard({ engine, showKeyboard }) {
                 {rows.map((row, rowIndex) => {
                     const isActiveRow = rowIndex === guesses.length;
                     const applyShake = isActiveRow && isShaking;
+                    
+                    let rowClass = '';
+                    if (applyShake) {
+                        rowClass = shakeTrigger % 2 === 0 ? 'wordle-shake-a' : 'wordle-shake-b';
+                    }
 
                     return (
-                        <Box key={rowIndex} sx={{ 
-                            display: 'flex', 
-                            gap: isKeyboardVisible ? '4px' : '8px', 
-                            transition: 'gap 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                            width: '100%', justifyContent: 'center',
-                            animation: applyShake ? 'shake 0.37s ease-in-out' : 'none',
-                            '@keyframes shake': {
-                                '0%, 100%': { transform: 'translate3d(0, 0, 0)' },
-                                '20%, 60%': { transform: 'translate3d(-4px, 0, 0)' },
-                                '40%, 80%': { transform: 'translate3d(4px, 0, 0)' }
-                            }
-                        }}>
+                        <Box 
+                            key={rowIndex} 
+                            className={rowClass}
+                            sx={{ 
+                                display: 'flex', 
+                                gap: isKeyboardVisible ? '4px' : '8px', 
+                                transition: 'gap 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                width: '100%', 
+                                justifyContent: 'center'
+                            }}
+                        >
                             {row.letters.map((char, colIndex) => {
                                 const status = getLetterStatus(char !== ' ' ? char : '', colIndex, targetWord, row.isEvaluatedRow);
                                
@@ -197,7 +242,9 @@ export default function WordleBoard({ engine, showKeyboard }) {
                             else if (status === 'absent') keyBg = 'var(--color-wordle-absent, #3a3a3c)';
 
                             return (
-                                <Box key={key} onClick={() => onKeyPress?.(key)}
+                                <Box key={key} onClick={(e) => { e.stopPropagation(); onKeyPress?.(key); }}
+                                    role="button"
+                                    aria-label={key === 'BACK' ? 'Backspace' : key}
                                     sx={{
                                         flex: key === 'ENTER' || key === 'BACK' ? 1.5 : 1,
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',

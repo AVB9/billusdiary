@@ -5,27 +5,18 @@ import Typography from '@mui/material/Typography';
 import WidgetBase from '@widgets/WidgetBase';
 
 // Views
-import WordleLobby from './state/WordleLobby';
-import WordleBoard from './state/WordleBoard';
-import WordleAdmire from './state/WordleAdmire';
-import WordleStats from './state/WordleStats';
+import WordleLobby from './states/WordleLobby';
+import WordleBoard from './states/WordleBoard';
+import WordleAdmire from './states/WordleAdmire';
+import WordleStats from './states/WordleStats';
 
 // Overlays
 import HintOverlay from './overlays/HintOverlay';
 import AnswerOverlay from './overlays/AnswerOverlay';
 import UnderDevOverlay from './overlays/UnderDevOverlay';
 
-import * as Icons from '@ui/Icons'; 
+import * as Icons from '@widgets/wordle/elements/Icons'; 
 import useWordleEngine from './usewordleengine';
-
-const RoomIcon = () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-        <circle cx="9" cy="7" r="4"></circle>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-    </svg>
-);
 
 export default function WordleWidget({ widgetId }) {
     const [currentState, setCurrentState] = useState('lobby');
@@ -65,7 +56,7 @@ export default function WordleWidget({ widgetId }) {
             case 'lobby':
                 return (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Box sx={iconStyle} onClick={() => setActiveOverlay('underdev')}><RoomIcon /></Box>
+                        <Box sx={iconStyle} onClick={() => setActiveOverlay('underdev')}><Icons.Room /></Box>
                         <Box sx={iconStyle} onClick={() => setCurrentState('stats')}><Icons.Stats /></Box>
                     </Box>
                 );
@@ -76,7 +67,6 @@ export default function WordleWidget({ widgetId }) {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         
                         {isGameActive ? (
-                            /* ACTIVE GAME: Show Keyboard Toggle & Hint */
                             <>
                                 <Box sx={iconStyle} onClick={() => setShowKeyboard(!showKeyboard)}>
                                     {showKeyboard ? <Icons.KeyboardShow /> : <Icons.KeyboardHide />}
@@ -86,10 +76,9 @@ export default function WordleWidget({ widgetId }) {
                                 </Box>
                             </>
                         ) : (
-                            /* GAME OVER: Show Room & Stats Icons */
                             <>
                                 <Box sx={iconStyle} onClick={() => setActiveOverlay('underdev')}>
-                                    <RoomIcon />
+                                    <Icons.Room />
                                 </Box>
                                 <Box sx={iconStyle} onClick={() => setCurrentState('stats')}>
                                     <Icons.Stats />
@@ -103,7 +92,7 @@ export default function WordleWidget({ widgetId }) {
             case 'stats':
                 return (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Box sx={iconStyle} onClick={() => setActiveOverlay('underdev')}><RoomIcon /></Box>
+                        <Box sx={iconStyle} onClick={() => setActiveOverlay('underdev')}><Icons.Room /></Box>
                     </Box>
                 );
             case 'admire':
@@ -146,7 +135,6 @@ export default function WordleWidget({ widgetId }) {
                         onGoStats={() => { setActiveOverlay(null); setCurrentState('stats'); }}
                     />
                     
-                    {/* THE MULTIPLAYER CATCH-ALL */}
                     <UnderDevOverlay 
                         isOpen={activeOverlay === 'underdev'} 
                         onClose={() => setActiveOverlay(null)} 
@@ -159,15 +147,25 @@ export default function WordleWidget({ widgetId }) {
                     onStartSolo={(date) => { setGameDate(date); setCurrentState('board'); }}
                     onAdmire={(date) => { setGameDate(date); setCurrentState('admire'); }}
                     
-                    /* SEALED: Lobby Buttons */
                     onJoinRoom={() => setActiveOverlay('underdev')}
                     onManageRooms={() => setActiveOverlay('underdev')}
                 />
             )}
             
-            {currentState === 'board' && <WordleBoard engine={engine} showKeyboard={showKeyboard} />}
-            {currentState === 'admire' && <WordleAdmire engine={engine} />}
-            {currentState === 'stats' && <WordleStats engine={engine} />}
+            {currentState === 'board' && (
+                <WordleBoard 
+                    guesses={engine.guesses}
+                    currentGuess={engine.currentGuess}
+                    targetWord={engine.targetWord}
+                    gameStatus={engine.gameStatus}
+                    onKeyPress={engine.onKeyPress}
+                    toastMessage={engine.toastMessage}
+                    shakeTrigger={engine.shakeTrigger}
+                    showKeyboard={showKeyboard} 
+                />
+            )}
+            {currentState === 'admire' && <WordleAdmire guesses={engine.guesses} targetWord={engine.targetWord} />}
+            {currentState === 'stats' && <WordleStats />}
             
         </WidgetBase>
     );

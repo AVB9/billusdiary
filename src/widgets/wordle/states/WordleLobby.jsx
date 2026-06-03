@@ -6,12 +6,16 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import DatePicker from '@ui/DatePicker';
 
+// Timezone-safe local formatter
+const formatLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 export default function WordleLobby({ onStartSolo, onAdmire, onJoinRoom, onManageRooms }) {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [isCompleted, setIsCompleted] = useState(false);
 
+    const dateStr = formatLocal(selectedDate);
+
     useEffect(() => {
-        const dateStr = selectedDate.toISOString().split('T')[0];
         const key = `wordle_save_v1_${dateStr}`;
         const saved = localStorage.getItem(key);
         
@@ -25,9 +29,7 @@ export default function WordleLobby({ onStartSolo, onAdmire, onJoinRoom, onManag
         } else {
             setIsCompleted(false);
         }
-    }, [selectedDate]);
-
-    const dateStr = selectedDate.toISOString().split('T')[0];
+    }, [dateStr]);
 
     return (
         <Box sx={{ 
@@ -51,7 +53,6 @@ export default function WordleLobby({ onStartSolo, onAdmire, onJoinRoom, onManag
                     disableFuture={true} 
                 />
 
-                {/* THE MULTIPLAYER ROW: 50/50 Split */}
                 <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
                     <Button 
                         variant="outlined" 
@@ -102,7 +103,6 @@ export default function WordleLobby({ onStartSolo, onAdmire, onJoinRoom, onManag
                         PLAY WORDLE
                     </Button>
                 )}
-
             </Stack>
         </Box>
     );

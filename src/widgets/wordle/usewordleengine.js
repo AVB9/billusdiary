@@ -1,9 +1,10 @@
 // src/widgets/wordle/useWordleEngine.js
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
+import { saveWordleGameState } from './wordledb';
 
 export const VALID_WORDS = [
-    "BETAS", "TESTS", "WORDS", "PLAYS", "GAMES", "CODES", "DATAS", "NODES",
-    "ROOTS", "TREES", "LEAFS", "CORES", "BASES", "LINKS", "HTTPS", "USERS"
+    "BETA", "TEST", "WORD", "PLAY", "GAME", "CODE", "DATA", "NODE",
+    "ROOT", "TREE", "LEAF", "CORE", "BASE", "LINK", "HTTP", "USER"
 ]; 
 
 export const GAME_CONFIG = {
@@ -99,6 +100,10 @@ export default function useWordleEngine(isActive, dateStr) {
     const [playedOn, setPlayedOn] = useState(() => getSaveDataForDate(dateStr)?.playedOn || null);
     const [currentGuess, setCurrentGuess] = useState("");
     const [toastMessage, setToastMessage] = useState(null); 
+    
+    // NEW: Reliable numeric trigger for animations
+    const [shakeTrigger, setShakeTrigger] = useState(0);
+    
     const [activeDate, setActiveDate] = useState(dateStr);
     
     if (dateStr !== activeDate) {
@@ -108,11 +113,19 @@ export default function useWordleEngine(isActive, dateStr) {
         setCurrentGuess(""); setActiveDate(dateStr);
     }
 
-    const TARGET_WORD = useMemo(() => getWordForDateStr(dateStr), [dateStr]);
+    const TARGET_WORD = getWordForDateStr(dateStr);
 
     useEffect(() => {
-        if (storageKey) localStorage.setItem(storageKey, JSON.stringify({ guesses, gameStatus, isRevealed, playedOn }));
-    }, [guesses, gameStatus, isRevealed, playedOn, storageKey]);
+        if (storageKey) {
+            // 1. Instant local persistence for offline resilience
+            localStorage.setItem(storageKey, JSON.stringify({ guesses, gameStatus, isRevealed, playedOn }));
+            
+            // 2. Asynchronous cloud sync
+            // NOTE: activeRoomIds is passed as an empty array for now. 
+            // When we connect the global user context in Phase 5, we will pass the user's active rooms here.
+            saveWordleGameState(dateStr, guesses, gameStatus, isRevealed, []);
+        }
+    }, [guesses, gameStatus, isRevealed, playedOn, storageKey, dateStr]);
 
     const showToast = (msg) => { setToastMessage(msg); setTimeout(() => setToastMessage(null), 2000); };
     
@@ -127,15 +140,23 @@ export default function useWordleEngine(isActive, dateStr) {
         if (key === 'BACKSPACE' || key === 'BACK') setCurrentGuess(prev => prev.slice(0, -1));
         else if (key === 'ENTER') {
             if (currentGuess.length === GAME_CONFIG.WORD_LENGTH) {
-                if (!VALID_WORDS.includes(currentGuess)) { showToast("Not in word list"); return; }
+                if (!VALID_WORDS.includes(currentGuess)) { 
+                    showToast("Not in word list"); 
+                    setShakeTrigger(prev => prev + 1); // Trigger Shake
+                    return; 
+                }
                 const newGuesses = [...guesses, currentGuess];
                 setGuesses(newGuesses); setCurrentGuess(""); 
                 if (currentGuess === TARGET_WORD) { setGameStatus("won"); stampFinishedDate(); } 
                 else if (newGuesses.length >= GAME_CONFIG.MAX_GUESSES) { setGameStatus("lost"); stampFinishedDate(); }
+            } else {
+                // NEW: Handle incomplete words
+                showToast("Not enough letters");
+                setShakeTrigger(prev => prev + 1); // Trigger Shake
             }
         } 
         else if (/^[A-Z]$/.test(key) && currentGuess.length < GAME_CONFIG.WORD_LENGTH) setCurrentGuess(prev => prev + key);
     };
 
-    return { guesses, currentGuess, gameStatus, targetWord: TARGET_WORD, toastMessage, onKeyPress: handleKeyInput, isRevealed, markRevealed };
+    return { guesses, currentGuess, gameStatus, targetWord: TARGET_WORD, toastMessage, shakeTrigger, onKeyPress: handleKeyInput, isRevealed, markRevealed };
 }

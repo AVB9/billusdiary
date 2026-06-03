@@ -1,3 +1,4 @@
+// src/widgets/wordle/WordDatePicker.jsx
 import React, { useState, useRef } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -11,10 +12,21 @@ export default function WordDatePicker({ value, onChange, disableFuture, getWord
     const [open, setOpen] = useState(false);
     const containerRef = useRef(null);
 
-    const currentValue = dayjs(value);
+    // FIX: Timezone-proof parsing. Bypasses the native JS Date parser which 
+    // can mistakenly convert "YYYY-MM-DD" strings to UTC midnight, causing 
+    // a one-day rollback depending on your local timezone offset.
+    const parseLocal = (val) => {
+        if (typeof val === 'string' && val.includes('-')) {
+            const [y, m, d] = val.split('-').map(Number);
+            return dayjs(new Date(y, m - 1, d));
+        }
+        return dayjs(val).startOf('day');
+    };
+
+    const currentValue = parseLocal(value);
     const today = dayjs().startOf('day');
-    const targetDay = currentValue.startOf('day');
-    const isToday = targetDay.isSame(today);
+    const targetDay = currentValue;
+    const isToday = targetDay.isSame(today, 'day');
 
     const dateStr = targetDay.format('YYYY-MM-DD');
     const { status, word } = getWordForDate(dateStr);
@@ -34,7 +46,6 @@ export default function WordDatePicker({ value, onChange, disableFuture, getWord
 
     const bottomText = currentValue.format('MMM D').toUpperCase();
 
-    // FIX: Pass explicit YYYY-MM-DD strings instead of .toDate() to prevent UTC rollback
     const handlePrevDay = (e) => { 
         e.stopPropagation(); 
         onChange(currentValue.subtract(1, 'day').format('YYYY-MM-DD')); 
