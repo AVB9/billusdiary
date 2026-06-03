@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import WordDatePicker from '../WordDatePicker';
-import { getWordForDateStr, getSaveDataForDate, getGlobalWordleStats, getLocalYYYYMMDD } from '../usewordleengine';
+// THE FIX 1: Import GAME_CONFIG
+import { getWordForDateStr, getSaveDataForDate, getGlobalWordleStats, getLocalYYYYMMDD, GAME_CONFIG } from '../usewordleengine';
 
 export default function WordleStats() {
     const [viewDateStr, setViewDateStr] = useState(getLocalYYYYMMDD());
@@ -25,11 +26,12 @@ export default function WordleStats() {
     const activeDayData = realDataResolver(viewDateStr);
     const globalStats = getGlobalWordleStats(); 
 
-    let dailyStatText = '- / 4';
+    // THE FIX 2: Dynamically inject GAME_CONFIG.MAX_GUESSES into the text
+    let dailyStatText = `- / ${GAME_CONFIG.MAX_GUESSES}`;
     let dailyStatColor = 'var(--color-text-muted)';
     
     if (activeDayData.status === 'won') {
-        dailyStatText = `${activeDayData.guesses} / 4`;
+        dailyStatText = `${activeDayData.guesses} / ${GAME_CONFIG.MAX_GUESSES}`;
         dailyStatColor = 'var(--color-primary)'; 
     } else if (activeDayData.status === 'lost') {
         dailyStatText = 'LOST';
@@ -102,6 +104,7 @@ export default function WordleStats() {
                     </Typography>
                     
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
+                        {/* Notice how this map function automatically adapts to GAME_CONFIG.MAX_GUESSES! */}
                         {globalStats.distribution.map((count, index) => {
                             const guessNum = index + 1;
                             const isCurrentDayMatch = activeDayData.status === 'won' && activeDayData.guesses === guessNum;

@@ -9,6 +9,7 @@ export default function AnswerOverlay({
     isOpen, 
     onClose, 
     targetWord = '', 
+    definition = '', // Added definition prop
     reason, 
     guessCount, 
     onGoHome, 
@@ -95,7 +96,8 @@ export default function AnswerOverlay({
                     lineHeight: 1.4,
                     pb: 1
                 }}>
-                    A definition of the word goes here. It provides context. If this definition happens to be extremely long, the CSS Mask built into OverlayBase will gracefully fade the text into pure opacity right before it hits the footer buttons!
+                    {/* Replaced hardcoded text with dynamic definition */}
+                    {definition ? `"${definition}"` : "Fetching definition..."}
                 </Typography>
             </Box>
         </OverlayBase>

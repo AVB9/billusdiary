@@ -4,7 +4,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { GAME_CONFIG, getLetterStatus } from '../usewordleengine';
 
-export default function WordleAdmire({ guesses = [], targetWord = '' }) {
+export default function WordleAdmire({ guesses = [], targetWord = '', definition = '' }) {
     if (!targetWord) return null;
 
     const rows = Array.from({ length: GAME_CONFIG.MAX_GUESSES }).map((_, i) => {
@@ -26,7 +26,6 @@ export default function WordleAdmire({ guesses = [], targetWord = '' }) {
                 {rows.map((row, rowIndex) => (
                     <Box key={rowIndex} sx={{ display: 'flex', gap: '6px', width: '100%', justifyContent: 'center' }}>
                         {row.letters.map((char, colIndex) => {
-                            // Passing targetWord to our centralized evaluation function
                             const status = getLetterStatus(char !== ' ' ? char : '', colIndex, targetWord, row.isEvaluatedRow);
                            
                             let cellSx = {
@@ -73,7 +72,7 @@ export default function WordleAdmire({ guesses = [], targetWord = '' }) {
                 background: 'var(--color-glass-white)',
                 borderTop: '1px solid var(--color-glass-border)',
                 borderRadius: 'var(--rad-sm)',
-                p: 1, mx: 0.5,
+                p: 1.5, mx: 0.5,
                 animation: 'fadeIn 0.5s ease backwards',
                 animationDelay: '0.6s'
             }}>
@@ -82,16 +81,17 @@ export default function WordleAdmire({ guesses = [], targetWord = '' }) {
                 </Typography>
                
                 <Typography sx={{ 
-                    fontSize: '0.65rem', 
-                    color: 'var(--color-text-muted)', 
+                    fontSize: '0.75rem', 
+                    color: 'var(--color-text)', 
+                    fontStyle: 'italic',
                     textAlign: 'center', 
                     lineHeight: 1.4, 
                     mt: 0.5,
-                    maxHeight: '2.8em', 
+                    maxHeight: '3.2em', 
                     overflowY: 'auto',
                     pr: 0.5 
                 }}>
-                    A definition of the word goes here. This is a read-only snapshot of your victory or defeat. If you replace this placeholder with an incredibly long string of text, you will see that it now neatly scrolls inside this box without breaking the beautiful grid layout above it!
+                    "{definition}"
                 </Typography>
             </Box>
         </Box>

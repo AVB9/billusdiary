@@ -12,9 +12,7 @@ export default function WordDatePicker({ value, onChange, disableFuture, getWord
     const [open, setOpen] = useState(false);
     const containerRef = useRef(null);
 
-    // FIX: Timezone-proof parsing. Bypasses the native JS Date parser which 
-    // can mistakenly convert "YYYY-MM-DD" strings to UTC midnight, causing 
-    // a one-day rollback depending on your local timezone offset.
+    // Timezone-proof parsing
     const parseLocal = (val) => {
         if (typeof val === 'string' && val.includes('-')) {
             const [y, m, d] = val.split('-').map(Number);
@@ -31,7 +29,11 @@ export default function WordDatePicker({ value, onChange, disableFuture, getWord
     const dateStr = targetDay.format('YYYY-MM-DD');
     const { status, word } = getWordForDate(dateStr);
 
-    let topText = word;
+    // THE FIX: Gracefully handle the word whether it's a legacy primitive string 
+    // or the new {word, definition} dictionary object!
+    const displayWord = typeof word === 'object' && word !== null ? word.word : word;
+
+    let topText = displayWord;
     let textDecoration = 'none';
     let textOpacity = 1;
 

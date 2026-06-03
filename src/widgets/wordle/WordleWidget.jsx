@@ -15,7 +15,7 @@ import HintOverlay from './overlays/HintOverlay';
 import AnswerOverlay from './overlays/AnswerOverlay';
 import UnderDevOverlay from './overlays/UnderDevOverlay';
 
-import * as Icons from '@widgets/wordle/elements/Icons'; 
+import * as Icons from './elements/Icons'; 
 import useWordleEngine from './usewordleengine';
 
 export default function WordleWidget({ widgetId }) {
@@ -128,6 +128,7 @@ export default function WordleWidget({ widgetId }) {
                         isOpen={activeOverlay === 'answer'}
                         onClose={() => setActiveOverlay(null)}
                         targetWord={engine.targetWord}
+                        definition={engine.targetDefinition} // <--- NEW
                         reason={answerReason}
                         guessCount={engine.guesses.length}
                         isRevealed={engine.isRevealed} 
@@ -164,7 +165,8 @@ export default function WordleWidget({ widgetId }) {
                     showKeyboard={showKeyboard} 
                 />
             )}
-            {currentState === 'admire' && <WordleAdmire guesses={engine.guesses} targetWord={engine.targetWord} />}
+            {/* NEW: Passed definition prop */}
+            {currentState === 'admire' && <WordleAdmire guesses={engine.guesses} targetWord={engine.targetWord} definition={engine.targetDefinition} />}
             {currentState === 'stats' && <WordleStats />}
             
         </WidgetBase>

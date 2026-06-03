@@ -1,11 +1,7 @@
-// src/widgets/wordle/useWordleEngine.js
+// src/widgets/wordle/usewordleengine.js
 import { useState, useEffect } from 'react';
 import { saveWordleGameState } from './wordledb';
-
-export const VALID_WORDS = [
-    "BETA", "TEST", "WORD", "PLAY", "GAME", "CODE", "DATA", "NODE",
-    "ROOT", "TREE", "LEAF", "CORE", "BASE", "LINK", "HTTP", "USER"
-]; 
+import { TARGET_WORDS } from './elements/wordlist';
 
 export const GAME_CONFIG = {
     WORD_LENGTH: 4,
@@ -25,10 +21,17 @@ export const getLetterStatus = (letter, index, targetWord, isEvaluatedRow) => {
 };
 
 export const getWordForDateStr = (dateStr) => {
-    if (!dateStr) return "BETA"; 
+    if (!dateStr) return TARGET_WORDS[0].word; 
     const numericSeed = parseInt(dateStr.replace(/-/g, ''), 10);
-    const index = numericSeed % VALID_WORDS.length;
-    return VALID_WORDS[index];
+    const index = numericSeed % TARGET_WORDS.length;
+    return TARGET_WORDS[index].word;
+};
+
+export const getDefinitionForDateStr = (dateStr) => {
+    if (!dateStr) return TARGET_WORDS[0].definition; 
+    const numericSeed = parseInt(dateStr.replace(/-/g, ''), 10);
+    const index = numericSeed % TARGET_WORDS.length;
+    return TARGET_WORDS[index].definition;
 };
 
 export const getSaveDataForDate = (dateStr) => {
@@ -101,9 +104,8 @@ export default function useWordleEngine(isActive, dateStr) {
     const [currentGuess, setCurrentGuess] = useState("");
     const [toastMessage, setToastMessage] = useState(null); 
     
-    // NEW: Reliable numeric trigger for animations
     const [shakeTrigger, setShakeTrigger] = useState(0);
-    
+    const [isValidating, setIsValidating] = useState(false);
     const [activeDate, setActiveDate] = useState(dateStr);
     
     if (dateStr !== activeDate) {
@@ -114,49 +116,76 @@ export default function useWordleEngine(isActive, dateStr) {
     }
 
     const TARGET_WORD = getWordForDateStr(dateStr);
+    const TARGET_DEF = getDefinitionForDateStr(dateStr);
 
     useEffect(() => {
         if (storageKey) {
-            // 1. Instant local persistence for offline resilience
             localStorage.setItem(storageKey, JSON.stringify({ guesses, gameStatus, isRevealed, playedOn }));
-            
-            // 2. Asynchronous cloud sync
-            // NOTE: activeRoomIds is passed as an empty array for now. 
-            // When we connect the global user context in Phase 5, we will pass the user's active rooms here.
-            saveWordleGameState(dateStr, guesses, gameStatus, isRevealed, []);
+            saveWordleGameState(dateStr, guesses, gameStatus, isRevealed);
         }
     }, [guesses, gameStatus, isRevealed, playedOn, storageKey, dateStr]);
 
     const showToast = (msg) => { setToastMessage(msg); setTimeout(() => setToastMessage(null), 2000); };
-    
     const stampFinishedDate = () => { if (!playedOn) setPlayedOn(getLocalYYYYMMDD()); };
-
     const markRevealed = () => { setIsRevealed(true); stampFinishedDate(); };
 
-    const handleKeyInput = (keyString) => {
-        if (!isActive || gameStatus !== 'playing') return;
-        const key = keyString.toUpperCase();
-
-        if (key === 'BACKSPACE' || key === 'BACK') setCurrentGuess(prev => prev.slice(0, -1));
-        else if (key === 'ENTER') {
-            if (currentGuess.length === GAME_CONFIG.WORD_LENGTH) {
-                if (!VALID_WORDS.includes(currentGuess)) { 
-                    showToast("Not in word list"); 
-                    setShakeTrigger(prev => prev + 1); // Trigger Shake
-                    return; 
-                }
-                const newGuesses = [...guesses, currentGuess];
-                setGuesses(newGuesses); setCurrentGuess(""); 
-                if (currentGuess === TARGET_WORD) { setGameStatus("won"); stampFinishedDate(); } 
-                else if (newGuesses.length >= GAME_CONFIG.MAX_GUESSES) { setGameStatus("lost"); stampFinishedDate(); }
-            } else {
-                // NEW: Handle incomplete words
-                showToast("Not enough letters");
-                setShakeTrigger(prev => prev + 1); // Trigger Shake
-            }
-        } 
-        else if (/^[A-Z]$/.test(key) && currentGuess.length < GAME_CONFIG.WORD_LENGTH) setCurrentGuess(prev => prev + key);
+    const checkWordValidity = async (word) => {
+        if (TARGET_WORDS.some(w => w.word === word)) return true;
+        
+        try {
+            const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`);
+            if (res.status === 404) return false; 
+            return true; 
+        } catch (e) {
+            console.error("Dictionary API Error:", e);
+            return true; 
+        }
     };
 
-    return { guesses, currentGuess, gameStatus, targetWord: TARGET_WORD, toastMessage, shakeTrigger, onKeyPress: handleKeyInput, isRevealed, markRevealed };
+    const handleKeyInput = async (keyString) => {
+        if (!isActive || gameStatus !== 'playing' || isValidating) return;
+        const key = keyString.toUpperCase();
+
+        if (key === 'BACKSPACE' || key === 'BACK') {
+            setCurrentGuess(prev => prev.slice(0, -1));
+        }
+        else if (key === 'ENTER') {
+            if (currentGuess.length === GAME_CONFIG.WORD_LENGTH) {
+                
+                setIsValidating(true); 
+                const isValid = await checkWordValidity(currentGuess);
+                setIsValidating(false); 
+
+                if (!isValid) { 
+                    showToast("Not in word list"); 
+                    setShakeTrigger(prev => prev + 1); 
+                    return; 
+                }
+                
+                const newGuesses = [...guesses, currentGuess];
+                setGuesses(newGuesses); 
+                setCurrentGuess(""); 
+                
+                if (currentGuess === TARGET_WORD) { 
+                    setGameStatus("won"); 
+                    stampFinishedDate(); 
+                } else if (newGuesses.length >= GAME_CONFIG.MAX_GUESSES) { 
+                    setGameStatus("lost"); 
+                    stampFinishedDate(); 
+                }
+            } else {
+                showToast("Not enough letters");
+                setShakeTrigger(prev => prev + 1); 
+            }
+        } 
+        else if (/^[A-Z]$/.test(key) && currentGuess.length < GAME_CONFIG.WORD_LENGTH) {
+            setCurrentGuess(prev => prev + key);
+        }
+    };
+
+    return { 
+        guesses, currentGuess, gameStatus, toastMessage, shakeTrigger, onKeyPress: handleKeyInput, isRevealed, markRevealed,
+        targetWord: TARGET_WORD, 
+        targetDefinition: TARGET_DEF 
+    };
 }
