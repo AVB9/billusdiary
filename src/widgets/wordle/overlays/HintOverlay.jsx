@@ -18,8 +18,26 @@ export default function HintOverlay({ isOpen, onClose, targetWord = '', onReveal
         const vowelsList = ['A', 'E', 'I', 'O', 'U'];
         const letters = targetWord.toUpperCase().split('');
         
-        setVowel(letters.find(char => vowelsList.includes(char)) || '');
-        setConsonant(letters.find(char => !vowelsList.includes(char)) || '');
+        // 1. Gather ALL vowels and consonants present in the word
+        const availableVowels = letters.filter(char => vowelsList.includes(char));
+        const availableConsonants = letters.filter(char => !vowelsList.includes(char));
+        
+        // 2. Create a deterministic seed by adding up the ASCII values of the word.
+        // This ensures the hint jumps around the word, but remains identical for 
+        // every single player in the world on that specific day!
+        const seed = letters.reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        
+        // 3. Select a hint using modulo math (safely falling back to '' if none exist)
+        const selectedVowel = availableVowels.length > 0 
+            ? availableVowels[seed % availableVowels.length] 
+            : '';
+            
+        const selectedConsonant = availableConsonants.length > 0 
+            ? availableConsonants[seed % availableConsonants.length] 
+            : '';
+        
+        setVowel(selectedVowel);
+        setConsonant(selectedConsonant);
         
         setRevealedVowel(false);
         setRevealedConsonant(false);

@@ -1,10 +1,10 @@
 // src/widgets/wordle/WordleWidget.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import WidgetBase from '@widgets/WidgetBase';
 
-// Views
+// States
 import WordleLobby from './states/WordleLobby';
 import WordleBoard from './states/WordleBoard';
 import WordleAdmire from './states/WordleAdmire';
@@ -15,19 +15,23 @@ import HintOverlay from './overlays/HintOverlay';
 import AnswerOverlay from './overlays/AnswerOverlay';
 import UnderDevOverlay from './overlays/UnderDevOverlay';
 
+// Elements & Engine
 import * as Icons from './elements/Icons'; 
-import useWordleEngine from './usewordleengine';
+import useWordleEngine, { getLocalYYYYMMDD } from './usewordleengine';
 
 export default function WordleWidget({ widgetId }) {
+    
+    // State Management
     const [currentState, setCurrentState] = useState('lobby');
     const [activeOverlay, setActiveOverlay] = useState(null);
-    const [gameDate, setGameDate] = useState(new Date().toLocaleDateString());
+    const [gameDate, setGameDate] = useState(getLocalYYYYMMDD()); 
     const [showKeyboard, setShowKeyboard] = useState(false);
     const [answerReason, setAnswerReason] = useState('won');
     
     const isPlaying = currentState === 'board';
     const engine = useWordleEngine(isPlaying, gameDate);
 
+    // Telemetry Sync
     useEffect(() => {
         const telemetry = { renders: 1, view: currentState, syncScope: 'ISOLATED_SOLO' };
         window.dispatchEvent(new CustomEvent('widget_telemetry_uplink', {
@@ -35,74 +39,116 @@ export default function WordleWidget({ widgetId }) {
         }));
     }, [currentState]);
 
+    // Game Over Overlay Listener
     useEffect(() => {
         if (currentState !== 'board') return;
 
-        if (engine.gameStatus === 'won') {
-            setAnswerReason('won');
-            const timer = setTimeout(() => setActiveOverlay('answer'), 1500);
-            return () => clearTimeout(timer);
-        } else if (engine.gameStatus === 'lost') {
-            setAnswerReason('lost');
+        if (engine.gameStatus === 'won' || engine.gameStatus === 'lost') {
+            setAnswerReason(engine.gameStatus);
             const timer = setTimeout(() => setActiveOverlay('answer'), 1500);
             return () => clearTimeout(timer);
         }
     }, [engine.gameStatus, currentState]);
 
-    const renderTRS = () => {
-        const iconStyle = { cursor: 'pointer', display: 'flex', color: 'var(--color-text-muted)', transition: 'color 0.2s ease', '&:hover': { color: 'var(--color-text-main, #FFF)' } };
+    // Top Right Section (TRS) Configurator
+    const headerActions = useMemo(() => {
+        const iconStyle = { 
+            cursor: 'pointer', 
+            display: 'flex', 
+            color: 'var(--color-text-muted)', 
+            transition: 'color 0.2s ease', 
+            '&:hover': { color: 'var(--color-text-main, #FFF)' } 
+        };
         
+        const DateLabel = () => (
+            <Typography sx={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-text-muted)' }}>
+                {gameDate}
+            </Typography>
+        );
+
+        const actionConfigs = {
+            lobby: (
+                <>
+                    <Box sx={iconStyle} onClick={() => setActiveOverlay('underdev')}><Icons.Room /></Box>
+                    <Box sx={iconStyle} onClick={() => setCurrentState('stats')}><Icons.Stats /></Box>
+                </>
+            ),
+            board: (
+                <>
+                    {engine.gameStatus === 'playing' ? (
+                        <>
+                            <Box sx={iconStyle} onClick={() => setShowKeyboard(prev => !prev)}>
+                                {showKeyboard ? <Icons.KeyboardShow /> : <Icons.KeyboardHide />}
+                            </Box>
+                            <Box sx={{ ...iconStyle, color: 'var(--color-primary)' }} onClick={() => setActiveOverlay('hint')}>
+                                <Icons.Hint />
+                            </Box>
+                        </>
+                    ) : (
+                        <>
+                            <Box sx={iconStyle} onClick={() => setActiveOverlay('underdev')}><Icons.Room /></Box>
+                            <Box sx={iconStyle} onClick={() => setCurrentState('stats')}><Icons.Stats /></Box>
+                        </>
+                    )}
+                    <DateLabel />
+                </>
+            ),
+            stats: (
+                <Box sx={iconStyle} onClick={() => setActiveOverlay('underdev')}><Icons.Room /></Box>
+            ),
+            admire: (
+                <>
+                    <Box sx={iconStyle} onClick={() => setCurrentState('stats')}><Icons.Stats /></Box>
+                    <DateLabel />
+                </>
+            )
+        };
+
+        return (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {actionConfigs[currentState] || null}
+            </Box>
+        );
+    }, [currentState, showKeyboard, engine.gameStatus, gameDate]);
+
+    // Dynamic State Router
+    const renderActiveView = () => {
         switch (currentState) {
             case 'lobby':
                 return (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Box sx={iconStyle} onClick={() => setActiveOverlay('underdev')}><Icons.Room /></Box>
-                        <Box sx={iconStyle} onClick={() => setCurrentState('stats')}><Icons.Stats /></Box>
-                    </Box>
+                    <WordleLobby
+                        onStartSolo={(date) => { setGameDate(date); setCurrentState('board'); }}
+                        onAdmire={(date) => { setGameDate(date); setCurrentState('admire'); }}
+                        onJoinRoom={() => setActiveOverlay('underdev')}
+                        onManageRooms={() => setActiveOverlay('underdev')}
+                    />
                 );
             case 'board':
-                const isGameActive = engine.gameStatus === 'playing';
-                
                 return (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        
-                        {isGameActive ? (
-                            <>
-                                <Box sx={iconStyle} onClick={() => setShowKeyboard(!showKeyboard)}>
-                                    {showKeyboard ? <Icons.KeyboardShow /> : <Icons.KeyboardHide />}
-                                </Box>
-                                <Box sx={{ ...iconStyle, color: 'var(--color-primary)' }} onClick={() => setActiveOverlay('hint')}>
-                                    <Icons.Hint />
-                                </Box>
-                            </>
-                        ) : (
-                            <>
-                                <Box sx={iconStyle} onClick={() => setActiveOverlay('underdev')}>
-                                    <Icons.Room />
-                                </Box>
-                                <Box sx={iconStyle} onClick={() => setCurrentState('stats')}>
-                                    <Icons.Stats />
-                                </Box>
-                            </>
-                        )}
-                        
-                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-text-muted)' }}>{gameDate}</Typography>
-                    </Box>
-                );
-            case 'stats':
-                return (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Box sx={iconStyle} onClick={() => setActiveOverlay('underdev')}><Icons.Room /></Box>
-                    </Box>
+                    <WordleBoard 
+                        guesses={engine.guesses} 
+                        currentGuess={engine.currentGuess}
+                        targetWord={engine.targetWord} 
+                        gameStatus={engine.gameStatus}
+                        onKeyPress={engine.onKeyPress} 
+                        toastMessage={engine.toastMessage}
+                        shakeTrigger={engine.shakeTrigger} 
+                        isValidating={engine.isValidating} 
+                        showKeyboard={showKeyboard} 
+                    />
                 );
             case 'admire':
                 return (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box sx={iconStyle} onClick={() => setCurrentState('stats')}><Icons.Stats /></Box>
-                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-text-muted)' }}>{gameDate}</Typography>
-                    </Box>
+                    <WordleAdmire 
+                        guesses={engine.guesses} 
+                        targetWord={engine.targetWord} 
+                        definition={engine.targetDefinition} 
+                    />
                 );
-            default: return null;
+            case 'stats':
+                return <WordleStats />;
+            default:
+                return null;
         }
     };
 
@@ -110,32 +156,31 @@ export default function WordleWidget({ widgetId }) {
         <WidgetBase
             title="WORDLE"
             onTitleClick={() => setCurrentState('lobby')}
-            headerActions={renderTRS()}
+            headerActions={headerActions}
             toastMessage={engine.toastMessage}
             overlays={
                 <>
                     <HintOverlay
-                        isOpen={activeOverlay === 'hint'}
-                        onClose={() => setActiveOverlay(null)}
+                        isOpen={activeOverlay === 'hint'} 
+                        onClose={() => setActiveOverlay(null)} 
                         targetWord={engine.targetWord}
-                        onRevealAnswer={() => {
+                        onRevealAnswer={() => { 
                             engine.markRevealed(); 
-                            setAnswerReason('revealed');
+                            setAnswerReason('revealed'); 
                             setActiveOverlay('answer'); 
                         }}
                     />
                     <AnswerOverlay
-                        isOpen={activeOverlay === 'answer'}
+                        isOpen={activeOverlay === 'answer'} 
                         onClose={() => setActiveOverlay(null)}
-                        targetWord={engine.targetWord}
-                        definition={engine.targetDefinition} // <--- NEW
+                        targetWord={engine.targetWord} 
+                        definition={engine.targetDefinition} 
                         reason={answerReason}
-                        guessCount={engine.guesses.length}
+                        guessCount={engine.guesses.length} 
                         isRevealed={engine.isRevealed} 
                         onGoHome={() => { setActiveOverlay(null); setCurrentState('lobby'); }}
                         onGoStats={() => { setActiveOverlay(null); setCurrentState('stats'); }}
                     />
-                    
                     <UnderDevOverlay 
                         isOpen={activeOverlay === 'underdev'} 
                         onClose={() => setActiveOverlay(null)} 
@@ -143,33 +188,7 @@ export default function WordleWidget({ widgetId }) {
                 </>
             }
         >
-            {currentState === 'lobby' && (
-                <WordleLobby
-                    onStartSolo={(date) => { setGameDate(date); setCurrentState('board'); }}
-                    onAdmire={(date) => { setGameDate(date); setCurrentState('admire'); }}
-                    
-                    onJoinRoom={() => setActiveOverlay('underdev')}
-                    onManageRooms={() => setActiveOverlay('underdev')}
-                />
-            )}
-            
-            {currentState === 'board' && (
-                <WordleBoard 
-                    guesses={engine.guesses}
-                    currentGuess={engine.currentGuess}
-                    targetWord={engine.targetWord}
-                    gameStatus={engine.gameStatus}
-                    onKeyPress={engine.onKeyPress}
-                    toastMessage={engine.toastMessage}
-                    shakeTrigger={engine.shakeTrigger}
-                    isValidating={engine.isValidating} 
-                    showKeyboard={showKeyboard} 
-                />
-            )}
-            {/* NEW: Passed definition prop */}
-            {currentState === 'admire' && <WordleAdmire guesses={engine.guesses} targetWord={engine.targetWord} definition={engine.targetDefinition} />}
-            {currentState === 'stats' && <WordleStats />}
-            
+            {renderActiveView()}
         </WidgetBase>
     );
 }

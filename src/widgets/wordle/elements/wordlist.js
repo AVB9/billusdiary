@@ -1,5 +1,13 @@
-export const TARGET_WORDS = [
-{ word: "ARCH", definition: "A curved symmetrical structure spanning an opening and typically supporting the weight of a bridge, roof, or wall." },
+export const TARGET_WORDS = {
+    "3": [
+        { word: "CAT", definition: "A small domesticated carnivorous mammal with soft fur." },
+        { word: "DOG", definition: "A domesticated carnivorous mammal that typically has a long snout and an acute sense of smell." }
+    ],
+    "4": [
+        { word: "BETA", definition: "A stage of software testing in which a product is released to a limited number of users." },
+        { word: "DATA", definition: "Facts and statistics collected together for reference or analysis." },
+        { word: "NODE", definition: "A basic unit of a data structure, such as a linked list or tree data structure." },
+        { word: "ARCH", definition: "A curved symmetrical structure spanning an opening and typically supporting the weight of a bridge, roof, or wall." },
 { word: "AREA", definition: "A region or part of a town, a country, or the world, or the extent of a two-dimensional surface within a boundary." },
 { word: "ARMY", definition: "An organized military force equipped for fighting on land." },
 { word: "ATOM", definition: "The basic unit of a chemical element, consisting of a nucleus surrounded by electrons." },
@@ -661,4 +669,11 @@ export const TARGET_WORDS = [
     { word: "FUSS", definition: "A display of unnecessary or excessive excitement, activity, or interest." },
     { word: "FUZE", definition: "A mechanical device used to detonate an explosive charge." },
     { word: "FUZZ", definition: "A mass of fine, light fibers or hairs." }
-];
+    ],
+    "5": [
+        { word: "APPLE", definition: "The round fruit of a tree of the rose family, which typically has thin red or green skin." }
+    ],
+    "6": [
+        { word: "WIDGET", definition: "An application, or a component of an interface, that enables a user to perform a function or access a service." }
+    ]
+};
