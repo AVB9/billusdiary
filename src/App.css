@@ -111,16 +111,18 @@
 }
 
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85); /* Darkened to absorb scattered light */
+    backdrop-filter: var(--blur-heavy); /* Increased to completely dissolve underlying shapes */
+    -webkit-backdrop-filter: var(--blur-heavy);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
 }
 
 .modal {

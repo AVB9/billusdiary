@@ -1,20 +1,17 @@
-// src/widgets/wordle/states/WordleLobby.jsx
 import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import DatePicker from '@ui/DatePicker';
+import { PrimaryButton, SecondaryButton } from '@ui/Button';
 import { checkIfPlayed } from '../usewordleengine';
 
-// Timezone-safe local formatter
 const formatLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export default function WordleLobby({ onStartSolo, onAdmire, onJoinRoom, onManageRooms }) {
     const [selectedDate, setSelectedDate] = useState(new Date());
     
     const dateStr = formatLocal(selectedDate);
-    // FIX 2: Using the pure helper function instead of direct localStorage access!
     const isCompleted = checkIfPlayed(dateStr);
 
     return (
@@ -40,54 +37,37 @@ export default function WordleLobby({ onStartSolo, onAdmire, onJoinRoom, onManag
                 />
 
                 <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
-                    <Button 
-                        variant="outlined" 
+                    <SecondaryButton 
                         onClick={onJoinRoom}
-                        sx={{ 
-                            flex: 1, py: 1, borderRadius: 'var(--rad-sm)', fontWeight: 900, fontSize: '0.75rem',
-                            color: 'var(--color-text-main, #FFF)', borderColor: 'var(--color-glass-border)',
-                            '&:hover': { background: 'var(--color-glass-white)', borderColor: 'var(--color-text-main, #FFF)' }
-                        }}
+                        sx={{ flex: 1, py: 1, fontSize: '0.75rem' }}
                     >
                         JOIN ROOM
-                    </Button>
-                    <Button 
-                        variant="outlined" 
+                    </SecondaryButton>
+                    
+                    <SecondaryButton 
                         onClick={onManageRooms}
-                        sx={{ 
-                            flex: 1, py: 1, borderRadius: 'var(--rad-sm)', fontWeight: 900, fontSize: '0.75rem',
-                            color: 'var(--color-text-main, #FFF)', borderColor: 'var(--color-glass-border)',
-                            '&:hover': { background: 'var(--color-glass-white)', borderColor: 'var(--color-text-main, #FFF)' }
-                        }}
+                        sx={{ flex: 1, py: 1, fontSize: '0.75rem' }}
                     >
                         MY ROOMS
-                    </Button>
+                    </SecondaryButton>
                 </Box>
 
                 {isCompleted ? (
-                    <Button 
-                        fullWidth variant="contained" 
+                    <PrimaryButton 
+                        fullWidth 
                         onClick={() => onAdmire(dateStr)}
-                        sx={{ 
-                            py: 1.2, borderRadius: 'var(--rad-sm)', fontWeight: 900, fontSize: '0.85rem',
-                            color: 'var(--color-bg)', background: 'var(--color-primary)',
-                            boxShadow: 'none', '&:hover': { background: 'var(--color-primary)', filter: 'brightness(1.1)', boxShadow: 'none' }
-                        }}
+                        sx={{ py: 1.2, fontSize: '0.85rem' }}
                     >
                         ADMIRE WORDLE
-                    </Button>
+                    </PrimaryButton>
                 ) : (
-                    <Button 
-                        fullWidth variant="contained" 
+                    <PrimaryButton 
+                        fullWidth 
                         onClick={() => onStartSolo(dateStr)}
-                        sx={{ 
-                            py: 1.2, borderRadius: 'var(--rad-sm)', fontWeight: 900, fontSize: '0.85rem',
-                            color: 'var(--color-bg)', background: 'var(--color-primary)',
-                            boxShadow: 'none', '&:hover': { background: 'var(--color-primary)', filter: 'brightness(1.1)', boxShadow: 'none' }
-                        }}
+                        sx={{ py: 1.2, fontSize: '0.85rem' }}
                     >
                         PLAY WORDLE
-                    </Button>
+                    </PrimaryButton>
                 )}
             </Stack>
         </Box>

@@ -278,7 +278,20 @@ input, textarea { appearance: none; -webkit-appearance: none; }
 /* =================================================================
    7. MODALS & BOTTOM PILL NAV
    ================================================================= */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; }
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85); /* Darkened to absorb scattered light */
+    backdrop-filter: var(--blur-heavy); /* Increased to completely dissolve underlying shapes */
+    -webkit-backdrop-filter: var(--blur-heavy);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
 .modal-box { width: 90%; max-width: 350px; padding: var(--pad-xl); }
 .modal-title { margin-bottom: 20px; text-align: center; font-size: 1.3rem; }
 .modal-box h2 { font-size: 1.2rem; margin-bottom: var(--pad-md); }
@@ -679,11 +692,11 @@ input[type="date"]::-webkit-inner-spin-button, input[type="date"]::-webkit-clear
     z-index: 99999 !important; 
     pointer-events: none !important; 
     opacity: 0.98;
-    background: rgba(30, 30, 30, 0.7) !important; 
+    background: rgba(20, 20, 20, 0.85) !important; /* Slightly more opaque to ground the element */
     backdrop-filter: blur(20px) !important;
     -webkit-backdrop-filter: blur(20px) !important;
     border: 1px solid var(--color-primary) !important;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 15px rgba(255, 59, 59, 0.2) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8) !important; /* Stripped the red glow, deepened the physical drop shadow */
     transition: box-shadow 0.25s ease, border-color 0.25s ease;
     will-change: transform;
 }

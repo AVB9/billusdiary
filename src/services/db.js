@@ -1,6 +1,6 @@
 // src/services/db.js
 import { db } from './firebase';
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 /**
  * Save the user's active widgets and grid layout to Firebase.
@@ -12,9 +12,10 @@ export const saveHomeConfig = async (uid, activeWidgets, layoutData) => {
         await setDoc(userRef, {
             home: {
                 activeWidgets: activeWidgets,
-                layout: layoutData
+                layout: layoutData,
+                updatedAt: serverTimestamp() // CRITICAL: Resolves conflicts if user has app open on multiple devices
             }
-        }, { merge: true }); // CRITICAL: Merge prevents overwriting other app data
+        }, { merge: true }); 
         
         console.log("Layout saved to Firebase!");
     } catch (error) {
@@ -34,9 +35,9 @@ export const getHomeConfig = async (uid) => {
         if (docSnap.exists() && docSnap.data().home) {
             return docSnap.data().home;
         } else {
-            // Return a default layout if they are a brand new user
+            // Return a default blank layout for brand new users
             return {
-                activeWidgets: ["wordle"], // Default starting widget
+                activeWidgets: [], // Starts completely empty
                 layout: { desktop: [], mobile: [] }
             };
         }
