@@ -1,11 +1,11 @@
-// src/tabs/home/grid/EditWidgetsModal.jsx
+// src/tabs/home/grid/EditGridModal.jsx
 import React, { useState, useEffect } from 'react';
 import SystemModal from '@modals/SystemModal';
 import Pill from '@ui/Pill'; 
 import PillTray from '@ui/PillTray'; // THE NEW TRAY
 import { WIDGET_DICTIONARY } from '@widgets/WidgetRegistry';
 
-export default function EditWidgetsModal({ isOpen, onClose, userLayout, onSave }) {
+export default function EditGridModal({ isOpen, onClose, userLayout, onSave }) {
     const [draftLayout, setDraftLayout] = useState([]);
 
     useEffect(() => {

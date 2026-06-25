@@ -2,17 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import Greetings from '@tabs/home/header/Greetings';
 import Grid from '@tabs/home/grid/Grid';
-import EditWidgetsModal from '@tabs/home/grid/EditWidgetsModal';
-import EditBar from '@tabs/home/grid/EditBar';
+import EditGridModal from '@tabs/home/grid/EditGridModal';
+import EditGridBar from '@tabs/home/grid/EditGridBar';
 import { WIDGET_DICTIONARY } from '@widgets/WidgetRegistry';
-import { getHomeLayout, saveHomeLayout } from '@services/db'; // <--- NEW DB IMPORTS
+import { getHomeLayout, saveHomeLayout } from '@services/db'; 
 import '@tabs/home/hometab.css';
 
-export default function HomeTab({ uid }) { // <--- RECEIVE UID FROM APP.JSX
+export default function HomeTab({ uid }) { 
     const [isEditMode, setIsEditMode] = useState(false);
     const [isWidgetModalOpen, setIsWidgetModalOpen] = useState(false);
     
-    const [isLoadingLayout, setIsLoadingLayout] = useState(true); // <--- NEW LOADING STATE
+    const [isLoadingLayout, setIsLoadingLayout] = useState(true); 
     const [userLayout, setUserLayout] = useState([]);
     const [backupLayout, setBackupLayout] = useState([]);
     
@@ -72,7 +72,6 @@ export default function HomeTab({ uid }) { // <--- RECEIVE UID FROM APP.JSX
 
     const handleSaveEditMode = async () => {
         setIsEditMode(false);
-        // Save to Firebase immediately when the user confirms their grid layout!
         await saveHomeLayout(uid, userLayout);
     };
 
@@ -84,7 +83,6 @@ export default function HomeTab({ uid }) { // <--- RECEIVE UID FROM APP.JSX
 
     const handleModalSave = async (newLayout) => {
         setUserLayout(newLayout);
-        // Save to Firebase immediately when the user adds/removes widgets!
         await saveHomeLayout(uid, newLayout);
     };
 
@@ -110,73 +108,81 @@ export default function HomeTab({ uid }) { // <--- RECEIVE UID FROM APP.JSX
         setIsEditMode(true);
     };
 
-    // Prevent rendering the grid while Firebase is fetching
-    if (isLoadingLayout) {
-        return (
-            <div className="app-tab" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'rgba(255,255,255,0.5)' }}>
-                Loading Workspace...
-            </div>
-        );
-    }
-
     return (
         <div className="app-tab">
             <div className="central-column">
+                {/* 1. Greetings loads INSTANTLY */}
                 <Greetings />
 
-                {isEditMode && (
-                    <EditBar 
-                        onOpenModal={() => setIsWidgetModalOpen(true)}
-                        onReset={handleResetLayout}
-                        onCancel={handleCancelEditMode}
-                        onSave={handleSaveEditMode} /* <--- FIREBASE SYNC TRIGGERS HERE */
-                    />
-                )}
-
-                <div 
-                    style={{ display: 'contents' }} 
-                    onPointerDownCapture={(e) => {
-                        const targetWrapper = e.target.closest('.react-grid-item');
-                        if (targetWrapper) {
-                            const widgetId = targetWrapper.getAttribute('data-widget-id');
-                            if (widgetId) {
-                                setInspectedWidgetId(widgetId);
-                            } else {
-                                console.warn("DEV PANEL WARNING: Clicked a widget, but the 'data-widget-id' attribute is missing on the Grid item wrapper!");
-                            }
-                        } else {
-                            setInspectedWidgetId(null);
-                        }
-                    }}
-                >
-                    <Grid 
-                        layoutConfig={userLayout} 
-                        isEditMode={isEditMode} 
-                        onLayoutChange={handleLayoutSync} 
-                        onAddWidget={() => { 
-                            handleEnterEditMode(); 
-                            setIsWidgetModalOpen(true); 
-                        }} 
-                    />
-                </div>
-                
-                {!isEditMode && userLayout.length > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '40px' }}>
-                        <button 
-                            onClick={handleEnterEditMode} 
-                            style={{ padding: '10px 20px', opacity: 0.4, background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: 'white', borderRadius: '12px', cursor: 'pointer', fontSize: '0.8rem' }}
-                        >
-                            Enter Edit Mode
-                        </button>
+                {/* 2. Show the Grid Loader OR the actual Grid depending on Firebase */}
+                {isLoadingLayout ? (
+                    <div style={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        height: '35vh', border: '2px dashed rgba(255,255,255,0.05)', borderRadius: 'var(--rad-lg, 24px)',
+                        marginTop: '20px', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                    }}>
+                        <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }`}</style>
+                        <p style={{ opacity: 0.4, fontWeight: 600, letterSpacing: '1px', fontSize: '0.85rem' }}>
+                            LOADING WORKSPACE...
+                        </p>
                     </div>
+                ) : (
+                    <>
+                        {isEditMode && (
+                            <EditGridBar 
+                                onOpenModal={() => setIsWidgetModalOpen(true)}
+                                onReset={handleResetLayout}
+                                onCancel={handleCancelEditMode}
+                                onSave={handleSaveEditMode}
+                            />
+                        )}
+
+                        <div 
+                            style={{ display: 'contents' }} 
+                            onPointerDownCapture={(e) => {
+                                const targetWrapper = e.target.closest('.react-grid-item');
+                                if (targetWrapper) {
+                                    const widgetId = targetWrapper.getAttribute('data-widget-id');
+                                    if (widgetId) {
+                                        setInspectedWidgetId(widgetId);
+                                    } else {
+                                        console.warn("DEV PANEL WARNING: Clicked a widget, but the 'data-widget-id' attribute is missing on the Grid item wrapper!");
+                                    }
+                                } else {
+                                    setInspectedWidgetId(null);
+                                }
+                            }}
+                        >
+                            <Grid 
+                                layoutConfig={userLayout} 
+                                isEditMode={isEditMode} 
+                                onLayoutChange={handleLayoutSync} 
+                                onAddWidget={() => { 
+                                    handleEnterEditMode(); 
+                                    setIsWidgetModalOpen(true); 
+                                }} 
+                            />
+                        </div>
+                        
+                        {!isEditMode && userLayout.length > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '40px' }}>
+                                <button 
+                                    onClick={handleEnterEditMode} 
+                                    style={{ padding: '10px 20px', opacity: 0.4, background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: 'white', borderRadius: '12px', cursor: 'pointer', fontSize: '0.8rem' }}
+                                >
+                                    Enter Edit Mode
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 
-            <EditWidgetsModal 
+            <EditGridModal 
                 isOpen={isWidgetModalOpen}
                 onClose={() => setIsWidgetModalOpen(false)}
                 userLayout={userLayout}
-                onSave={handleModalSave} /* <--- FIREBASE SYNC TRIGGERS HERE */
+                onSave={handleModalSave} 
             />
         </div>
     );

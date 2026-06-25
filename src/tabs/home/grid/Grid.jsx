@@ -150,7 +150,7 @@ export default function Grid({ layoutConfig = [], isEditMode, onLayoutChange, on
                         onClick={onAddWidget}
                         sx={{ borderRadius: 4, fontWeight: 'bold', color: '#000', px: 3, py: 1.5 }}
                     >
-                        + Add Widget
+                        Add Widgets
                     </Button>
                 </div>
             )}

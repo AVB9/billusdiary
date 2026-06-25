@@ -1,4 +1,4 @@
-// src/tabs/home/grid/EditBar.jsx
+// src/tabs/home/grid/EditGridBar.jsx
 import React from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -14,7 +14,7 @@ const ResetIcon = () => (
     </svg>
 );
 
-export default function EditBar({ onOpenModal, onReset, onCancel, onSave }) {
+export default function EditGridBar({ onOpenModal, onReset, onCancel, onSave }) {
     return (
         <Box className="glass-panel" sx={{ p: 2, mb: 2, width: '100%' }}>
             <Stack 
@@ -41,7 +41,7 @@ export default function EditBar({ onOpenModal, onReset, onCancel, onSave }) {
                             whiteSpace: 'nowrap',
                         }}
                     >
-                        + Edit Widgets
+                        Edit Widgets
                     </Button>
                     
                     <Tooltip title="Reset Layout" placement="top" arrow>
