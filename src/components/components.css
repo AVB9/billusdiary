@@ -131,6 +131,10 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-top: 1px solid rgba(255, 255, 255, 0.15); 
     
+    /* THE FIX: Isolate the layer so the blur does not bleed outwards */
+    transform: translateZ(0);
+    will-change: transform, backdrop-filter;
+    
     transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), 
                 background 0.2s ease,
                 border-color 0.2s ease;
@@ -142,6 +146,7 @@ button.glass-panel {
 }
 .glass-panel[onClick]:active,
 button.glass-panel:active {
-    transform: scale(0.96);
+    /* Preserve the translateZ while scaling! */
+    transform: scale(0.96) translateZ(0);
     background: rgba(255, 255, 255, 0.08);
 }

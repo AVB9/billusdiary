@@ -2,33 +2,30 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import BottomNav from '@layout/BottomNav';
-import HomeTab from '@tabs/home/HomeTab';
 import OnBoarding from '@layout/OnBoarding'; 
 import DevPanel from '@layout/DevPanel'; 
-// 1. Updated the import to match your new file name
 import Wordle from '@widgets/wordle/Wordle'; 
+
 import { subscribeToAuthChanges } from './services/auth'; 
 
-const APP_TABS = [
-    { id: 'momentum', component: <div className="app-tab" style={{ padding: '20px', color: 'white' }}>Momentum Placeholder</div> },
-    { id: 'planner', component: <div className="app-tab" style={{ padding: '20px', color: 'white' }}>Planner Placeholder</div> },
-    { id: 'home', component: <HomeTab /> },
-    { id: 'todo', component: <div className="app-tab" style={{ padding: '20px', color: 'white' }}>Todo Placeholder</div> },
-    { id: 'settings', component: <div className="app-tab" style={{ padding: '20px', color: 'white' }}>Settings Placeholder</div> }
-];
+// THE NEW REGISTRY IMPORT
+import { TAB_REGISTRY } from '@tabs/TabRegistry';
 
-const MainOS = ({ activeIndex, handleTabChange, user }) => (
+// ============================================================================
+// MAIN OS WRAPPER
+// ============================================================================
+const MainOS = ({ activeIndex, handleTabChange, user, activeTabs }) => (
     <>
         <main id="app-container">
             <div style={{ width: '100%' }}>
-                {APP_TABS.map((tab, idx) => (
+                {activeTabs.map((tab, idx) => (
                     <div key={tab.id} style={{ display: activeIndex === idx ? 'block' : 'none', width: '100%' }}>
                         {React.cloneElement(tab.component, { uid: user.uid })}
                     </div>
                 ))}
             </div>
         </main>
-        <BottomNav activeIndex={activeIndex} onTabChange={handleTabChange} />
+        <BottomNav activeIndex={activeIndex} onTabChange={handleTabChange} tabs={activeTabs} />
     </>
 );
 
@@ -36,14 +33,27 @@ export default function App() {
     const [user, setUser] = useState(null);
     const [isAuthLoading, setIsAuthLoading] = useState(true);
 
-    const startingIndex = APP_TABS.findIndex(tab => tab.id === 'home');
-    const [activeIndex, setActiveIndex] = useState(startingIndex !== -1 ? startingIndex : 0);
+    // DYNAMIC CONFIGURATION (Later, fetch these two from Firebase!)
+    const [navConfig, setNavConfig] = useState(['momentum', 'planner', 'home', 'todo', 'settings']);
+    const [defaultTabId, setDefaultTabId] = useState('home');
+
+    // Resolve IDs to actual component objects using the new TabRegistry
+    const activeTabs = navConfig.map(id => TAB_REGISTRY[id]).filter(Boolean);
+
+    // Initial starting index based on the defaultTabId inside the user's config
+    const startingIndex = navConfig.indexOf(defaultTabId) !== -1 ? navConfig.indexOf(defaultTabId) : 0;
+    const [activeIndex, setActiveIndex] = useState(startingIndex);
+    
     const scrollPositions = useRef({});
 
     useEffect(() => {
         const unsubscribe = subscribeToAuthChanges((currentUser) => {
             setUser(currentUser);
             setIsAuthLoading(false);
+            
+            // NOTE: Here is where you will fetch user doc from Firebase
+            // and update setNavConfig(userData.navSequence) 
+            // and setDefaultTabId(userData.defaultTab)
         });
         return () => unsubscribe();
     }, []);
@@ -55,13 +65,14 @@ export default function App() {
 
     useEffect(() => {
         if (!user) return; 
-        if (APP_TABS[activeIndex].id === 'home') {
+        // Look up by dynamic ID string instead of fixed position
+        if (navConfig[activeIndex] === 'home') {
             window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
         } else {
             const savedScroll = scrollPositions.current[activeIndex] || 0;
             window.scrollTo({ top: savedScroll, left: 0, behavior: 'instant' });
         }
-    }, [activeIndex, user]);
+    }, [activeIndex, user, navConfig]);
 
     if (isAuthLoading) {
         return <div style={{ display: 'flex', minHeight: '100vh', justifyContent: 'center', alignItems: 'center' }}>Loading OS...</div>;
@@ -81,9 +92,7 @@ export default function App() {
             <DevPanel user={user} />
             
             <Routes>
-                <Route path="/" element={<MainOS activeIndex={activeIndex} handleTabChange={handleTabChange} user={user} />} />
-                
-                {/* 2. Updated the element to use your new <Wordle /> component */}
+                <Route path="/" element={<MainOS activeIndex={activeIndex} handleTabChange={handleTabChange} user={user} activeTabs={activeTabs} />} />
                 <Route path="/wordle" element={<Wordle user={user} />} />
             </Routes>
         </>

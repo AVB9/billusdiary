@@ -11,12 +11,9 @@ const baseSx = {
     textTransform: 'uppercase', 
     whiteSpace: 'nowrap', 
     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)', 
-    // MOBILE TACTILE FEEDBACK
+    // MOBILE TACTILE FEEDBACK: Always fires on touch!
     '&:active': { 
         transform: 'scale(0.96)' 
-    },
-    '&:hover': { 
-        boxShadow: 'none' 
     }
 };
 
@@ -31,12 +28,16 @@ export const PrimaryButton = ({ children, sx, fullWidth, onClick, disabled, ...p
             ...baseSx,
             color: 'var(--color-bg, #000000)',
             background: 'var(--color-primary, #EF4444)',
-            '&:hover': { 
-                background: 'var(--color-primary, #EF4444)', 
-                filter: 'brightness(1.1)', 
-                boxShadow: 'none',
-                transform: 'translateY(-1px)' 
+            
+            // THE FIX: Only brighten if using a physical mouse
+            '@media (hover: hover) and (pointer: fine)': {
+                '&:hover': { 
+                    background: 'color-mix(in srgb, var(--color-primary) 85%, white)', 
+                    boxShadow: 'none',
+                    transform: 'translateY(-1px)' 
+                }
             },
+            
             '&.Mui-disabled': {
                 background: 'rgba(255,255,255,0.1)',
                 color: 'rgba(255,255,255,0.3)',
@@ -48,23 +49,28 @@ export const PrimaryButton = ({ children, sx, fullWidth, onClick, disabled, ...p
     </MuiButton>
 );
 
-// THE UPGRADE: The "Soft Tonal" aesthetic
+// The "Soft Tonal" aesthetic
 export const SecondaryButton = ({ children, sx, fullWidth, onClick, disabled, ...props }) => (
     <MuiButton
-        variant="text" // Removed outline
+        variant="text" 
         fullWidth={fullWidth}
         onClick={onClick}
         disabled={disabled}
         {...props}
         sx={{
             ...baseSx,
-            color: 'var(--color-text-muted, rgba(255,255,255,0.7))', // Muted text
-            backgroundColor: 'rgba(255,255,255,0.06)', // Very faint structural background, NO BORDER
-            '&:hover': { 
-                backgroundColor: 'rgba(255,255,255,0.12)', // Background subtly brightens
-                color: 'var(--color-text-main, #FFFFFF)', // Text pops to bright white
-                transform: 'translateY(-1px)'
+            color: 'var(--color-text-muted, rgba(255,255,255,0.7))', 
+            backgroundColor: 'rgba(255,255,255,0.06)', 
+            
+            // THE FIX: Only brighten background and text if using a physical mouse
+            '@media (hover: hover) and (pointer: fine)': {
+                '&:hover': { 
+                    backgroundColor: 'rgba(255,255,255,0.12)', 
+                    color: 'var(--color-text, #FFFFFF)', 
+                    transform: 'translateY(-1px)'
+                }
             },
+            
             '&.Mui-disabled': {
                 color: 'rgba(255,255,255,0.3)',
                 backgroundColor: 'rgba(255,255,255,0.02)',
@@ -88,12 +94,16 @@ export const ActionPair = ({ onCancel, onConfirm, cancelText = "Cancel", confirm
                 whiteSpace: 'nowrap', 
                 fontWeight: 900,
                 color: 'rgba(255,255,255,0.6)',
-                backgroundColor: 'rgba(255,255,255,0.06)', // Matches the soft tonal look
+                backgroundColor: 'rgba(255,255,255,0.06)', 
                 transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:active': { transform: 'scale(0.96)' },
-                '&:hover': { 
-                    backgroundColor: 'rgba(255,255,255,0.12)', 
-                    color: '#FFFFFF' 
+                
+                // THE FIX: Only brighten if using a physical mouse
+                '@media (hover: hover) and (pointer: fine)': {
+                    '&:hover': { 
+                        backgroundColor: 'rgba(255,255,255,0.12)', 
+                        color: '#FFFFFF' 
+                    }
                 }
             }}
         >

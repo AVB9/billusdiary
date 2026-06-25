@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Per-user root document (keep small)
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      // Widgets subcollection: each widget doc belongs to the owning user
+      match /widgets/{widgetId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+
+      // Generic subcollections under user are owner-only
+      match /{subcollection=**}/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // Public leaderboards (per-date). Writes must be by the user matching the document id.
+    match /wordle_leaderboards/{date}/scores/{uid} {
+      allow read: if true;
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['score','status','timestamp'])
+        && (request.resource.data.score is number || request.resource.data.score == null)
+        && (request.resource.data.status in ['won','lost','revealed']);
+    }
+
+    // Public/shared namespace for cross-user data like rooms or templates
+    match /public/{widgetType}/{docId=**} {
+      allow read: if true;
+
+      // Create: must include an ownerUid equal to request.auth.uid
+      allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
+
+      // Update/Delete: only owner can modify
+      allow update, delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // Fallback: deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -2,30 +2,42 @@
 /* =================================================================
    1. CORE VARIABLES (The Absolute Source of Truth)
    ================================================================= */
-   :root {
-    /* Colors */
+:root {
+    /* 🔴 THE 3 USER INPUTS (Your JS will only ever change these 3 lines) */
     --color-bg: #0a0a0a;
-    --color-surface: #1a1a1a;
     --color-text: #ffffff;
-    --color-text-muted: #888888;
     --color-primary: #ff3b3b;
     
-    /* Glass & Alpha Colors */
-    --color-glass-bg: rgba(30, 30, 30, 0.45);
-    --color-glass-tint: rgba(10, 10, 10, 0.45);
-    --color-glass-border: rgba(255, 255, 255, 0.08);
-    --color-glass-white: rgba(255, 255, 255, 0.15);
+    /* 🟢 THE ENGINE: Algorithmic Colors (Do not touch via JS) */
+    /* Surface is just the Background color with 8% white mixed in (Result: #1a1a1a) */
+    --color-surface: color-mix(in srgb, var(--color-bg) 92%, white);
+    
+    /* Muted text is just the Text color at 55% opacity (Result: #888888) */
+    --color-text-muted: color-mix(in srgb, var(--color-text) 55%, transparent);
+
+    /* Glass & Alpha Colors (These now adapt automatically to light/dark themes!) */
+    --color-glass-bg: color-mix(in srgb, var(--color-text) 8%, transparent);
+    --color-glass-tint: color-mix(in srgb, var(--color-bg) 45%, transparent);
+    --color-glass-border: color-mix(in srgb, var(--color-text) 8%, transparent);
+    --color-glass-white: color-mix(in srgb, var(--color-text) 15%, transparent);
+
+    /* Semantic Colors (Base colors are hardcoded, but backgrounds/borders are calculated) */
     --color-danger: #ff5252;
-    --color-danger-bg: rgba(255, 59, 59, 0.15);
-    --color-danger-border: rgba(255, 59, 59, 0.3);
+    --color-danger-bg: color-mix(in srgb, var(--color-danger) 15%, transparent);
+    --color-danger-border: color-mix(in srgb, var(--color-danger) 30%, transparent);
+
     --color-success: #1fcc61;
-    --color-success-bg: rgba(31, 204, 97, 0.15);
-    --color-success-border: rgba(31, 204, 97, 0.3);
+    --color-success-bg: color-mix(in srgb, var(--color-success) 15%, transparent);
+    --color-success-border: color-mix(in srgb, var(--color-success) 30%, transparent);
+
+    /* Wordle Specific Colors (Hardcoded because game rules don't change with themes) */
     --color-wordle-correct: #538d4e;
     --color-wordle-present: #b59f3b;
     --color-wordle-absent: #3a3a3c;
     
-    /* Spacing & Layout (HARDWARE AWARE) */
+    /* =================================================================
+       2. HARDWARE, LAYOUT & SPACING (Untouched)
+       ================================================================= */
     --max-mobile-width: 480px;
     --max-desktop-width: 1200px;
     --safe-bottom: env(safe-area-inset-bottom, 20px);

@@ -12,7 +12,7 @@ export default function HomeTab() {
     const [isWidgetModalOpen, setIsWidgetModalOpen] = useState(false);
     const [backupLayout, setBackupLayout] = useState([]);
     
-    // FIX: Store the ID, not the object. This ensures DevPanel gets live resizing data!
+    // Store the ID, not the object. This ensures DevPanel gets live resizing data!
     const [inspectedWidgetId, setInspectedWidgetId] = useState(null); 
 
     const [userLayout, setUserLayout] = useState(() => {
@@ -20,17 +20,15 @@ export default function HomeTab() {
         return savedLayout ? JSON.parse(savedLayout) : []; 
     });
 
-    // Derive the live widget from the layout array
-    const inspectedWidget = userLayout.find(w => w.id === inspectedWidgetId) || null;
-
+    // THE FIX: Wrap both sides in String() so 1 === "1" perfectly matches.
+    const inspectedWidget = userLayout.find(w => String(w.id) === String(inspectedWidgetId)) || null;
 
     // 1. Broadcast the selected widget anytime it changes
     useEffect(() => {
         window.dispatchEvent(new CustomEvent('DEV_PANEL_SYNC', {
-            // FIX: We pass 'inspectedWidget' instead of the undefined 'selectedWidget'
             detail: { selectedWidget: inspectedWidget, isEditMode } 
         }));
-    }, [inspectedWidget, isEditMode]); // FIX: Updated dependency array
+    }, [inspectedWidget, isEditMode]);
 
     // 2. Listen for the DevPanel telling us to toggle Edit Mode
     useEffect(() => {
@@ -49,8 +47,9 @@ export default function HomeTab() {
         
         window.addEventListener('DEV_PANEL_TOGGLE_EDIT', handleToggle);
         return () => window.removeEventListener('DEV_PANEL_TOGGLE_EDIT', handleToggle);
-    }, [userLayout]); // We need userLayout in the dependency array so the backup is fresh!
+    }, [userLayout]); 
 
+    // 3. Persist layout changes to localStorage
     useEffect(() => {
         if (!isEditMode) {
             localStorage.setItem('bento_layout_v4', JSON.stringify(userLayout));
@@ -92,6 +91,7 @@ export default function HomeTab() {
     const handleCancelEdit = () => {
         setUserLayout(backupLayout); 
         setIsEditMode(false);
+        setInspectedWidgetId(null); // Optional: clear inspection on cancel
     };
 
     return (
@@ -108,22 +108,24 @@ export default function HomeTab() {
                     />
                 )}
 
+                {/* THE FIX: Deterministic Data Attribute Capture */}
                 <div 
                     style={{ display: 'contents' }} 
                     onPointerDownCapture={(e) => {
-                        const targetItem = e.target.closest('.react-grid-item');
-                        const textSignature = targetItem?.innerText || '';
-                        let deducedType = null;
-                        if (/wordle/i.test(textSignature)) deducedType = 'wordle';
-                        else if (/goal|countdown/i.test(textSignature)) deducedType = 'goal-countdown';
-                        else if (/focus|timer|clock/i.test(textSignature)) deducedType = 'focus-clock';
-                        else if (/habit/i.test(textSignature)) deducedType = 'daily-habits';
-                        else if (/stat/i.test(textSignature)) deducedType = 'weekly-stats';
-
-                        if (deducedType) {
-                            const activeMatch = userLayout.find(w => w.type === deducedType);
-                            // Store the ID, not the object snapshot
-                            if (activeMatch) setInspectedWidgetId(activeMatch.id);
+                        // 1. Find the RGL wrapper
+                        const targetWrapper = e.target.closest('.react-grid-item');
+                        if (targetWrapper) {
+                            // 2. Extract the explicitly set dataset ID
+                            const widgetId = targetWrapper.getAttribute('data-widget-id');
+                            
+                            if (widgetId) {
+                                setInspectedWidgetId(widgetId);
+                            } else {
+                                // 3. If it fails, tell us exactly why in the console!
+                                console.warn("DEV PANEL WARNING: Clicked a widget, but the 'data-widget-id' attribute is missing on the Grid item wrapper!");
+                            }
+                        } else {
+                            setInspectedWidgetId(null); // Clicked empty space
                         }
                     }}
                 >
@@ -140,7 +142,19 @@ export default function HomeTab() {
                 
                 {!isEditMode && userLayout.length > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'center', marginTop: '40px' }}>
-                        <button onClick={handleEnterEditMode} style={{ padding: '10px 20px', opacity: 0.4, background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: 'white', borderRadius: '12px', cursor: 'pointer', fontSize: '0.8rem' }}>
+                        <button 
+                            onClick={handleEnterEditMode} 
+                            style={{ 
+                                padding: '10px 20px', 
+                                opacity: 0.4, 
+                                background: 'transparent', 
+                                border: '1px solid rgba(255,255,255,0.3)', 
+                                color: 'white', 
+                                borderRadius: '12px', 
+                                cursor: 'pointer', 
+                                fontSize: '0.8rem' 
+                            }}
+                        >
                             Enter Edit Mode
                         </button>
                     </div>

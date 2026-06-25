@@ -1,3 +1,4 @@
+// src/components/dev/DevPanel.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -15,13 +16,13 @@ export default function DevPanel({ user }) {
     const [isDragging, setIsDragging] = useState(false);
     const dragStart = useRef({ x: 0, y: 0 });
     const [isCollapsed, setIsCollapsed] = useState(false);
-    const [isFocused, setIsFocused] = useState(false); // For input field glow
+    const [isFocused, setIsFocused] = useState(false); 
 
     // Auth State
     const [newName, setNewName] = useState('');
     const [isAuthLoading, setIsAuthLoading] = useState(false);
 
-    // Global Widget State (Caught from invisible window events)
+    // Global Widget State
     const [selectedWidget, setSelectedWidget] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
 
@@ -31,7 +32,7 @@ export default function DevPanel({ user }) {
     const [devNote, setDevNote] = useState('');
 
     // ==========================================
-    // INVISIBLE EVENT LISTENERS (The Magic)
+    // INVISIBLE EVENT LISTENERS
     // ==========================================
     useEffect(() => {
         const handleSync = (e) => {
@@ -89,12 +90,11 @@ export default function DevPanel({ user }) {
         if (!selectedWidget) return;
         setDevNote(localStorage.getItem(`dev_note_${selectedWidget.type}`) || '');
 
-        let targetNode = null;
-        document.querySelectorAll('.react-grid-item').forEach(item => {
-            if (item.innerText.toLowerCase().includes(selectedWidget.type.replace('-', ' '))) targetNode = item;
-        });
+        // THE FIX: Directly select the exact node using the ID passed from HomeTab!
+        const targetNode = document.querySelector(`[data-widget-id="${selectedWidget.id}"]`);
 
         if (!targetNode) return;
+        
         const outerNode = targetNode.querySelector('.widget-outer-area') || targetNode;
         const contentNode = targetNode.querySelector('.widget-content-area') || targetNode;
 
@@ -107,7 +107,9 @@ export default function DevPanel({ user }) {
             });
         });
 
-        observer.observe(outerNode); observer.observe(contentNode); 
+        observer.observe(outerNode); 
+        observer.observe(contentNode); 
+        
         return () => observer.disconnect();
     }, [selectedWidget]);
 
@@ -157,7 +159,6 @@ export default function DevPanel({ user }) {
             {!isCollapsed && (
                 <Box sx={{ 
                     mt: 1, maxHeight: '80vh', overflowY: 'auto', pr: 0.5,
-                    /* Hide scrollbar for a cleaner look */
                     '&::-webkit-scrollbar': { width: '4px' },
                     '&::-webkit-scrollbar-thumb': { background: 'rgba(255,255,255,0.1)', borderRadius: '4px' }
                 }}>
@@ -221,7 +222,7 @@ export default function DevPanel({ user }) {
                         </Box>
                     </Box>
 
-                    {/* SECTION 2: TELEMETRY (Only visible if a widget is clicked in the OS) */}
+                    {/* SECTION 2: TELEMETRY */}
                     {selectedWidget ? (
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                             <Box sx={{ background: 'rgba(0,0,0,0.4)', borderRadius: '8px', p: 1, border: '1px inset rgba(255,255,255,0.05)', textAlign: 'center' }}>

@@ -1,23 +1,39 @@
 /* src/widgets/wordle/style.css */
 
-.wordle-shake-a {
-    animation: wordleShakeA 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+/* Board Shake Animation (Keep your existing one if you have it) */
+@keyframes shakeA {
+    10%, 90% { transform: translateX(-1px); }
+    20%, 80% { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-4px); }
+    40%, 60% { transform: translateX(4px); }
+}
+.wordle-shake-a { animation: shakeA 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+.wordle-shake-b { animation: shakeA 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+
+/* FLIP ANIMATIONS 
+  These use your centralized theme colors automatically!
+*/
+@keyframes flip_correct {
+    0% { transform: rotateX(0deg); background: transparent; border-color: var(--color-text-muted); }
+    49.9% { transform: rotateX(90deg); background: transparent; border-color: var(--color-text-muted); }
+    50% { transform: rotateX(90deg); background: var(--color-wordle-correct); border-color: var(--color-wordle-correct); }
+    100% { transform: rotateX(0deg); background: var(--color-wordle-correct); border-color: var(--color-wordle-correct); }
 }
 
-.wordle-shake-b {
-    animation: wordleShakeB 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+@keyframes flip_present {
+    0% { transform: rotateX(0deg); background: transparent; border-color: var(--color-text-muted); }
+    49.9% { transform: rotateX(90deg); background: transparent; border-color: var(--color-text-muted); }
+    50% { transform: rotateX(90deg); background: var(--color-wordle-present); border-color: var(--color-wordle-present); }
+    100% { transform: rotateX(0deg); background: var(--color-wordle-present); border-color: var(--color-wordle-present); }
 }
 
-@keyframes wordleShakeA {
-    10%, 90% { transform: translate3d(-1px, 0, 0); }
-    20%, 80% { transform: translate3d(2px, 0, 0); }
-    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-    40%, 60% { transform: translate3d(4px, 0, 0); }
+@keyframes flip_absent {
+    0% { transform: rotateX(0deg); background: transparent; border-color: var(--color-text-muted); }
+    49.9% { transform: rotateX(90deg); background: transparent; border-color: var(--color-text-muted); }
+    50% { transform: rotateX(90deg); background: var(--color-wordle-absent); border-color: var(--color-wordle-absent); }
+    100% { transform: rotateX(0deg); background: var(--color-wordle-absent); border-color: var(--color-wordle-absent); }
 }
 
-@keyframes wordleShakeB {
-    10%, 90% { transform: translate3d(-1px, 0, 0); }
-    20%, 80% { transform: translate3d(2px, 0, 0); }
-    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-    40%, 60% { transform: translate3d(4px, 0, 0); }
-}
+.cell-flip-correct { animation: flip_correct 0.5s ease-in-out forwards; }
+.cell-flip-present { animation: flip_present 0.5s ease-in-out forwards; }
+.cell-flip-absent {  animation: flip_absent 0.5s ease-in-out forwards; }

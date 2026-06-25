@@ -1,4 +1,4 @@
-//.src/tabs/home/grid/Grid.jsx
+// src/tabs/home/grid/Grid.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import GridLayout from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
@@ -77,7 +77,6 @@ export default function Grid({ layoutConfig = [], isEditMode, onLayoutChange, on
     
     const containerRef = useRef(null);
     
-    // THE FIX: Refs to track state inside the ResizeObserver closure without causing loops
     const currentWidthRef = useRef(gridWidth);
     const initialLoadDone = useRef(false);
 
@@ -89,7 +88,6 @@ export default function Grid({ layoutConfig = [], isEditMode, onLayoutChange, on
 
         let revealTimer;
         const updateWidth = (newWidth) => {
-            // THE FIX: Ignore tiny width shifts (< 10px) caused by scrollbars appearing/disappearing
             if (initialLoadDone.current && Math.abs(currentWidthRef.current - newWidth) < 10) {
                 return;
             }
@@ -101,7 +99,6 @@ export default function Grid({ layoutConfig = [], isEditMode, onLayoutChange, on
                 
                 if (revealTimer) clearTimeout(revealTimer);
                 revealTimer = setTimeout(() => {
-                    // Only trigger the reveal animation if it hasn't happened yet!
                     if (!initialLoadDone.current) {
                         setIsRevealed(true);
                         initialLoadDone.current = true;
@@ -160,7 +157,6 @@ export default function Grid({ layoutConfig = [], isEditMode, onLayoutChange, on
 
             {validItems.length > 0 && gridWidth > 0 && (
                 <GridLayout
-                    // THE FIX: Pass `edit-mode-on` as a CSS class so we can kill animations inside Edit Mode
                     className={`layout ${transitionsOn ? 'animations-on' : 'animations-off'} ${isResizingGlobal ? 'is-resizing' : ''} ${isEditMode ? 'edit-mode-on' : ''}`}
                     layout={generateRGLLayout()}
                     width={gridWidth}
@@ -177,6 +173,7 @@ export default function Grid({ layoutConfig = [], isEditMode, onLayoutChange, on
                         return (
                             <div 
                                 key={String(item.id)} 
+                                data-widget-id={String(item.id)} 
                                 onPointerDown={() => isEditMode && setActiveWidgetId(item.id)} 
                                 style={{ outline: 'none' }}
                             >

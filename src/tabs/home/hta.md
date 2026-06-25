@@ -37,7 +37,7 @@ A lightweight header component that greets the user.
 
 * **Time-Aware**: Checks `new Date().getHours()` to determine the time block (e.g., morning, afternoon, night).
 * **Dynamic Assets**: Updates the icon (Sun/Moon) and the sub-greeting text (e.g., "gumiimornin", "sleepii time") based on the current hour.
-* **CSS Fade Sequence**: Uses a combination of `setTimeout` and local state (`isFading`) to smoothly fade the sub-greeting text out and swap it with a motivational message after 3.5 seconds.
+* **CSS Fade Sequence**: Uses a combination of `setTimeout` and local state (`isFading`) to smoothly fade the sub-greeting text out and swap it with a message after 3.5 seconds.
 
 ---
 

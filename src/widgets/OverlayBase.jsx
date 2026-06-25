@@ -15,28 +15,27 @@ export default function OverlayBase({ isOpen, title, onClose, children, footerAc
                 p: 1, animation: 'fadeIn 0.2s ease'
             }}
         >
-            {/* 1. SIBLING BACKDROP LAYER: Safely handles the dimming and blur */}
+            {/* 1. SIBLING BACKDROP LAYER: The Fix */}
+            {/* Removed the blur. Strictly use darkening to kill the nested scatter bug. */}
             <Box 
                 onClick={onClose} 
                 sx={{
                     position: 'absolute', inset: 0, zIndex: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-                    backdropFilter: 'blur(4px)',
-                    WebkitBackdropFilter: 'blur(4px)'
+                    backgroundColor: 'rgba(0, 0, 0, 0.75)', 
                 }}
             />
 
-            {/* 2. FOREGROUND CONTENT LAYER: Hardware accelerated & crisp! */}
+            {/* 2. FOREGROUND CONTENT LAYER */}
             <GlassPanel 
                 onClick={(e) => e.stopPropagation()} 
                 sx={{
-                    position: 'relative', zIndex: 1, // Sits safely above the backdrop sibling
+                    position: 'relative', zIndex: 1, 
                     maxWidth: '80%', maxHeight: '80%', 
                     display: 'flex', flexDirection: 'column',
                     p: 1.5, borderRadius: 'var(--rad-lg)',
                     border: '1px solid var(--color-glass-border)',
                     boxShadow: 'var(--shadow-lg)',
-                    // Force the GPU to render this layer perfectly sharp
+                    // Force GPU layer to prevent edge-bleeding
                     transform: 'translateZ(0)',
                     WebkitFontSmoothing: 'antialiased' 
                 }}
@@ -55,7 +54,7 @@ export default function OverlayBase({ isOpen, title, onClose, children, footerAc
                     </Box>
                 </Box>
 
-                {/* OVERLAY CONTENT (Scrollable with Opacity Mask) */}
+                {/* OVERLAY CONTENT */}
                 <Box sx={{ 
                     display: 'flex', flexDirection: 'column', gap: 1, 
                     overflowY: 'auto', overflowX: 'hidden', flexGrow: 1, pr: 0.5,
@@ -71,7 +70,6 @@ export default function OverlayBase({ isOpen, title, onClose, children, footerAc
                         {footerActions}
                     </Box>
                 )}
-
             </GlassPanel>
         </Box>
     );

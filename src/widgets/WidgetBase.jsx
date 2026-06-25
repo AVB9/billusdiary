@@ -2,7 +2,7 @@
 import React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import GlassPanel from '@ui/GlassPanel'; 
+import GlassPanel from '@components/ui/GlassPanel'; 
 
 export default function WidgetBase({ 
     title, 
@@ -30,7 +30,20 @@ export default function WidgetBase({
                     <Typography 
                         variant="subtitle2" 
                         onClick={onTitleClick}
-                        sx={{ fontWeight: 800, letterSpacing: '2px', color: 'var(--color-text-muted)', textTransform: 'uppercase', cursor: onTitleClick ? 'pointer' : 'default', transition: 'color 0.2s ease', lineHeight: 1, '&:hover': onTitleClick ? { color: 'var(--color-text)' } : {} }}
+                        sx={{ 
+                            fontWeight: 800, 
+                            letterSpacing: '2px', 
+                            color: 'var(--color-text-muted)', 
+                            textTransform: 'uppercase', 
+                            cursor: onTitleClick ? 'pointer' : 'default', 
+                            transition: 'color 0.2s ease', 
+                            lineHeight: 1, 
+                            
+                            // THE FIX: Wrap the title's hover state in the media query!
+                            '@media (hover: hover) and (pointer: fine)': {
+                                '&:hover': onTitleClick ? { color: 'var(--color-text)' } : {}
+                            }
+                        }}
                     >
                         {title}
                     </Typography>
@@ -41,49 +54,36 @@ export default function WidgetBase({
             )}
 
             {/* RESPONSIVE CONTENT SPACE */}
-            <Box className="widget-content-area" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', position: 'relative', height: '100%', overflow: 'hidden' }}>
+            <Box className="widget-content-area" sx={{ 
+                flexGrow: 1, display: 'flex', flexDirection: 'column', 
+                position: 'relative', height: '100%', overflow: 'hidden',
+                containerType: 'inline-size' 
+            }}>
                 {children}
             </Box>
 
             {/* OVERLAY LAYER */}
             {overlays}
 
-            {/* THE UNIVERSAL WIDGET TOAST (Shift-Free & Centered) */}
+            {/* THE UNIVERSAL WIDGET TOAST */}
             {toastMessage && (
                 <Box sx={{
-                    position: 'absolute',
-                    top: 0, left: 0, right: 0, bottom: 0, // 1. Span the entire widget
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',           // 2. Center mathematically using Flexbox
-                    pointerEvents: 'none',              // 3. Let clicks pass through the invisible wrapper
-                    zIndex: 9999
+                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    pointerEvents: 'none', zIndex: 9999
                 }}>
                     <Box sx={{
-                        // 4. Our Glassmorphism DNA
-                        background: 'white',
-                        backdropFilter: 'var(--blur-heavy)',
-                        border: '1px solid var(--color-glass-border)',
-                        boxShadow: 'var(--shadow-lg)',
-                        
-                        // 5. Typography & Accent Color
-                        color: 'var(--color-text-muted)', 
-                        fontWeight: 900,
-                        fontSize: '0.8rem',
-                        letterSpacing: '1px',
-                        textTransform: 'uppercase',
-                        
-                        // 6. Pill Styling
-                        px: 2.5, py: 1.25,
-                        borderRadius: 'var(--rad-pill)', 
-                        whiteSpace: 'nowrap',
-                        animation: 'fadeIn 0.1s ease' // Safe to use now because there's no transform conflict!
+                        background: 'white', backdropFilter: 'var(--blur-heavy)',
+                        border: '1px solid var(--color-glass-border)', boxShadow: 'var(--shadow-lg)',
+                        color: 'var(--color-text-muted)', fontWeight: 900, fontSize: '0.8rem',
+                        letterSpacing: '1px', textTransform: 'uppercase',
+                        px: 2.5, py: 1.25, borderRadius: 'var(--rad-pill)', whiteSpace: 'nowrap',
+                        animation: 'fadeIn 0.1s ease'
                     }}>
                         {toastMessage}
                     </Box>
                 </Box>
             )}
-            
         </GlassPanel>
     );
 }

@@ -39,36 +39,25 @@ export default function WordleBoard({ guesses = [], currentGuess = '', targetWor
     const handleBoxKeyDown = (e) => {
         if (document.activeElement === hiddenInputRef.current) return; 
         if (!isBoardActive) return;
-        
         const activeTag = document.activeElement?.tagName?.toLowerCase();
         if (activeTag === 'input' || activeTag === 'textarea') return;
         if (e.ctrlKey || e.metaKey || e.altKey) return;
-
-        if (e.key === 'Backspace' || e.key === ' ') {
-            e.preventDefault(); 
-            e.stopPropagation(); // FIX 1: Prevent parent dashboard from navigating back
-        }
-
+        if (e.key === 'Backspace' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); }
         if (/^[a-zA-Z]$/.test(e.key) || e.key === 'Enter' || e.key === 'Backspace') {
-            e.stopPropagation(); 
-            onKeyPress?.(e.key);
+            e.stopPropagation(); onKeyPress?.(e.key);
         }
     };
 
     const handleInput = (e) => {
         const val = e.target.value.toUpperCase();
         const lastChar = val.charAt(val.length - 1);
-        if (/^[A-Z]$/.test(lastChar)) {
-            onKeyPress?.(lastChar);
-        }
+        if (/^[A-Z]$/.test(lastChar)) onKeyPress?.(lastChar);
         e.target.value = ' ';
     };
 
     const handleInputKeyDown = (e) => {
         if (e.key === 'Backspace' || e.key === 'Enter') {
-            e.preventDefault();
-            e.stopPropagation(); 
-            onKeyPress?.(e.key);
+            e.preventDefault(); e.stopPropagation(); onKeyPress?.(e.key);
         }
     };
 
@@ -90,174 +79,124 @@ export default function WordleBoard({ guesses = [], currentGuess = '', targetWor
     const rows = Array.from({ length: GAME_CONFIG.MAX_GUESSES }).map((_, i) => {
         let rowStr = '';
         let isEvaluatedRow = false;
-        if (i < guesses.length) {
-            rowStr = guesses[i];
-            isEvaluatedRow = true;
-        } else if (i === guesses.length) {
-            rowStr = currentGuess;
-        }
-        const letters = rowStr.padEnd(GAME_CONFIG.WORD_LENGTH, ' ').split('');
-        return { letters, isEvaluatedRow };
+        if (i < guesses.length) { rowStr = guesses[i]; isEvaluatedRow = true; } 
+        else if (i === guesses.length) { rowStr = currentGuess; }
+        return { letters: rowStr.padEnd(GAME_CONFIG.WORD_LENGTH, ' ').split(''), isEvaluatedRow };
     });
 
     return (
         <Box 
-            ref={boardRef}
-            tabIndex={0}
-            onClick={handleBoardClick}
-            onKeyDown={handleBoxKeyDown}
-            onFocus={() => setIsBoardActive(true)}
-            onBlur={() => setIsBoardActive(false)}
+            ref={boardRef} tabIndex={0}
+            onClick={handleBoardClick} onKeyDown={handleBoxKeyDown}
+            onFocus={() => setIsBoardActive(true)} onBlur={() => setIsBoardActive(false)}
             sx={{ 
                 display: 'flex', flexDirection: 'column', height: '100%', width: '100%', 
-                justifyContent: 'space-between', pb: 0.5, outline: 'none',
-                position: 'relative', cursor: 'text'
+                justifyContent: 'space-between', pb: 0.5, outline: 'none', position: 'relative', 
+                cursor: 'text', containerType: 'inline-size'
             }}
         >
             <input 
-                ref={hiddenInputRef}
-                type="text"
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="characters"
-                spellCheck="false"
-                defaultValue=" " 
-                onInput={handleInput}
-                onKeyDown={handleInputKeyDown}
-                onBlur={() => setIsBoardActive(false)}
-                onFocus={() => setIsBoardActive(true)}
-                style={{ 
-                    position: 'absolute', opacity: 0, 
-                    pointerEvents: 'none', width: '1px', height: '1px', 
-                    top: 0, left: 0 
-                }}
+                ref={hiddenInputRef} type="text" autoComplete="off" autoCorrect="off" 
+                autoCapitalize="characters" spellCheck="false" defaultValue=" " 
+                onInput={handleInput} onKeyDown={handleInputKeyDown}
+                onBlur={() => setIsBoardActive(false)} onFocus={() => setIsBoardActive(true)}
+                style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: '1px', height: '1px', top: 0, left: 0 }}
             />
 
+            {/* 4x4 SCALING GRID */}
             <Box sx={{ 
-                flexGrow: 1, display: 'flex', flexDirection: 'column', 
-                alignItems: 'center', justifyContent: 'center', 
-                gap: isKeyboardVisible ? '4px' : '8px', 
-                transition: 'gap 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                minHeight: 0 
+                flexGrow: 1, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                minHeight: 0,
+                width: '100%'
             }}>
-                {rows.map((row, rowIndex) => {
-                    const isActiveRow = rowIndex === guesses.length;
-                    const applyShake = isActiveRow && isShaking;
-                    
-                    let rowClass = '';
-                    if (applyShake) {
-                        rowClass = shakeTrigger % 2 === 0 ? 'wordle-shake-a' : 'wordle-shake-b';
-                    }
+                <Box sx={{
+                    display: 'grid',
+                    gridTemplateRows: 'repeat(4, 1fr)',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gap: '5px',
+                    height: '100%',
+                    maxHeight: '100%',
+                    aspectRatio: '1/1'
+                }}>
+                    {rows.map((row, rowIndex) => {
+                        const isActiveRow = rowIndex === guesses.length;
+                        const applyShake = isActiveRow && isShaking;
+                        const rowClass = applyShake ? (shakeTrigger % 2 === 0 ? 'wordle-shake-a' : 'wordle-shake-b') : '';
 
-                    return (
-                        <Box 
-                            key={rowIndex} 
-                            className={rowClass}
-                            sx={{ 
-                                display: 'flex', 
-                                gap: isKeyboardVisible ? '4px' : '8px', 
-                                transition: 'gap 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                width: '100%', 
-                                justifyContent: 'center'
-                            }}
-                        >
-                            {row.letters.map((char, colIndex) => {
-                                const status = getLetterStatus(char !== ' ' ? char : '', colIndex, targetWord, row.isEvaluatedRow);
-                               
-                                let cellSx = {
-                                    width: '100%',
-                                    maxWidth: isKeyboardVisible ? '36px' : '52px', 
-                                    aspectRatio: '1/1',
+                        return row.letters.map((char, colIndex) => {
+                            const status = getLetterStatus(char !== ' ' ? char : '', colIndex, targetWord, row.isEvaluatedRow);
+                            const animationClass = row.isEvaluatedRow ? `cell-flip-${status}` : '';
+                            
+                            return (
+                                <Box key={`${rowIndex}-${colIndex}`} className={`${rowClass} ${animationClass}`} sx={{ 
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    borderRadius: 'var(--rad-sm)', color: 'var(--color-text)',
-                                    background: 'transparent', 
+                                    borderRadius: '6px', color: 'var(--color-text)',
                                     border: '1px solid var(--color-glass-border)',
-                                    opacity: 1,
-                                    transition: 'max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease'
-                                };
-
-                                if (row.isEvaluatedRow) {
-                                    const colors = {
-                                        correct: 'var(--color-wordle-correct, #538d4e)',
-                                        present: 'var(--color-wordle-present, #b59f3b)',
-                                        absent: 'var(--color-wordle-absent, #3a3a3c)'
-                                    };
-                                    const color = colors[status];
-                                   
-                                    cellSx = {
-                                        ...cellSx,
-                                        border: '1px solid var(--color-text-muted)',
-                                        animation: `flip_${status} 0.5s ease-in-out forwards`,
-                                        animationDelay: `${colIndex * 150}ms`,
-                                        [`@keyframes flip_${status}`]: {
-                                            '0%': { transform: 'rotateX(0deg)', background: 'transparent', borderColor: 'var(--color-text-muted)' },
-                                            '49.9%': { transform: 'rotateX(90deg)', background: 'transparent', borderColor: 'var(--color-text-muted)' },
-                                            '50%': { transform: 'rotateX(90deg)', background: color, borderColor: color },
-                                            '100%': { transform: 'rotateX(0deg)', background: color, borderColor: color }
-                                        }
-                                    };
-                                } else if (char !== ' ') {
-                                    cellSx.border = '1px solid var(--color-text-muted)';
-                                } else if (gameStatus === 'playing' && isBoardActive && isActiveRow && colIndex === currentGuess.length) {
-                                    cellSx.border = '1px solid var(--color-text-muted)';
-                                    cellSx.opacity = 0.5;
-                                }
-
-                                return (
-                                    <Box key={colIndex} sx={cellSx}>
-                                        <Typography sx={{ 
-                                            fontWeight: 900, 
-                                            fontSize: isKeyboardVisible ? '1.25rem' : '1.75rem', 
-                                            transition: 'font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
-                                            lineHeight: 1,
-                                            whiteSpace: 'nowrap'
-                                        }}>
-                                            {char !== ' ' ? char : ''}
-                                        </Typography>
-                                    </Box>
-                                );
-                            })}
-                        </Box>
-                    );
-                })}
+                                    opacity: (isActiveRow && colIndex === currentGuess.length) ? 0.5 : 1,
+                                    animationDelay: `${colIndex * 150}ms`,
+                                    transition: 'all 0.2s ease',
+                                    ...(char !== ' ' && !row.isEvaluatedRow && { border: '1px solid var(--color-text-muted)' })
+                                }}>
+                                    <Typography sx={{ 
+                                        fontWeight: 900, lineHeight: 1, 
+                                        fontSize: 'clamp(1rem, 6cqmin, 2rem)' 
+                                    }}>
+                                        {char !== ' ' ? char : ''}
+                                    </Typography>
+                                </Box>
+                            );
+                        });
+                    })}
+                </Box>
             </Box>
 
+            {/* RESTORED KEYBOARD */}
             <Box sx={{ 
-                display: 'flex', flexDirection: 'column', gap: 0.5, flexShrink: 0, width: '100%', px: 0.5,
-                maxHeight: isKeyboardVisible ? '100px' : '0px',
-                opacity: isKeyboardVisible ? 1 : 0,
-                overflow: 'hidden',
-                transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease',
+                display: 'flex', flexDirection: 'column', gap: '3px', width: '100%', px: 0.5,
+                mt: isKeyboardVisible ? 1 : 0, flexShrink: 0, 
+                maxHeight: isKeyboardVisible ? '120px' : '0px',
+                opacity: isKeyboardVisible ? 1 : 0, overflow: 'hidden',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 pointerEvents: isKeyboardVisible ? 'auto' : 'none' 
             }}>
                 {KEYBOARD_ROWS.map((row, rowIndex) => (
-                    <Box key={rowIndex} sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
+                    <Box key={rowIndex} sx={{ display: 'flex', justifyContent: 'center', gap: '3px' }}>
                         {row.map(key => {
                             const status = getKeyboardKeyStatus(key);
-                            let keyBg = 'var(--color-glass-white)';
-                            if (status === 'correct') keyBg = 'var(--color-wordle-correct, #538d4e)';
-                            else if (status === 'present') keyBg = 'var(--color-wordle-present, #b59f3b)';
-                            else if (status === 'absent') keyBg = 'var(--color-wordle-absent, #3a3a3c)';
-
-                            // FIX 3: Display network loading status specifically on the ENTER key
                             const isEnterKey = key === 'ENTER';
                             const showLoader = isEnterKey && isValidating;
 
+                            let keyBg = 'var(--color-glass-white)';
+                            if (status === 'correct') keyBg = 'var(--color-wordle-correct)';
+                            else if (status === 'present') keyBg = 'var(--color-wordle-present)';
+                            else if (status === 'absent') keyBg = 'var(--color-wordle-absent)';
+
                             return (
-                                <Box key={key} onClick={(e) => { e.stopPropagation(); onKeyPress?.(key); }}
-                                    role="button"
-                                    aria-label={key === 'BACK' ? 'Backspace' : key}
+                                <Box key={key} role="button" aria-label={key === 'BACK' ? 'Backspace' : key}
+                                    onClick={(e) => { e.stopPropagation(); onKeyPress?.(key); }}
                                     sx={{
                                         flex: key === 'ENTER' || key === 'BACK' ? 1.5 : 1,
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        height: '24px', borderRadius: 'var(--rad-sm)',
-                                        background: keyBg, border: '1px solid var(--color-glass-border)',
+                                        height: 'clamp(20px, 8cqmin, 28px)', 
+                                        borderRadius: '4px', background: keyBg, 
+                                        border: '1px solid var(--color-glass-border)',
                                         cursor: showLoader ? 'wait' : 'pointer', userSelect: 'none',
-                                        opacity: showLoader ? 0.6 : 1,
-                                        '&:active': { transform: showLoader ? 'none' : 'scale(0.95)' }
+                                        opacity: showLoader ? 0.6 : 1, transition: 'all 0.1s',
+                                        
+                                        '&:active': { transform: showLoader ? 'none' : 'scale(0.92)' },
+                                        '@media (hover: hover) and (pointer: fine)': {
+                                            '&:hover': { filter: 'brightness(1.2)' }
+                                        }
                                     }}
                                 >
-                                    <Typography sx={{ fontSize: key === 'ENTER' || key === 'BACK' ? '0.55rem' : '0.75rem', fontWeight: 900, color: status === 'absent' ? 'var(--color-text-muted)' : 'var(--color-text)' }}>
+                                    <Typography sx={{ 
+                                        fontWeight: 900, 
+                                        fontSize: key === 'ENTER' || key === 'BACK' ? 'clamp(0.5rem, 2cqmin, 0.65rem)' : 'clamp(0.7rem, 3cqmin, 0.9rem)',
+                                        color: status === 'absent' ? 'var(--color-text-muted)' : 'var(--color-text)' 
+                                    }}>
                                         {key === 'BACK' ? '⌫' : (showLoader ? '...' : key)}
                                     </Typography>
                                 </Box>
