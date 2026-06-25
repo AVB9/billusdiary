@@ -15,7 +15,8 @@ export default defineConfig({
       '@modals': path.resolve(__dirname, './src/components/modals'),
       '@layout': path.resolve(__dirname, './src/components/layout'),
       '@widgets': path.resolve(__dirname, './src/widgets'),
-      '@tabs': path.resolve(__dirname, './src/tabs'),      
+      '@tabs': path.resolve(__dirname, './src/tabs'),
+      '@services': path.resolve(__dirname, './src/services'),      
     },
   },
 })

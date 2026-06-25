@@ -9,7 +9,7 @@ export const saveWordleGameState = async (dateStr, guesses, gameStatus, isReveal
         const batch = writeBatch(db);
 
         // 1. Write to Private History Subcollection
-        const historyRef = doc(db, `users/${user.uid}/wordle_history`, dateStr);
+        const historyRef = doc(db, `users/${user.uid}/wordle`, dateStr);
         batch.set(historyRef, {
             guesses,
             gameStatus,

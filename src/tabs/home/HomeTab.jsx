@@ -5,65 +5,87 @@ import Grid from '@tabs/home/grid/Grid';
 import EditWidgetsModal from '@tabs/home/grid/EditWidgetsModal';
 import EditBar from '@tabs/home/grid/EditBar';
 import { WIDGET_DICTIONARY } from '@widgets/WidgetRegistry';
+import { getHomeLayout, saveHomeLayout } from '@services/db'; // <--- NEW DB IMPORTS
 import '@tabs/home/hometab.css';
 
-export default function HomeTab() {
+export default function HomeTab({ uid }) { // <--- RECEIVE UID FROM APP.JSX
     const [isEditMode, setIsEditMode] = useState(false);
     const [isWidgetModalOpen, setIsWidgetModalOpen] = useState(false);
+    
+    const [isLoadingLayout, setIsLoadingLayout] = useState(true); // <--- NEW LOADING STATE
+    const [userLayout, setUserLayout] = useState([]);
     const [backupLayout, setBackupLayout] = useState([]);
     
-    // Store the ID, not the object. This ensures DevPanel gets live resizing data!
     const [inspectedWidgetId, setInspectedWidgetId] = useState(null); 
-
-    const [userLayout, setUserLayout] = useState(() => {
-        const savedLayout = localStorage.getItem('bento_layout_v4');
-        return savedLayout ? JSON.parse(savedLayout) : []; 
-    });
-
-    // THE FIX: Wrap both sides in String() so 1 === "1" perfectly matches.
     const inspectedWidget = userLayout.find(w => String(w.id) === String(inspectedWidgetId)) || null;
 
-    // 1. Broadcast the selected widget anytime it changes
+    // ========================================================================
+    // 1. FIREBASE INITIAL FETCH
+    // ========================================================================
+    useEffect(() => {
+        if (!uid) return;
+        
+        const loadLayoutFromFirebase = async () => {
+            const savedLayout = await getHomeLayout(uid);
+            setUserLayout(savedLayout);
+            setIsLoadingLayout(false);
+        };
+        
+        loadLayoutFromFirebase();
+    }, [uid]);
+
+    // ========================================================================
+    // 2. DEV PANEL SYNC & LISTENERS
+    // ========================================================================
     useEffect(() => {
         window.dispatchEvent(new CustomEvent('DEV_PANEL_SYNC', {
             detail: { selectedWidget: inspectedWidget, isEditMode } 
         }));
     }, [inspectedWidget, isEditMode]);
 
-    // 2. Listen for the DevPanel telling us to toggle Edit Mode
     useEffect(() => {
         const handleToggle = () => {
             setIsEditMode(prev => {
                 if (!prev) {
-                    // If we are turning edit mode ON, take a backup of the layout first
                     setBackupLayout(userLayout);
                     return true;
-                } else {
-                    // If we are turning it OFF, just close it
-                    return false;
                 }
+                return false;
             });
         };
-        
         window.addEventListener('DEV_PANEL_TOGGLE_EDIT', handleToggle);
         return () => window.removeEventListener('DEV_PANEL_TOGGLE_EDIT', handleToggle);
     }, [userLayout]); 
 
-    // 3. Persist layout changes to localStorage
-    useEffect(() => {
-        if (!isEditMode) {
-            localStorage.setItem('bento_layout_v4', JSON.stringify(userLayout));
-        }
-    }, [userLayout, isEditMode]);
-
+    // ========================================================================
+    // 3. LAYOUT HANDLERS & FIREBASE SAVING
+    // ========================================================================
     const handleLayoutSync = (newRglLayout) => {
         setUserLayout(prevLayout => 
             prevLayout.map(widget => {
-                const rglData = newRglLayout.find(l => l.i === widget.id);
+                const rglData = newRglLayout.find(l => String(l.i) === String(widget.id));
                 if (rglData) return { ...widget, x: rglData.x, y: rglData.y, w: rglData.w, h: rglData.h };
                 return widget;
             })
         );
+    };
+
+    const handleSaveEditMode = async () => {
+        setIsEditMode(false);
+        // Save to Firebase immediately when the user confirms their grid layout!
+        await saveHomeLayout(uid, userLayout);
+    };
+
+    const handleCancelEditMode = () => {
+        setUserLayout(backupLayout); 
+        setIsEditMode(false);
+        setInspectedWidgetId(null);
+    };
+
+    const handleModalSave = async (newLayout) => {
+        setUserLayout(newLayout);
+        // Save to Firebase immediately when the user adds/removes widgets!
+        await saveHomeLayout(uid, newLayout);
     };
 
     const getOptimumSize = (widgetType) => {
@@ -88,11 +110,14 @@ export default function HomeTab() {
         setIsEditMode(true);
     };
 
-    const handleCancelEdit = () => {
-        setUserLayout(backupLayout); 
-        setIsEditMode(false);
-        setInspectedWidgetId(null); // Optional: clear inspection on cancel
-    };
+    // Prevent rendering the grid while Firebase is fetching
+    if (isLoadingLayout) {
+        return (
+            <div className="app-tab" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'rgba(255,255,255,0.5)' }}>
+                Loading Workspace...
+            </div>
+        );
+    }
 
     return (
         <div className="app-tab">
@@ -103,29 +128,24 @@ export default function HomeTab() {
                     <EditBar 
                         onOpenModal={() => setIsWidgetModalOpen(true)}
                         onReset={handleResetLayout}
-                        onCancel={handleCancelEdit}
-                        onSave={() => setIsEditMode(false)}
+                        onCancel={handleCancelEditMode}
+                        onSave={handleSaveEditMode} /* <--- FIREBASE SYNC TRIGGERS HERE */
                     />
                 )}
 
-                {/* THE FIX: Deterministic Data Attribute Capture */}
                 <div 
                     style={{ display: 'contents' }} 
                     onPointerDownCapture={(e) => {
-                        // 1. Find the RGL wrapper
                         const targetWrapper = e.target.closest('.react-grid-item');
                         if (targetWrapper) {
-                            // 2. Extract the explicitly set dataset ID
                             const widgetId = targetWrapper.getAttribute('data-widget-id');
-                            
                             if (widgetId) {
                                 setInspectedWidgetId(widgetId);
                             } else {
-                                // 3. If it fails, tell us exactly why in the console!
                                 console.warn("DEV PANEL WARNING: Clicked a widget, but the 'data-widget-id' attribute is missing on the Grid item wrapper!");
                             }
                         } else {
-                            setInspectedWidgetId(null); // Clicked empty space
+                            setInspectedWidgetId(null);
                         }
                     }}
                 >
@@ -144,16 +164,7 @@ export default function HomeTab() {
                     <div style={{ display: 'flex', justifyContent: 'center', marginTop: '40px' }}>
                         <button 
                             onClick={handleEnterEditMode} 
-                            style={{ 
-                                padding: '10px 20px', 
-                                opacity: 0.4, 
-                                background: 'transparent', 
-                                border: '1px solid rgba(255,255,255,0.3)', 
-                                color: 'white', 
-                                borderRadius: '12px', 
-                                cursor: 'pointer', 
-                                fontSize: '0.8rem' 
-                            }}
+                            style={{ padding: '10px 20px', opacity: 0.4, background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: 'white', borderRadius: '12px', cursor: 'pointer', fontSize: '0.8rem' }}
                         >
                             Enter Edit Mode
                         </button>
@@ -165,7 +176,7 @@ export default function HomeTab() {
                 isOpen={isWidgetModalOpen}
                 onClose={() => setIsWidgetModalOpen(false)}
                 userLayout={userLayout}
-                onSave={setUserLayout}
+                onSave={handleModalSave} /* <--- FIREBASE SYNC TRIGGERS HERE */
             />
         </div>
     );
