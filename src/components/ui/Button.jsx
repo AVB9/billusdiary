@@ -84,7 +84,7 @@ export const SecondaryButton = ({ children, sx, fullWidth, onClick, disabled, ..
 
 // The 30/70 Layout specifically for forms and dialogs
 export const ActionPair = ({ onCancel, onConfirm, cancelText = "Cancel", confirmText = "Done" }) => (
-    <Stack direction="row" spacing={1.5} width="100%">
+    <Stack direction="row" spacing={1.5} width="100%" height="100%" alignItems="center">
         <MuiButton 
             variant="text" 
             onClick={onCancel}
