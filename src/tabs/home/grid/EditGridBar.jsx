@@ -6,20 +6,14 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import { ActionPair } from '@ui/Button'; 
-
-const ResetIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-        <path d="M3 3v5h5"/>
-    </svg>
-);
+import { Reset } from '@ui/Icons'; 
 
 export default function EditGridBar({ onOpenModal, onReset, onCancel, onSave }) {
     return (
         <Box className="glass-panel" sx={{ p: 2, mb: 2, width: '100%' }}>
             <Stack 
                 direction={{ xs: 'column', sm: 'row' }} 
-                alignItems="stretch" // 2. THE FIX: Allow children to stretch to the max height dynamically
+                alignItems="stretch" 
                 spacing={2}
                 sx={{ width: '100%' }}
             >
@@ -28,7 +22,7 @@ export default function EditGridBar({ onOpenModal, onReset, onCancel, onSave }) 
                 <Stack 
                     direction="row" 
                     spacing={2} 
-                    alignItems="center" // Keep the left items centered vertically
+                    alignItems="center" 
                     sx={{ width: { xs: '100%', sm: 'auto' } }}
                 >
                     <Button 
@@ -40,7 +34,7 @@ export default function EditGridBar({ onOpenModal, onReset, onCancel, onSave }) 
                             borderRadius: '12px',
                             borderColor: 'rgba(255,255,255,0.3)',
                             whiteSpace: 'nowrap',
-                            height: '100%' // Adapts dynamically
+                            height: '100%' 
                         }}
                     >
                         Edit Widgets
@@ -50,7 +44,7 @@ export default function EditGridBar({ onOpenModal, onReset, onCancel, onSave }) 
                         <IconButton 
                             onClick={onReset}
                             sx={{ 
-                                aspectRatio: '1/1', // Forces a perfect square without magic numbers
+                                aspectRatio: '1/1', 
                                 borderRadius: '12px',
                                 border: '1px solid rgba(255,255,255,0.2)', 
                                 background: 'rgba(255,255,255,0.05)',
@@ -62,7 +56,7 @@ export default function EditGridBar({ onOpenModal, onReset, onCancel, onSave }) 
                                 }
                             }}
                         >
-                            <ResetIcon />
+                            <Reset /> 
                         </IconButton>
                     </Tooltip>
                 </Stack>
@@ -74,7 +68,7 @@ export default function EditGridBar({ onOpenModal, onReset, onCancel, onSave }) 
                 <Box sx={{ 
                     width: { xs: '100%', sm: 'auto' },
                     display: 'flex',
-                    alignItems: 'center' // Naturally centers the ActionPair within the stretched height
+                    alignItems: 'center' 
                 }}>
                     <ActionPair 
                         onCancel={onCancel} 

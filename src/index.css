@@ -81,7 +81,6 @@ input, textarea {
 html, body {
     margin: 0;
     padding: 0;
-    width: 100%;
     min-height: 100%;
     overscroll-behavior: none; /* Keeps native bounce away */
 }

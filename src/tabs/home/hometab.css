@@ -3,36 +3,54 @@
    ================================================================= */
 .react-grid-layout { width: 100%; }
 
-/* 1. The Dropzone Placeholder */
+/* 1. Base Placeholder (Invisible by default) */
 .react-grid-layout .react-grid-placeholder {
     background: rgba(96, 165, 250, 0.15) !important; 
     border: 2px dashed #60A5FA !important;
     border-radius: var(--rad-lg, 24px) !important;
-    opacity: 1 !important;
+    opacity: 0 !important; /* FIXED: Hidden until interaction begins */
     transition-duration: 150ms !important;
-    z-index: 1;
+    z-index: 1 !important;
 }
 
-/* 2. KILL THE PLACEHOLDER DURING RESIZE 
-   THE JS FIX: Now relying on the class injected by our React state
-*/
+/* 2. Reveal Placeholder ONLY during a drag */
+.layout.is-dragging .react-grid-placeholder {
+    opacity: 1 !important;
+}
+
+/* 3. Keep Placeholder hidden during resize */
 .layout.is-resizing .react-grid-placeholder {
     display: none !important;
     opacity: 0 !important;
 }
 
-/* 3. THE GLOW RING (Only on Drag, NEVER on Resize) */
-.react-draggable-dragging:not(.react-resizable-resizing) {
+/* =================================================================
+   Z-INDEX HIERARCHY & INTERACTION STYLES
+   ================================================================= */
+/* 1. Selected Widget (Floats above standard widgets and placeholder) */
+.react-grid-item.is-selected {
+    z-index: 50 !important;
+}
+
+/* 2. Actively Dragged Widget (Absolute top layer + Glow Ring) */
+.react-grid-item.react-draggable-dragging {
+    z-index: 100 !important;
+}
+.react-grid-item.react-draggable-dragging:not(.react-resizable-resizing) {
     box-shadow: 0 0 0 2px var(--color-primary, #60A5FA), 0 20px 40px rgba(0,0,0,0.6) !important;
     border-radius: var(--rad-lg, 24px) !important;
-    z-index: 100 !important; 
+}
+
+/* 3. Hide the default resize handle unless the widget is selected */
+.react-grid-item:not(.is-selected) .react-resizable-handle {
+    display: none !important;
 }
 
 /* =================================================================
-   RED RING FIX & SMART FOCUS RING
+   BROWSER OVERRIDES & HITBOXES
    ================================================================= */
-* {
-    /* Prevents the blue/red tap box on mobile and some desktop clicks */
+/* Prevent the blue/red tap box, scoped only to the grid to save performance */
+.react-grid-layout * {
     -webkit-tap-highlight-color: transparent; 
 }
 
@@ -45,10 +63,10 @@
 .react-draggable-dragging { 
     outline: none !important; 
     border: none !important; 
-    box-shadow: none !important; /* Kills Firefox drag shadow */
+    box-shadow: none !important;
 }
 
-/* 1. THE NATIVE RGL HITBOX (Invisible) */
+/* The Native RGL Hitbox (Invisible, relies on SmartFocusRing visually) */
 .react-resizable-handle { 
     background-image: none !important; 
     width: 40px !important;
@@ -61,13 +79,15 @@
 }
 .react-resizable-handle::after { display: none !important; content: none !important; }
 
-/* 2. THE SMART SVG CONTAINER */
+/* =================================================================
+   THE SMART FOCUS RING
+   ================================================================= */
 .smart-focus-ring-container {
     position: absolute;
     inset: 0;
     z-index: 4;
     pointer-events: none;
-    animation: fadeInRing 0.15s ease-out; /* Slightly faster snap-in */
+    animation: fadeInRing 0.15s ease-out; 
 }
 
 @keyframes fadeInRing {
@@ -80,9 +100,9 @@
     opacity: 0 !important;
 }
 
-/* ==============================================
+/* =================================================================
    LOCAL WIDGET ANIMATION (Synchronized Slide-Up)
-   ============================================== */
+   ================================================================= */
 @keyframes widgetSlideUp {
     0% { 
         opacity: 0; 
@@ -98,21 +118,36 @@
     width: 100%;
     height: 100%;
     position: relative;
-    opacity: 0; /* Base state ensures it stays hidden before the JS trigger */
+    opacity: 0;
+    /* Hardware acceleration for smoother initial load */
+    will-change: transform, opacity;
 }
 
-/* Base trigger for the initial load */
 .widget-glass-wrapper.revealed {
     animation: widgetSlideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-/* THE FIX: Override the animation and force opacity to 100% during 
-   interactions. This stops the visual flashing when RGL recalculates the DOM!
-*/
+/* Override animation and force 100% opacity during interactions to prevent flashing */
 .layout.edit-mode-on .widget-glass-wrapper,
 .react-grid-item.react-draggable-dragging .widget-glass-wrapper,
 .react-grid-item.react-resizable-resizing .widget-glass-wrapper {
     opacity: 1 !important;
     animation: none !important;
     transform: none !important;
+}
+
+/* =================================================================
+   MOBILE ONLY: DRAG VS SCROLL FIX
+   ================================================================= */
+@media (pointer: coarse) {
+    /* Override RGL's inline paralysis to allow native vertical swiping */
+    .layout.edit-mode-on .react-grid-item,
+    .scroll-shield {
+        touch-action: pan-y !important;
+    }
+    
+    /* Lock scrolling ONLY when they explicitly grab the drag pill */
+    .drag-handle {
+        touch-action: none !important; 
+    }
 }

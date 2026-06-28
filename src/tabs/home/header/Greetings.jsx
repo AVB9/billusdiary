@@ -1,7 +1,7 @@
-//.src/tabs/home/header/Greetings.jsx
+// src/tabs/home/header/Greetings.jsx
 import React, { useState, useEffect } from 'react';
+import { Sun, Moon } from '@ui/Icons'; 
 
-// You can eventually move this to a separate data file, but it's fine here for now.
 const HOME_ASSETS = {
     greetings: (name) => [
         `How are you ${name}... :)`,         
@@ -13,8 +13,8 @@ const HOME_ASSETS = {
         `Padhle bodmos... :)`,             
     ],
     icons: {
-        day: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>,
-        night: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        day: <Sun />,   
+        night: <Moon /> 
     },
     getSubGreeting: (hour) => {
         if (hour >= 7 && hour < 12) return "gumiimornin";
@@ -35,7 +35,7 @@ export default function Greetings() {
 
     useEffect(() => {
         // 1. Initialize data on mount
-        const savedName = localStorage.getItem('userDisplayName') || 'jiruuuu';
+        const savedName = localStorage.getItem('userDisplayName') || 'avb';
         const messages = HOME_ASSETS.greetings(savedName);
         const currentHour = new Date().getHours();
         
