@@ -1,8 +1,21 @@
 // src/widgets/WidgetRegistry.jsx
-import React, { useRef, useEffect, useState } from 'react';
-import { GoalTestWidget, FocusTestWidget, HabitsTestWidget, StatsTestWidget } from './TestWidgets';
-import WordleWidget from '@widgets/wordle/WordleWidget'; 
+import React, { useRef, useEffect, useState, lazy } from 'react';
 
+// =============================================================================
+// ASYNC WIDGET IMPORTS (Code Splitting)
+// =============================================================================
+// Default exports can be imported directly via lazy()
+const WordleWidget = lazy(() => import('@widgets/wordle/WordleWidget'));
+
+// Named exports require mapping the specific export to a 'default' key for React.lazy()
+const GoalTestWidget = lazy(() => import('./TestWidgets').then(module => ({ default: module.GoalTestWidget })));
+const FocusTestWidget = lazy(() => import('./TestWidgets').then(module => ({ default: module.FocusTestWidget })));
+const HabitsTestWidget = lazy(() => import('./TestWidgets').then(module => ({ default: module.HabitsTestWidget })));
+const StatsTestWidget = lazy(() => import('./TestWidgets').then(module => ({ default: module.StatsTestWidget })));
+
+// =============================================================================
+// TELEMETRY HOC
+// =============================================================================
 const withTelemetry = (WrappedComponent, widgetType) => {
     return function TelemetryWrapper(props) {
         const renderCount = useRef(0);
@@ -46,6 +59,9 @@ const withTelemetry = (WrappedComponent, widgetType) => {
     };
 };
 
+// =============================================================================
+// REGISTRY DICTIONARY
+// =============================================================================
 export const WIDGET_DICTIONARY = {
     'goal-countdown': { 
         name: 'Goal Tracker',

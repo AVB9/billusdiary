@@ -40,22 +40,24 @@ export default function Greetings() {
         const currentHour = new Date().getHours();
         
         setGreeting(messages[Math.floor(Math.random() * messages.length)]);
+        
+        // Restored: Only shows ONE icon based on the time of day
         setIcon((currentHour >= 6 && currentHour < 18) ? HOME_ASSETS.icons.day : HOME_ASSETS.icons.night);
+        
         setSubGreeting(HOME_ASSETS.getSubGreeting(currentHour));
 
         // 2. Start the fade sequence
         const fadeOutTimer = setTimeout(() => {
-            setIsFading(true); // Trigger CSS opacity change
+            setIsFading(true); 
             
             const textChangeTimer = setTimeout(() => {
                 setSubGreeting("gummi luck");
-                setIsFading(false); // Fade back in
-            }, 500); // Wait 0.5s for the CSS fade to finish before changing text
+                setIsFading(false); 
+            }, 500); 
 
             return () => clearTimeout(textChangeTimer);
         }, 3500);
 
-        // 3. Cleanup function if the component unmounts early
         return () => clearTimeout(fadeOutTimer);
     }, []);
 

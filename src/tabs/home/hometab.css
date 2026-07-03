@@ -1,24 +1,24 @@
+/* src/tabs/home/hometab.css */
+
 /* =================================================================
    RGL ENGINE & PLACEHOLDER AESTHETICS
    ================================================================= */
 .react-grid-layout { width: 100%; }
 
-/* 1. Base Placeholder (Invisible by default) */
+/* 1. The Dropzone Placeholder (Inherits Glass & Primary Variables) */
 .react-grid-layout .react-grid-placeholder {
-    background: rgba(96, 165, 250, 0.15) !important; 
-    border: 2px dashed #60A5FA !important;
-    border-radius: var(--rad-lg, 24px) !important;
-    opacity: 0 !important; /* FIXED: Hidden until interaction begins */
+    background: color-mix(in srgb, var(--color-primary) 15%, transparent) !important; 
+    border: 2px dashed var(--color-primary) !important;
+    border-radius: var(--rad-lg) !important;
+    opacity: 0 !important; 
     transition-duration: 150ms !important;
     z-index: 1 !important;
 }
 
-/* 2. Reveal Placeholder ONLY during a drag */
 .layout.is-dragging .react-grid-placeholder {
     opacity: 1 !important;
 }
 
-/* 3. Keep Placeholder hidden during resize */
 .layout.is-resizing .react-grid-placeholder {
     display: none !important;
     opacity: 0 !important;
@@ -27,21 +27,20 @@
 /* =================================================================
    Z-INDEX HIERARCHY & INTERACTION STYLES
    ================================================================= */
-/* 1. Selected Widget (Floats above standard widgets and placeholder) */
 .react-grid-item.is-selected {
     z-index: 50 !important;
 }
 
-/* 2. Actively Dragged Widget (Absolute top layer + Glow Ring) */
 .react-grid-item.react-draggable-dragging {
     z-index: 100 !important;
 }
+
+/* Active Drag Glow (Utilizes global shadow variables) */
 .react-grid-item.react-draggable-dragging:not(.react-resizable-resizing) {
-    box-shadow: 0 0 0 2px var(--color-primary, #60A5FA), 0 20px 40px rgba(0,0,0,0.6) !important;
-    border-radius: var(--rad-lg, 24px) !important;
+    box-shadow: 0 0 0 2px var(--color-primary), var(--shadow-glow) !important;
+    border-radius: var(--rad-lg) !important;
 }
 
-/* 3. Hide the default resize handle unless the widget is selected */
 .react-grid-item:not(.is-selected) .react-resizable-handle {
     display: none !important;
 }
@@ -49,12 +48,10 @@
 /* =================================================================
    BROWSER OVERRIDES & HITBOXES
    ================================================================= */
-/* Prevent the blue/red tap box, scoped only to the grid to save performance */
 .react-grid-layout * {
     -webkit-tap-highlight-color: transparent; 
 }
 
-/* Aggressively strip all browser defaults during dragging and clicking */
 .react-grid-item,
 .react-grid-item:focus, 
 .react-grid-item:active, 
@@ -66,7 +63,6 @@
     box-shadow: none !important;
 }
 
-/* The Native RGL Hitbox (Invisible, relies on SmartFocusRing visually) */
 .react-resizable-handle { 
     background-image: none !important; 
     width: 40px !important;
@@ -95,23 +91,16 @@
     100% { opacity: 1; transform: scale(1); }
 }
 
-/* Hide the ring while resizing to kill visual jitter */
 .react-resizable-resizing .smart-focus-ring-container {
     opacity: 0 !important;
 }
 
 /* =================================================================
-   LOCAL WIDGET ANIMATION (Synchronized Slide-Up)
+   LOCAL WIDGET ANIMATION
    ================================================================= */
 @keyframes widgetSlideUp {
-    0% { 
-        opacity: 0; 
-        transform: translateY(24px); 
-    }
-    100% { 
-        opacity: 1; 
-        transform: translateY(0); 
-    }
+    0% { opacity: 0; transform: translateY(24px); }
+    100% { opacity: 1; transform: translateY(0); }
 }
 
 .widget-glass-wrapper {
@@ -119,7 +108,6 @@
     height: 100%;
     position: relative;
     opacity: 0;
-    /* Hardware acceleration for smoother initial load */
     will-change: transform, opacity;
 }
 
@@ -127,7 +115,6 @@
     animation: widgetSlideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-/* Override animation and force 100% opacity during interactions to prevent flashing */
 .layout.edit-mode-on .widget-glass-wrapper,
 .react-grid-item.react-draggable-dragging .widget-glass-wrapper,
 .react-grid-item.react-resizable-resizing .widget-glass-wrapper {
@@ -137,17 +124,59 @@
 }
 
 /* =================================================================
-   MOBILE ONLY: DRAG VS SCROLL FIX
+   MOBILE ONLY: TOUCH ISOLATION LOGIC
    ================================================================= */
 @media (pointer: coarse) {
-    /* Override RGL's inline paralysis to allow native vertical swiping */
     .layout.edit-mode-on .react-grid-item,
     .scroll-shield {
         touch-action: pan-y !important;
     }
     
-    /* Lock scrolling ONLY when they explicitly grab the drag pill */
     .drag-handle {
         touch-action: none !important; 
     }
+}
+
+
+/* =================================================================
+   HEADER ICON ANIMATIONS
+   ================================================================= */
+.header-icon {
+    cursor: pointer;
+    /* We transition 'scale' and 'filter' independently from 'rotate' */
+    transition: scale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease, color 0.2s ease;
+    scale: 1;
+}
+
+/* 1. The Hover Glow */
+.header-icon:hover {
+    scale: 1.15;
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--color-primary) 60%, transparent));
+    color: var(--color-text);
+}
+
+/* 2. The Interaction "Squish" (Triggers while clicking/pressing) */
+.header-icon:active {
+    scale: 0.85;
+    /* Faster transition going in so it feels instantly responsive */
+    transition: scale 0.05s ease;
+    filter: drop-shadow(0 0 4px var(--color-primary));
+}
+
+/* 3. Ambient Background Motions (Using independent 'rotate' property) */
+.sun-icon {
+    animation: ambientRotate 30s linear infinite;
+}
+
+.moon-icon {
+    animation: ambientPendulum 8s ease-in-out infinite;
+}
+
+@keyframes ambientRotate {
+    to { rotate: 360deg; }
+}
+
+@keyframes ambientPendulum {
+    0%, 100% { rotate: -12deg; }
+    50%      { rotate: 18deg; }
 }

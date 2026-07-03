@@ -5,6 +5,10 @@ import Grid from '@tabs/home/grid/Grid';
 import { getHomeLayout, saveHomeLayout } from './homedb'; // co-located, use relative
 import '@tabs/home/hometab.css';
 
+// Device detection implemented to route Firebase calls to the correct nested layout field
+const IS_TOUCH = typeof window !== 'undefined'
+    && window.matchMedia('(pointer: coarse)').matches;
+
 export default function HomeTab({ uid }) {
 
     const [isEditMode,       setIsEditMode]       = useState(false);
@@ -24,7 +28,8 @@ export default function HomeTab({ uid }) {
     useEffect(() => {
         if (!uid) return;
         (async () => {
-            const savedLayout = await getHomeLayout(uid);
+            // Passed IS_TOUCH to fetch the correct device layout
+            const savedLayout = await getHomeLayout(uid, IS_TOUCH);
             setUserLayout(savedLayout);
             setIsLoadingLayout(false);
         })();
@@ -59,7 +64,8 @@ export default function HomeTab({ uid }) {
     const handleSave = async (finalLayout) => {
         setUserLayout(finalLayout);
         setIsEditMode(false);
-        await saveHomeLayout(uid, finalLayout);
+        // Passed IS_TOUCH to save the layout to the correct device field
+        await saveHomeLayout(uid, finalLayout, IS_TOUCH);
     };
 
     // Grid calls this when the user clicks "Cancel"
@@ -116,11 +122,11 @@ export default function HomeTab({ uid }) {
                 ) : (
                     /*
                      * Grid owns everything below this point:
-                     *   — EditGridBar (edit mode toolbar)
-                     *   — EditGridModal (widget picker)
-                     *   — liveLayout draft state
-                     *   — RGL physics engine
-                     *   — "Enter Edit Mode" button (populated, non-edit state)
+                     * — EditGridBar (edit mode toolbar)
+                     * — EditGridModal (widget picker)
+                     * — liveLayout draft state
+                     * — RGL physics engine
+                     * — "Enter Edit Mode" button (populated, non-edit state)
                      *
                      * HomeTab only owns Firebase load/save and the edit mode flag.
                      */
